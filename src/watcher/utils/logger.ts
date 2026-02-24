@@ -7,24 +7,66 @@ const LOG_LEVELS: Record<LogLevel, number> = {
   error: 3,
 };
 
+// ANSI color codes
+const COLORS = {
+  reset: '\x1b[0m',
+  gray: '\x1b[90m',
+  cyan: '\x1b[36m',
+  green: '\x1b[32m',
+  yellow: '\x1b[33m',
+  red: '\x1b[31m',
+  bold: '\x1b[1m',
+};
+
+const LEVEL_COLORS: Record<LogLevel, string> = {
+  debug: COLORS.gray,
+  info: COLORS.green,
+  warn: COLORS.yellow,
+  error: COLORS.red,
+};
+
 class Logger {
   private level: LogLevel = 'info';
+  private colorsEnabled: boolean = true;
+
+  constructor() {
+    // Disable colors if not in TTY or if NO_COLOR env is set
+    if (process.env.NO_COLOR || !process.stdout.isTTY) {
+      this.colorsEnabled = false;
+    }
+  }
 
   setLevel(level: LogLevel): void {
     this.level = level;
+  }
+
+  setColors(enabled: boolean): void {
+    this.colorsEnabled = enabled;
   }
 
   private shouldLog(level: LogLevel): boolean {
     return LOG_LEVELS[level] >= LOG_LEVELS[this.level];
   }
 
+  private colorize(text: string, color: string): string {
+    if (!this.colorsEnabled) {
+      return text;
+    }
+    return `${color}${text}${COLORS.reset}`;
+  }
+
   private formatMessage(level: LogLevel, message: string, meta?: unknown): string {
     const timestamp = new Date().toISOString();
     const levelStr = level.toUpperCase().padEnd(5);
-    let output = `[${timestamp}] ${levelStr} ${message}`;
+    const levelColor = LEVEL_COLORS[level];
+
+    const coloredLevel = this.colorize(levelStr, levelColor + COLORS.bold);
+    const coloredTimestamp = this.colorize(`[${timestamp}]`, COLORS.gray);
+
+    let output = `${coloredTimestamp} ${coloredLevel} ${message}`;
 
     if (meta !== undefined) {
-      output += ' ' + JSON.stringify(meta, null, 2);
+      output += '\n' + this.colorize(JSON.stringify(meta, null, 2), COLORS.gray);
     }
 
     return output;
