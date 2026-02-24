@@ -26,10 +26,6 @@ export class GitHubProvider extends BaseProvider {
     return {
       name: 'github',
       version: '1.0.0',
-      capabilities: {
-        webhook: true,
-        polling: true,
-      },
     };
   }
 
@@ -122,11 +118,7 @@ export class GitHubProvider extends BaseProvider {
     return this.poller.poll();
   }
 
-  async getLastComment(
-    repository: string,
-    resourceType: string,
-    resourceNumber: number
-  ): Promise<CommentInfo | null> {
+  async getLastComment(event: WatcherEvent): Promise<CommentInfo | null> {
     if (!this.comments) {
       throw new ProviderError(
         'GitHub comments not initialized (token required)',
@@ -134,15 +126,10 @@ export class GitHubProvider extends BaseProvider {
       );
     }
 
-    return this.comments.getLastComment(repository, resourceType, resourceNumber);
+    return this.comments.getLastComment(event);
   }
 
-  async postComment(
-    repository: string,
-    resourceType: string,
-    resourceNumber: number,
-    comment: string
-  ): Promise<void> {
+  async postComment(event: WatcherEvent, comment: string): Promise<void> {
     if (!this.comments) {
       throw new ProviderError(
         'GitHub comments not initialized (token required)',
@@ -150,7 +137,7 @@ export class GitHubProvider extends BaseProvider {
       );
     }
 
-    return this.comments.postComment(repository, resourceType, resourceNumber, comment);
+    return this.comments.postComment(event, comment);
   }
 
   async shutdown(): Promise<void> {

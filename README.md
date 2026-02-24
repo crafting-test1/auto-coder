@@ -307,7 +307,6 @@ export class CustomProvider extends BaseProvider {
     return {
       name: 'custom',
       version: '1.0.0',
-      capabilities: { webhook: true, polling: true }
     };
   }
 

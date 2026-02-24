@@ -140,28 +140,14 @@ export class CommandExecutor {
     }
 
     const provider = this.providers.get(event.provider);
-    if (!provider || !provider.postComment) {
-      logger.warn(`Provider ${event.provider} does not support posting comments`);
-      return;
-    }
-
-    if (!event.resource.repository) {
-      return;
-    }
-
-    const resourceNumber = this.extractResourceNumber(event.resource.url);
-    if (!resourceNumber) {
+    if (!provider) {
+      logger.warn(`Provider ${event.provider} not found`);
       return;
     }
 
     try {
       const comment = this.initialCommentTemplate(event);
-      await provider.postComment(
-        event.resource.repository,
-        event.type,
-        resourceNumber,
-        comment
-      );
+      await provider.postComment(event, comment);
       logger.debug(`Posted initial comment for event ${event.id}`);
     } catch (error) {
       logger.error('Failed to post initial comment', error);
@@ -170,27 +156,13 @@ export class CommandExecutor {
 
   private async postOutputComment(event: WatcherEvent, output: string): Promise<void> {
     const provider = this.providers.get(event.provider);
-    if (!provider || !provider.postComment) {
-      logger.warn(`Provider ${event.provider} does not support posting comments`);
-      return;
-    }
-
-    if (!event.resource.repository) {
-      return;
-    }
-
-    const resourceNumber = this.extractResourceNumber(event.resource.url);
-    if (!resourceNumber) {
+    if (!provider) {
+      logger.warn(`Provider ${event.provider} not found`);
       return;
     }
 
     try {
-      await provider.postComment(
-        event.resource.repository,
-        event.type,
-        resourceNumber,
-        output
-      );
+      await provider.postComment(event, output);
       logger.debug(`Posted output comment for event ${event.id}`);
     } catch (error) {
       logger.error('Failed to post output comment', error);
@@ -264,11 +236,4 @@ export class CommandExecutor {
     });
   }
 
-  private extractResourceNumber(url: string): number | null {
-    const match = url.match(/\/(?:issues|pull)\/(\d+)/);
-    if (!match || !match[1]) {
-      return null;
-    }
-    return parseInt(match[1], 10);
-  }
 }

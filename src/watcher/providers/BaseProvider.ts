@@ -5,6 +5,7 @@ import type {
   WebhookValidationResult,
   NormalizedWebhookResult,
   WatcherEvent,
+  CommentInfo,
 } from '../types/index.js';
 import { ProviderError } from '../utils/errors.js';
 import { logger } from '../utils/logger.js';
@@ -24,13 +25,6 @@ export abstract class BaseProvider implements IProvider {
     body: unknown,
     rawBody?: string | Buffer
   ): Promise<WebhookValidationResult> {
-    if (!this.metadata.capabilities.webhook) {
-      return {
-        valid: false,
-        error: `Provider ${this.metadata.name} does not support webhooks`,
-      };
-    }
-
     return { valid: true };
   }
 
@@ -45,13 +39,20 @@ export abstract class BaseProvider implements IProvider {
   }
 
   async poll(): Promise<WatcherEvent[]> {
-    if (!this.metadata.capabilities.polling) {
-      throw new ProviderError(
-        `Provider ${this.metadata.name} does not support polling`,
-        this.metadata.name
-      );
-    }
     return [];
+  }
+
+  async getLastComment(event: WatcherEvent): Promise<CommentInfo | null> {
+    logger.warn(
+      `Provider ${this.metadata.name} does not support comment-based operations`
+    );
+    return null;
+  }
+
+  async postComment(event: WatcherEvent, comment: string): Promise<void> {
+    logger.warn(
+      `Provider ${this.metadata.name} does not support posting comments`
+    );
   }
 
   async shutdown(): Promise<void> {

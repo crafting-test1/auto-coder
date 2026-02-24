@@ -167,14 +167,9 @@ export class Watcher extends WatcherEventEmitter {
 
   private async startWebhookServer(): Promise<void> {
     const needsWebhook = Array.from(this.registry.getAll().entries()).some(
-      ([name, provider]) => {
+      ([name]) => {
         const config = this.config.providers[name];
-        return (
-          config?.enabled &&
-          provider.metadata.capabilities.webhook &&
-          provider.validateWebhook &&
-          provider.normalizeWebhook
-        );
+        return config?.enabled;
       }
     );
 
@@ -197,14 +192,6 @@ export class Watcher extends WatcherEventEmitter {
         continue;
       }
 
-      if (
-        !provider.metadata.capabilities.webhook ||
-        !provider.validateWebhook ||
-        !provider.normalizeWebhook
-      ) {
-        continue;
-      }
-
       const handler = new WebhookHandler(provider, async (events) => {
         await this.handleEvents(events as WatcherEvent[]);
       });
@@ -223,14 +210,11 @@ export class Watcher extends WatcherEventEmitter {
         continue;
       }
 
-      if (!provider.metadata.capabilities.polling || !provider.poll) {
-        continue;
-      }
-
       const hasAuth = config.auth !== undefined;
       const options = config.options as { repositories?: string[] } | undefined;
       const hasRepositories = options?.repositories && options.repositories.length > 0;
 
+      // Only start poller if auth and repositories are configured
       if (!hasAuth || !hasRepositories) {
         continue;
       }

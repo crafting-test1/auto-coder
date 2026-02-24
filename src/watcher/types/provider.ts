@@ -14,10 +14,6 @@ export interface ProviderAuth {
 export interface ProviderMetadata {
   name: string;
   version: string;
-  capabilities: {
-    webhook: boolean;
-    polling: boolean;
-  };
 }
 
 export interface ProviderConfig {
@@ -48,31 +44,22 @@ export interface IProvider {
 
   initialize(config: ProviderConfig): Promise<void>;
 
-  validateWebhook?(
+  validateWebhook(
     headers: Record<string, string | string[] | undefined>,
     body: unknown,
     rawBody?: string | Buffer
   ): Promise<WebhookValidationResult>;
 
-  normalizeWebhook?(
+  normalizeWebhook(
     headers: Record<string, string | string[] | undefined>,
     body: unknown
   ): Promise<NormalizedWebhookResult>;
 
-  poll?(): Promise<WatcherEvent[]>;
+  poll(): Promise<WatcherEvent[]>;
 
-  getLastComment?(
-    repository: string,
-    resourceType: string,
-    resourceNumber: number
-  ): Promise<CommentInfo | null>;
+  getLastComment(event: WatcherEvent): Promise<CommentInfo | null>;
 
-  postComment?(
-    repository: string,
-    resourceType: string,
-    resourceNumber: number,
-    comment: string
-  ): Promise<void>;
+  postComment(event: WatcherEvent, comment: string): Promise<void>;
 
   shutdown(): Promise<void>;
 }

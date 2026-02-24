@@ -23,35 +23,16 @@ export class CommentDeduplicator {
   async isDuplicate(event: WatcherEvent): Promise<boolean> {
     const provider = this.providers.get(event.provider);
 
-    if (!provider || !provider.getLastComment) {
-      logger.warn(
-        `Provider ${event.provider} does not support comment-based deduplication`
-      );
-      return false;
-    }
-
-    if (!event.resource.repository) {
-      logger.debug('Event has no repository, cannot check for duplicates');
-      return false;
-    }
-
-    const resourceNumber = this.extractResourceNumber(event.resource.url);
-    if (!resourceNumber) {
-      logger.debug(
-        `Could not extract resource number from URL: ${event.resource.url}`
-      );
+    if (!provider) {
+      logger.warn(`Provider ${event.provider} not found`);
       return false;
     }
 
     try {
-      const lastComment = await provider.getLastComment(
-        event.resource.repository,
-        event.type,
-        resourceNumber
-      );
+      const lastComment = await provider.getLastComment(event);
 
       if (!lastComment) {
-        logger.debug(`No comments found on ${event.type} #${resourceNumber}`);
+        logger.debug(`No comments found for event ${event.id}`);
         return false;
       }
 
@@ -73,23 +54,8 @@ export class CommentDeduplicator {
   async markAsProcessed(event: WatcherEvent): Promise<void> {
     const provider = this.providers.get(event.provider);
 
-    if (!provider || !provider.postComment) {
-      logger.warn(
-        `Provider ${event.provider} does not support posting comments`
-      );
-      return;
-    }
-
-    if (!event.resource.repository) {
-      logger.debug('Event has no repository, cannot post comment');
-      return;
-    }
-
-    const resourceNumber = this.extractResourceNumber(event.resource.url);
-    if (!resourceNumber) {
-      logger.debug(
-        `Could not extract resource number from URL: ${event.resource.url}`
-      );
+    if (!provider) {
+      logger.warn(`Provider ${event.provider} not found`);
       return;
     }
 
@@ -99,27 +65,12 @@ export class CommentDeduplicator {
         new Date().toISOString()
       );
 
-      await provider.postComment(
-        event.resource.repository,
-        event.type,
-        resourceNumber,
-        comment
-      );
+      await provider.postComment(event, comment);
 
-      logger.debug(
-        `Posted comment to ${event.type} #${resourceNumber} in ${event.resource.repository}`
-      );
+      logger.debug(`Posted deduplication comment for event ${event.id}`);
     } catch (error) {
       logger.error('Error posting comment', error);
     }
-  }
-
-  private extractResourceNumber(url: string): number | null {
-    const match = url.match(/\/(?:issues|pull)\/(\d+)/);
-    if (!match || !match[1]) {
-      return null;
-    }
-    return parseInt(match[1], 10);
   }
 
   shutdown(): void {
