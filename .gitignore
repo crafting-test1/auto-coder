@@ -6,6 +6,16 @@ dist/
 build/
 *.tsbuildinfo
 
+# Compiled test files
+test-*.js
+test-*.d.ts
+test-*.js.map
+test-*.d.ts.map
+tests/**/*.js
+tests/**/*.d.ts
+tests/**/*.js.map
+tests/**/*.d.ts.map
+
 # Coverage
 coverage/
 *.lcov

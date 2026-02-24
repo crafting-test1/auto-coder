@@ -1,0 +1,51 @@
+# Test Configuration for Command Executor
+# This demonstrates the command executor functionality
+
+server:
+  host: localhost
+  port: 3001
+
+deduplication:
+  enabled: true
+  strategy: memory
+  ttl: 3600
+  maxSize: 10000
+
+logLevel: debug
+
+# Command executor configuration
+commandExecutor:
+  enabled: true
+
+  # Simple test command that echoes event details
+  command: |
+    echo "=== Event Processed ==="
+    echo "Event ID: $EVENT_ID"
+    echo "Provider: $EVENT_PROVIDER"
+    echo "Type: $EVENT_TYPE"
+    echo "Action: $EVENT_ACTION"
+    echo "Resource: $RESOURCE_TITLE"
+    echo "URL: $RESOURCE_URL"
+    echo "Actor: $ACTOR_USERNAME"
+    echo ""
+    echo "=== Prompt Preview ==="
+    echo "$PROMPT" | head -20
+
+  # Use the example template
+  promptTemplateFile: ./config/event-prompt.example.hbs
+
+  # Pass prompt via environment variable (default)
+  useStdin: false
+
+  # Don't post comments in test mode
+  postInitialComment: false
+  postOutputComment: false
+
+providers:
+  github:
+    enabled: true
+
+    # For testing, we only enable webhook mode
+    # (no auth needed for webhook-only mode)
+
+    # No polling in test mode (would require auth + repositories)

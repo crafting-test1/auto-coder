@@ -6,6 +6,7 @@ import { ProviderRegistry } from './providers/ProviderRegistry.js';
 import { WebhookServer } from './transport/WebhookServer.js';
 import { WebhookHandler } from './transport/WebhookHandler.js';
 import { Poller } from './transport/Poller.js';
+import { CommandExecutor } from './utils/commandExecutor.js';
 import { logger } from './utils/logger.js';
 import { WatcherError, ProviderError } from './utils/errors.js';
 
@@ -13,6 +14,7 @@ export class Watcher extends WatcherEventEmitter {
   private registry: ProviderRegistry;
   private deduplicator: Deduplicator | CommentDeduplicator;
   private deduplicationStrategy: 'comment' | 'memory';
+  private commandExecutor: CommandExecutor | undefined;
   private server: WebhookServer | undefined;
   private pollers: Map<string, Poller> = new Map();
   private started = false;
@@ -44,6 +46,10 @@ export class Watcher extends WatcherEventEmitter {
         ttl: deduplicationConfig.ttl || 3600,
         maxSize: deduplicationConfig.maxSize || 10000,
       });
+    }
+
+    if (config.commandExecutor?.enabled) {
+      this.commandExecutor = new CommandExecutor(config.commandExecutor);
     }
   }
 
@@ -77,6 +83,10 @@ export class Watcher extends WatcherEventEmitter {
         (this.deduplicator as CommentDeduplicator).setProviders(
           this.registry.getAll()
         );
+      }
+
+      if (this.commandExecutor) {
+        this.commandExecutor.setProviders(this.registry.getAll());
       }
 
       await this.startWebhookServer();
@@ -273,6 +283,10 @@ export class Watcher extends WatcherEventEmitter {
 
       logger.debug(`Emitting event: ${event.id}`);
       this.emit('event', event);
+
+      if (this.commandExecutor) {
+        await this.commandExecutor.execute(event);
+      }
 
       if (this.deduplicationStrategy === 'comment') {
         await (this.deduplicator as CommentDeduplicator).markAsProcessed(event);

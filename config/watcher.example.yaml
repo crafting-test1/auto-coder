@@ -32,6 +32,37 @@ deduplication:
 # Log level: debug | info | warn | error
 logLevel: info
 
+# Command executor configuration
+commandExecutor:
+  enabled: false  # Set to true to enable command execution for events
+
+  # Command to execute (required if enabled)
+  # The command receives event data via environment variables or stdin
+  command: "echo 'Event received: $EVENT_ID'"
+
+  # Prompt template (optional)
+  # Uses Handlebars syntax to render event data into a prompt
+  # promptTemplate: |
+  #   Event: {{provider}}/{{type}}/{{action}}
+  #   Resource: {{resource.title}}
+  #   URL: {{resource.url}}
+
+  # Or load template from file (recommended)
+  # Use the production-tested template from samples/watch.go:
+  # promptTemplateFile: ./config/event-prompt.example.hbs
+
+  # Pass prompt via stdin instead of environment variable (default: false)
+  useStdin: false
+
+  # Post initial comment before executing command (default: false)
+  postInitialComment: false
+
+  # Initial comment template (optional, uses default if not specified)
+  # initialCommentTemplate: "🤖 Agent is processing event {{id}}"
+
+  # Post command output as comment (default: false)
+  postOutputComment: false
+
 # Provider configurations
 providers:
   # GitHub Provider

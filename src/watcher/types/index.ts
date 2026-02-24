@@ -20,4 +20,5 @@ export type {
   WatcherConfig,
   ServerConfig,
   DeduplicationConfig,
+  CommandExecutorConfig,
 } from './config.js';
