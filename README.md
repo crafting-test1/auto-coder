@@ -173,7 +173,6 @@ const watcher = new Watcher({
   },
   deduplication: {
     enabled: true,
-    strategy: 'comment',
     botUsername: 'auto-coder-bot'
   }
 });
@@ -194,7 +193,7 @@ The watcher is configured via YAML files. See `config/watcher.example.yaml` for 
 Key configuration sections:
 
 - **server**: Webhook server settings (host, port, basePath)
-- **deduplication**: Event deduplication settings (strategy, botUsername, ttl, maxSize)
+- **deduplication**: Event deduplication settings (botUsername, commentTemplate)
 - **providers**: Provider-specific configurations
 - **logLevel**: Logging verbosity (debug, info, warn, error)
 
@@ -231,9 +230,9 @@ interface WatcherEvent {
 
 ### Deduplication Strategies
 
-The watcher supports two deduplication strategies to prevent processing the same event multiple times:
+The watcher uses comment-based deduplication to prevent processing the same event multiple times.
 
-#### Comment-Based Deduplication (Recommended)
+#### Comment-Based Deduplication
 
 Posts a comment to the source resource (issue/PR) after processing each event. Before processing, checks if the last comment was posted by the watcher bot.
 
@@ -248,7 +247,6 @@ Posts a comment to the source resource (issue/PR) after processing each event. B
 ```yaml
 deduplication:
   enabled: true
-  strategy: comment
   botUsername: auto-coder-bot
   commentTemplate: "🤖 Event processed by auto-coder watcher at {timestamp}"
 ```
@@ -257,30 +255,6 @@ deduplication:
 - Provider must support comment operations (GitHub ✅)
 - Bot account needs write access to post comments
 - `botUsername` must match the account posting comments
-
-#### Memory-Based Deduplication
-
-Maintains an in-memory cache of event IDs with TTL expiration.
-
-**Advantages:**
-- Fast lookup (no API calls)
-- No write permissions needed
-- Works with any provider
-
-**Disadvantages:**
-- Not persistent (lost on restart)
-- Doesn't work in distributed setups
-- No visibility into processing history
-
-**Configuration:**
-
-```yaml
-deduplication:
-  enabled: true
-  strategy: memory
-  ttl: 3600      # seconds
-  maxSize: 10000 # max event IDs to cache
-```
 
 ### Webhook Endpoints
 

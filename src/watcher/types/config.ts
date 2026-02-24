@@ -8,10 +8,7 @@ export interface ServerConfig {
 
 export interface DeduplicationConfig {
   enabled: boolean;
-  strategy: 'comment' | 'memory';
-  ttl?: number;
-  maxSize?: number;
-  botUsername?: string;
+  botUsername: string;
   commentTemplate?: string;
 }
 

@@ -75,9 +75,7 @@ async function main() {
     logLevel: 'debug',
     deduplication: {
       enabled: true,
-      strategy: 'memory',
-      ttl: 3600,
-      maxSize: 10000,
+      botUsername: 'test-bot',
     },
     commandExecutor: {
       enabled: true,

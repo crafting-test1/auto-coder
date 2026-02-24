@@ -1,6 +1,5 @@
 import type { WatcherConfig, IProvider, WatcherEvent } from './types/index.js';
 import { WatcherEventEmitter } from './core/EventEmitter.js';
-import { Deduplicator } from './core/Deduplicator.js';
 import { CommentDeduplicator } from './core/CommentDeduplicator.js';
 import { ProviderRegistry } from './providers/ProviderRegistry.js';
 import { WebhookServer } from './transport/WebhookServer.js';
@@ -12,8 +11,7 @@ import { WatcherError, ProviderError } from './utils/errors.js';
 
 export class Watcher extends WatcherEventEmitter {
   private registry: ProviderRegistry;
-  private deduplicator: Deduplicator | CommentDeduplicator;
-  private deduplicationStrategy: 'comment' | 'memory';
+  private deduplicator: CommentDeduplicator;
   private commandExecutor: CommandExecutor | undefined;
   private server: WebhookServer | undefined;
   private pollers: Map<string, Poller> = new Map();
@@ -28,25 +26,11 @@ export class Watcher extends WatcherEventEmitter {
 
     this.registry = new ProviderRegistry();
 
-    const deduplicationConfig = config.deduplication || {
-      enabled: true,
-      strategy: 'memory' as const,
-      ttl: 3600,
-      maxSize: 10000,
-    };
-
-    this.deduplicationStrategy = deduplicationConfig.strategy || 'memory';
-
-    if (this.deduplicationStrategy === 'comment') {
-      this.deduplicator = new CommentDeduplicator(deduplicationConfig);
-    } else {
-      this.deduplicator = new Deduplicator({
-        enabled: deduplicationConfig.enabled,
-        strategy: 'memory',
-        ttl: deduplicationConfig.ttl || 3600,
-        maxSize: deduplicationConfig.maxSize || 10000,
-      });
+    if (!config.deduplication) {
+      throw new WatcherError('Deduplication configuration is required');
     }
+
+    this.deduplicator = new CommentDeduplicator(config.deduplication);
 
     if (config.commandExecutor?.enabled) {
       this.commandExecutor = new CommandExecutor(config.commandExecutor);
@@ -79,11 +63,7 @@ export class Watcher extends WatcherEventEmitter {
     try {
       await this.initializeProviders();
 
-      if (this.deduplicationStrategy === 'comment') {
-        (this.deduplicator as CommentDeduplicator).setProviders(
-          this.registry.getAll()
-        );
-      }
+      this.deduplicator.setProviders(this.registry.getAll());
 
       if (this.commandExecutor) {
         this.commandExecutor.setProviders(this.registry.getAll());
@@ -251,15 +231,7 @@ export class Watcher extends WatcherEventEmitter {
 
   private async handleEvents(events: WatcherEvent[]): Promise<void> {
     for (const event of events) {
-      let isDuplicate = false;
-
-      if (this.deduplicationStrategy === 'comment') {
-        isDuplicate = await (this.deduplicator as CommentDeduplicator).isDuplicate(
-          event
-        );
-      } else {
-        isDuplicate = (this.deduplicator as Deduplicator).isDuplicate(event.id);
-      }
+      const isDuplicate = await this.deduplicator.isDuplicate(event);
 
       if (isDuplicate) {
         continue;
@@ -272,9 +244,7 @@ export class Watcher extends WatcherEventEmitter {
         await this.commandExecutor.execute(event);
       }
 
-      if (this.deduplicationStrategy === 'comment') {
-        await (this.deduplicator as CommentDeduplicator).markAsProcessed(event);
-      }
+      await this.deduplicator.markAsProcessed(event);
     }
   }
 

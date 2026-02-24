@@ -9,25 +9,17 @@ server:
   # basePath: /api
 
 # Event deduplication configuration
+# Uses comment-based deduplication: checks last comment on issues/PRs
 deduplication:
   enabled: true
 
-  # Strategy: 'comment' | 'memory'
-  # - comment: Check last comment on issues/PRs to determine if already processed
-  # - memory: Use in-memory cache with TTL (default)
-  strategy: comment
-
-  # Bot username (required for comment strategy)
+  # Bot username (required)
   # This should be the username of the account posting comments
   botUsername: auto-coder-bot
 
-  # Comment template (optional, for comment strategy)
+  # Comment template (optional)
   # Use {timestamp} placeholder for ISO timestamp
   commentTemplate: "🤖 Event processed by auto-coder watcher at {timestamp}"
-
-  # Memory strategy options (only used when strategy: memory)
-  ttl: 3600        # Time to live in seconds (1 hour)
-  maxSize: 10000   # Maximum number of event IDs to cache
 
 # Log level: debug | info | warn | error
 logLevel: info

@@ -1,7 +1,6 @@
 export { Watcher } from './Watcher.js';
 
 export { ConfigLoader } from './core/ConfigLoader.js';
-export { Deduplicator } from './core/Deduplicator.js';
 export { CommentDeduplicator } from './core/CommentDeduplicator.js';
 
 export { BaseProvider } from './providers/BaseProvider.js';
