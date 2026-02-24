@@ -81,15 +81,25 @@ export class GitHubProvider extends BaseProvider {
       }
     }
 
-    this.webhook = new GitHubWebhook();
-    modes.push('webhook');
-
     const options = config.options as {
+      webhookSecret?: string;
+      webhookSecretEnv?: string;
+      webhookSecretFile?: string;
       repositories?: string[];
       events?: string[];
       initialLookbackHours?: number;
       maxItemsPerPoll?: number;
     } | undefined;
+
+    // Resolve webhook secret if provided
+    const webhookSecret = ConfigLoader.resolveSecret(
+      options?.webhookSecret,
+      options?.webhookSecretEnv,
+      options?.webhookSecretFile
+    );
+
+    this.webhook = new GitHubWebhook(webhookSecret);
+    modes.push('webhook');
 
     const hasPollingConfig =
       this.token && options?.repositories && options.repositories.length > 0;
@@ -127,7 +137,7 @@ export class GitHubProvider extends BaseProvider {
 
   async validateWebhook(
     headers: Record<string, string | string[] | undefined>,
-    body: unknown,
+    _body: unknown,
     rawBody?: string | Buffer
   ): Promise<boolean> {
     if (!this.webhook) {

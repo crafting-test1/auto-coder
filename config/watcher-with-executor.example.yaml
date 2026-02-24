@@ -46,6 +46,12 @@ providers:
       tokenEnv: GITHUB_TOKEN
 
     options:
+      # Webhook secret for signature verification (recommended for production)
+      # You can provide the secret directly, via environment variable, or from a file
+      # webhookSecret: "your-secret-here"
+      webhookSecretEnv: GITHUB_WEBHOOK_SECRET
+      # webhookSecretFile: /path/to/secret/file
+
       repositories:
         - owner/repo1
         - owner/repo2

@@ -88,6 +88,14 @@ providers:
 
     # GitHub-specific options
     options:
+      # Webhook secret for signature verification (optional but recommended for production)
+      # GitHub signs webhook payloads with HMAC SHA-256 using this secret
+      # Configure the same secret in your GitHub webhook settings
+      # You can provide the secret directly, via environment variable, or from a file
+      # webhookSecret: "your-secret-here"
+      webhookSecretEnv: GITHUB_WEBHOOK_SECRET
+      # webhookSecretFile: /path/to/secret/file
+
       # Repositories to monitor (required for polling mode)
       repositories:
         - owner/repo1
