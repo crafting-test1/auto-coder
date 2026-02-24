@@ -17,11 +17,27 @@ interface GitHubWebhookPayload {
   issue?: {
     id: number;
     number: number;
+    title: string;
+    body?: string;
+    html_url: string;
+    state: string;
+    assignees?: any[];
+    labels?: any[];
+    user?: { login: string; id: number };
     pull_request?: unknown;
   };
   pull_request?: {
     id: number;
     number: number;
+    title: string;
+    body?: string;
+    html_url: string;
+    state: string;
+    assignees?: any[];
+    labels?: any[];
+    user?: { login: string; id: number };
+    head?: { ref: string };
+    base?: { ref: string };
   };
   comment?: {
     id: number;
@@ -168,7 +184,10 @@ export class GitHubProvider extends BaseProvider {
       resourceNumber
     );
 
-    await eventHandler(payload, reactor);
+    // Normalize GitHub event for template rendering
+    const normalizedEvent = this.normalizeEvent(payload, deliveryId);
+
+    await eventHandler(normalizedEvent, reactor);
   }
 
   async poll(eventHandler: EventHandler): Promise<void> {
@@ -201,11 +220,111 @@ export class GitHubProvider extends BaseProvider {
         resourceNumber
       );
 
+      // Normalize GitHub API response for template rendering
+      const normalizedEvent = this.normalizePolledEvent(item);
+
       logger.debug(`Calling event handler for ${resourceType} #${resourceNumber}`);
-      await eventHandler(item.data, reactor);
+      await eventHandler(normalizedEvent, reactor);
     }
 
     logger.debug(`Finished processing ${items.length} items from GitHub poll`);
+  }
+
+  private normalizeEvent(payload: GitHubWebhookPayload, deliveryId: string): unknown {
+    let type = 'issue';
+    let resource: any = {};
+    let eventId = '';
+
+    if (payload.pull_request) {
+      type = 'pull_request';
+      const pr = payload.pull_request;
+      eventId = `github:${payload.repository.full_name}:${payload.action}:${pr.id}:${deliveryId}`;
+      resource = {
+        number: pr.number,
+        title: pr.title,
+        description: pr.body || '',
+        url: pr.html_url,
+        state: pr.state,
+        repository: payload.repository.full_name,
+        assignees: pr.assignees && pr.assignees.length > 0 ? pr.assignees : undefined,
+        labels: pr.labels?.map((l: any) => l.name),
+        author: pr.user?.login,
+        branch: pr.head?.ref,
+        mergeTo: pr.base?.ref,
+      };
+    } else if (payload.issue) {
+      type = 'issue';
+      const issue = payload.issue;
+      eventId = `github:${payload.repository.full_name}:${payload.action}:${issue.id}:${deliveryId}`;
+      resource = {
+        number: issue.number,
+        title: issue.title,
+        description: issue.body || '',
+        url: issue.html_url,
+        state: issue.state,
+        repository: payload.repository.full_name,
+        assignees: issue.assignees && issue.assignees.length > 0 ? issue.assignees : undefined,
+        labels: issue.labels?.map((l: any) => l.name),
+        author: issue.user?.login,
+      };
+    }
+
+    return {
+      id: eventId,
+      provider: 'github',
+      type,
+      action: payload.action,
+      resource,
+      actor: {
+        username: payload.sender?.login,
+        id: payload.sender?.id,
+      },
+      metadata: {
+        timestamp: new Date().toISOString(),
+        deliveryId,
+      },
+      raw: payload,
+    };
+  }
+
+  private normalizePolledEvent(item: any): unknown {
+    const data = item.data;
+    const type = item.type;
+    const eventId = `github:${item.repository}:poll:${data.number}:${Date.now()}`;
+
+    const resource: any = {
+      number: data.number,
+      title: data.title,
+      description: data.body || '',
+      url: data.html_url,
+      state: data.state,
+      repository: item.repository,
+      assignees: data.assignees && data.assignees.length > 0 ? data.assignees : undefined,
+      labels: data.labels?.map((l: any) => l.name),
+      author: data.user?.login,
+    };
+
+    if (type === 'pull_request' && data.head) {
+      resource.branch = data.head.ref;
+      resource.mergeTo = data.base?.ref;
+    }
+
+    return {
+      id: eventId,
+      provider: 'github',
+      type,
+      action: 'poll',
+      resource,
+      actor: {
+        username: data.user?.login,
+        id: data.user?.id,
+      },
+      metadata: {
+        timestamp: new Date().toISOString(),
+        polled: true,
+      },
+      raw: data,
+    };
   }
 
   async shutdown(): Promise<void> {

@@ -83,6 +83,7 @@ export class CommandExecutor {
 
     try {
       // Render prompt template if available
+      // Event should already be normalized by the provider
       let prompt = '';
       if (this.promptTemplate) {
         prompt = this.promptTemplate(event);
@@ -121,13 +122,20 @@ export class CommandExecutor {
         env.PROMPT = prompt;
       }
 
-      // Add any additional event data to environment
+      // Add normalized event data to environment
       if (event && typeof event === 'object') {
         const obj = event as Record<string, unknown>;
         if (obj.action) env.EVENT_ACTION = String(obj.action);
-        if (obj.repository && typeof obj.repository === 'object') {
-          const repo = obj.repository as Record<string, unknown>;
-          if (repo.full_name) env.EVENT_REPOSITORY = String(repo.full_name);
+        if (obj.type) env.EVENT_TYPE = String(obj.type);
+        if (obj.provider) env.EVENT_PROVIDER = String(obj.provider);
+
+        // Add resource information
+        if (obj.resource && typeof obj.resource === 'object') {
+          const resource = obj.resource as Record<string, unknown>;
+          if (resource.repository) env.EVENT_REPOSITORY = String(resource.repository);
+          if (resource.number) env.EVENT_NUMBER = String(resource.number);
+          if (resource.title) env.EVENT_TITLE = String(resource.title);
+          if (resource.url) env.EVENT_URL = String(resource.url);
         }
       }
 

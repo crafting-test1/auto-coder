@@ -160,7 +160,8 @@ export class Watcher extends WatcherEventEmitter {
 
         // Execute command if configured
         if (this.commandExecutor) {
-          const eventId = this.generateEventId(event);
+          // Extract event ID from normalized event
+          const eventId = this.extractEventId(event);
           await this.commandExecutor.execute(eventId, event, reactor);
         } else {
           // If no command executor, mark as processed manually
@@ -208,22 +209,24 @@ export class Watcher extends WatcherEventEmitter {
     }
   }
 
-  private generateEventId(event: unknown): string {
-    // Try to extract an ID from common event structures
+  private extractEventId(event: unknown): string {
+    // Extract ID from normalized event structure
     if (event && typeof event === 'object') {
       const obj = event as Record<string, unknown>;
       if (obj.id) return String(obj.id);
-      if (obj.number) return String(obj.number);
-      if (obj.issue && typeof obj.issue === 'object') {
-        const issue = obj.issue as Record<string, unknown>;
-        if (issue.number) return String(issue.number);
-      }
-      if (obj.pull_request && typeof obj.pull_request === 'object') {
-        const pr = obj.pull_request as Record<string, unknown>;
-        if (pr.number) return String(pr.number);
+
+      // Fallback to resource number if available
+      if (obj.resource && typeof obj.resource === 'object') {
+        const resource = obj.resource as Record<string, unknown>;
+        if (resource.number) return String(resource.number);
       }
     }
     return Date.now().toString();
+  }
+
+  private generateEventId(event: unknown): string {
+    // Try to extract an ID from normalized event structure
+    return this.extractEventId(event);
   }
 
   private async startWebhookServer(): Promise<void> {
