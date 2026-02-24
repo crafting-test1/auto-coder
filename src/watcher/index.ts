@@ -12,7 +12,6 @@ export type {
   WatcherConfig,
   ServerConfig,
   DeduplicationConfig,
-  RateLimitConfig,
   WatcherEvent,
   EventMetadata,
   Actor,
@@ -23,6 +22,7 @@ export type {
   ProviderMetadata,
   WebhookValidationResult,
   NormalizedWebhookResult,
+  CommentInfo,
 } from './types/index.js';
 
 export { EventType, EventAction } from './types/index.js';

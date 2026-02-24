@@ -22,10 +22,6 @@ export interface ProviderMetadata {
 
 export interface ProviderConfig {
   enabled: boolean;
-  mode: 'webhook' | 'polling' | 'both';
-  webhookSecret?: string;
-  webhookSecretEnv?: string;
-  webhookSecretFile?: string;
   pollingInterval?: number;
   auth?: ProviderAuth;
   options?: Record<string, unknown>;

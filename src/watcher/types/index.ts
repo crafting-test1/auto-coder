@@ -20,5 +20,4 @@ export type {
   WatcherConfig,
   ServerConfig,
   DeduplicationConfig,
-  RateLimitConfig,
 } from './config.js';

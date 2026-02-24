@@ -1,6 +1,7 @@
 import type { WatcherEvent, Actor } from '../../types/index.js';
 import { EventType, EventAction } from '../../types/index.js';
 import { logger } from '../../utils/logger.js';
+import { withExponentialRetry } from '../../utils/retry.js';
 
 interface GitHubPollerConfig {
   token: string;
@@ -68,19 +69,24 @@ export class GitHubPoller {
       url.searchParams.set('since', since.toISOString());
     }
 
-    const response = await fetch(url.toString(), {
-      headers: {
-        Authorization: `Bearer ${this.config.token}`,
-        Accept: 'application/vnd.github.v3+json',
-        'User-Agent': 'auto-coder-watcher',
-      },
+    const issues = await withExponentialRetry(async () => {
+      const response = await fetch(url.toString(), {
+        headers: {
+          Authorization: `Bearer ${this.config.token}`,
+          Accept: 'application/vnd.github.v3+json',
+          'User-Agent': 'auto-coder-watcher',
+        },
+      });
+
+      if (!response.ok) {
+        if (response.status === 409) {
+          throw response;
+        }
+        throw new Error(`GitHub API error: ${response.status} ${response.statusText}`);
+      }
+
+      return await response.json();
     });
-
-    if (!response.ok) {
-      throw new Error(`GitHub API error: ${response.status} ${response.statusText}`);
-    }
-
-    const issues = await response.json();
     const events: WatcherEvent[] = [];
 
     for (const issue of issues as Array<{
@@ -152,19 +158,24 @@ export class GitHubPoller {
     url.searchParams.set('direction', 'desc');
     url.searchParams.set('per_page', '100');
 
-    const response = await fetch(url.toString(), {
-      headers: {
-        Authorization: `Bearer ${this.config.token}`,
-        Accept: 'application/vnd.github.v3+json',
-        'User-Agent': 'auto-coder-watcher',
-      },
+    const prs = await withExponentialRetry(async () => {
+      const response = await fetch(url.toString(), {
+        headers: {
+          Authorization: `Bearer ${this.config.token}`,
+          Accept: 'application/vnd.github.v3+json',
+          'User-Agent': 'auto-coder-watcher',
+        },
+      });
+
+      if (!response.ok) {
+        if (response.status === 409) {
+          throw response;
+        }
+        throw new Error(`GitHub API error: ${response.status} ${response.statusText}`);
+      }
+
+      return await response.json();
     });
-
-    if (!response.ok) {
-      throw new Error(`GitHub API error: ${response.status} ${response.statusText}`);
-    }
-
-    const prs = await response.json();
     const events: WatcherEvent[] = [];
 
     for (const pr of prs as Array<{

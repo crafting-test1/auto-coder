@@ -29,12 +29,6 @@ deduplication:
   ttl: 3600        # Time to live in seconds (1 hour)
   maxSize: 10000   # Maximum number of event IDs to cache
 
-# Rate limiting configuration
-rateLimit:
-  enabled: true
-  windowMs: 60000  # Time window in milliseconds (1 minute)
-  max: 100         # Maximum requests per window
-
 # Log level: debug | info | warn | error
 logLevel: info
 
@@ -44,26 +38,13 @@ providers:
   github:
     enabled: true
 
-    # Mode: 'webhook' | 'polling' | 'both'
-    mode: both
+    # Webhook mode is always enabled for receiving events from GitHub
+    # (Implement your own security/authentication at the reverse proxy or API gateway level)
 
-    # Webhook configuration (required for webhook/both modes)
-    # Option 1: Direct secret (not recommended for production)
-    # webhookSecret: your_secret_here
-
-    # Option 2: From environment variable (recommended)
-    webhookSecretEnv: GITHUB_WEBHOOK_SECRET
-
-    # Option 3: From file
-    # webhookSecretFile: /path/to/secret.txt
-
-    # Option 4: Interpolate from environment in YAML
-    # webhookSecret: ${GITHUB_WEBHOOK_SECRET}
-
-    # Polling configuration (required for polling/both modes)
+    # Polling configuration (optional - enables polling mode if auth + repositories are provided)
     pollingInterval: 60  # Polling interval in seconds
 
-    # Authentication (required for polling mode)
+    # Authentication (required for polling mode and comment-based deduplication)
     auth:
       type: token
 

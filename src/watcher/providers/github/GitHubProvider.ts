@@ -36,6 +36,8 @@ export class GitHubProvider extends BaseProvider {
   async initialize(config: ProviderConfig): Promise<void> {
     await super.initialize(config);
 
+    const modes: string[] = [];
+
     if (config.auth) {
       this.token = ConfigLoader.resolveSecret(
         config.auth.token,
@@ -48,50 +50,33 @@ export class GitHubProvider extends BaseProvider {
       }
     }
 
-    if (config.mode === 'webhook' || config.mode === 'both') {
-      const secret = ConfigLoader.resolveSecret(
-        config.webhookSecret,
-        config.webhookSecretEnv,
-        config.webhookSecretFile
-      );
+    this.webhook = new GitHubWebhook();
+    this.normalizer = new GitHubNormalizer();
+    modes.push('webhook');
 
-      this.webhook = new GitHubWebhook(secret);
-      this.normalizer = new GitHubNormalizer();
-    }
+    const options = config.options as {
+      repositories?: string[];
+      events?: string[];
+    } | undefined;
 
-    if (config.mode === 'polling' || config.mode === 'both') {
-      if (!this.token) {
-        throw new ProviderError(
-          'GitHub token not found for polling mode',
-          'github'
-        );
-      }
+    const hasPollingConfig =
+      this.token && options?.repositories && options.repositories.length > 0;
 
-      const options = config.options as {
-        repositories?: string[];
-        events?: string[];
-      } | undefined;
-
-      if (!options?.repositories || options.repositories.length === 0) {
-        throw new ProviderError(
-          'GitHub polling mode requires at least one repository in options.repositories',
-          'github'
-        );
-      }
-
+    if (hasPollingConfig) {
       const pollerConfig: { token: string; repositories: string[]; events?: string[] } = {
-        token: this.token,
-        repositories: options.repositories,
+        token: this.token!,
+        repositories: options!.repositories!,
       };
 
-      if (options.events) {
+      if (options!.events) {
         pollerConfig.events = options.events;
       }
 
       this.poller = new GitHubPoller(pollerConfig);
+      modes.push('polling');
     }
 
-    logger.info(`GitHub provider initialized (mode: ${config.mode})`);
+    logger.info(`GitHub provider initialized with modes: ${modes.join(', ')}`);
   }
 
   async validateWebhook(
@@ -106,14 +91,7 @@ export class GitHubProvider extends BaseProvider {
       };
     }
 
-    if (!rawBody) {
-      return {
-        valid: false,
-        error: 'Raw body required for signature verification',
-      };
-    }
-
-    return this.webhook.validate(headers, rawBody);
+    return this.webhook.validate(headers, rawBody || '');
   }
 
   async normalizeWebhook(

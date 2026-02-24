@@ -161,8 +161,9 @@ export class Watcher extends WatcherEventEmitter {
         const config = this.config.providers[name];
         return (
           config?.enabled &&
-          (config.mode === 'webhook' || config.mode === 'both') &&
-          provider.metadata.capabilities.webhook
+          provider.metadata.capabilities.webhook &&
+          provider.validateWebhook &&
+          provider.normalizeWebhook
         );
       }
     );
@@ -177,14 +178,19 @@ export class Watcher extends WatcherEventEmitter {
       port: 3000,
     };
 
-    this.server = new WebhookServer(serverConfig, this.config.rateLimit);
+    this.server = new WebhookServer(serverConfig);
 
     for (const [name, provider] of this.registry.getAll().entries()) {
       const config = this.config.providers[name];
 
+      if (!config?.enabled) {
+        continue;
+      }
+
       if (
-        !config?.enabled ||
-        (config.mode !== 'webhook' && config.mode !== 'both')
+        !provider.metadata.capabilities.webhook ||
+        !provider.validateWebhook ||
+        !provider.normalizeWebhook
       ) {
         continue;
       }
@@ -203,15 +209,19 @@ export class Watcher extends WatcherEventEmitter {
     for (const [name, provider] of this.registry.getAll().entries()) {
       const config = this.config.providers[name];
 
-      if (
-        !config?.enabled ||
-        (config.mode !== 'polling' && config.mode !== 'both')
-      ) {
+      if (!config?.enabled) {
         continue;
       }
 
-      if (!provider.metadata.capabilities.polling) {
-        logger.warn(`Provider ${name} does not support polling, skipping`);
+      if (!provider.metadata.capabilities.polling || !provider.poll) {
+        continue;
+      }
+
+      const hasAuth = config.auth !== undefined;
+      const options = config.options as { repositories?: string[] } | undefined;
+      const hasRepositories = options?.repositories && options.repositories.length > 0;
+
+      if (!hasAuth || !hasRepositories) {
         continue;
       }
 

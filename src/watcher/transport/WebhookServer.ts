@@ -1,7 +1,6 @@
 import express, { type Express, type Request, type Response } from 'express';
 import type { Server } from 'http';
-import { rateLimit } from 'express-rate-limit';
-import type { ServerConfig, RateLimitConfig } from '../types/index.js';
+import type { ServerConfig } from '../types/index.js';
 import { logger } from '../utils/logger.js';
 
 export class WebhookServer {
@@ -10,10 +9,7 @@ export class WebhookServer {
   private activeRequests = 0;
   private shuttingDown = false;
 
-  constructor(
-    private readonly config: ServerConfig,
-    rateLimitConfig?: RateLimitConfig
-  ) {
+  constructor(private readonly config: ServerConfig) {
     this.app = express();
 
     this.app.use(
@@ -23,16 +19,6 @@ export class WebhookServer {
         },
       })
     );
-
-    if (rateLimitConfig?.enabled !== false) {
-      const limiter = rateLimit({
-        windowMs: rateLimitConfig?.windowMs || 60000,
-        max: rateLimitConfig?.max || 100,
-        message: 'Too many requests, please try again later',
-      });
-
-      this.app.use(limiter);
-    }
 
     this.app.use((req, res, next) => {
       if (this.shuttingDown) {

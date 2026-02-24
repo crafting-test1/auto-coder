@@ -46,33 +46,11 @@ export class ConfigLoader {
         continue;
       }
 
-      if (!providerConfig.mode) {
-        throw new ConfigError(`Provider ${name}: "mode" is required`);
-      }
+      const hasAuthConfig = providerConfig.auth !== undefined;
 
-      if (!['webhook', 'polling', 'both'].includes(providerConfig.mode)) {
-        throw new ConfigError(
-          `Provider ${name}: "mode" must be "webhook", "polling", or "both"`
-        );
-      }
-
-      if (
-        (providerConfig.mode === 'webhook' || providerConfig.mode === 'both') &&
-        !providerConfig.webhookSecret &&
-        !providerConfig.webhookSecretEnv &&
-        !providerConfig.webhookSecretFile
-      ) {
+      if (!hasAuthConfig) {
         logger.warn(
-          `Provider ${name}: No webhook secret configured, webhook validation will be skipped`
-        );
-      }
-
-      if (
-        (providerConfig.mode === 'polling' || providerConfig.mode === 'both') &&
-        !providerConfig.pollingInterval
-      ) {
-        throw new ConfigError(
-          `Provider ${name}: "pollingInterval" is required for polling mode`
+          `Provider ${name}: No auth configured. Polling mode and comment-based deduplication will not be available.`
         );
       }
     }

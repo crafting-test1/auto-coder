@@ -75,14 +75,19 @@ The watcher subsystem monitors external task/issue providers (GitHub, GitLab, Ji
 
 ### Features
 
-- **Dual Mode Operation**: Support for both passive (webhook) and proactive (polling) modes
+- **Dual Mode Operation**:
+  - **Webhook mode**: Always enabled for real-time event delivery (secure at infrastructure level)
+  - **Polling mode**: Optional, enabled when auth token and repositories are configured
+  - Both modes can run simultaneously
 - **Extensible Provider System**: Easy to add new providers via the `IProvider` interface
 - **Event Normalization**: All provider events normalized to a unified `WatcherEvent` format
 - **Smart Deduplication**: Two strategies available:
   - **Comment-based**: Posts comments to issues/PRs after processing, checks last comment to avoid duplicates (persistent, works across restarts)
   - **Memory-based**: In-memory TTL cache (fast, but not persistent)
+- **Automatic Retry**: Exponential backoff retry for 409 (Conflict) errors from provider APIs
 - **Graceful Shutdown**: Clean shutdown sequence with request draining
 - **Type-Safe**: Full TypeScript support with comprehensive type definitions
+- **Security-Agnostic**: No built-in webhook signature verification - implement security at infrastructure level (reverse proxy, API gateway, etc.)
 
 ### Quick Start
 
@@ -98,8 +103,11 @@ cp config/watcher.example.yaml config/watcher.yaml
 providers:
   github:
     enabled: true
-    mode: both
-    webhookSecret: ${GITHUB_WEBHOOK_SECRET}
+
+    # Webhook mode is always enabled
+    # (Implement security at reverse proxy/API gateway level)
+
+    # Polling mode (optional - provide auth + repositories to enable)
     pollingInterval: 60
     auth:
       type: token
@@ -112,10 +120,17 @@ providers:
         - pull_request
 ```
 
+**Mode Configuration:**
+- **Webhook mode**: Always enabled - receives webhook events from providers
+  - Security should be handled at the reverse proxy or API gateway level
+  - No signature verification at the application level
+- **Polling mode**: Enabled when `auth` + `options.repositories` are provided
+  - Actively polls provider APIs for changes
+  - Requires authentication token
+
 3. Set environment variables:
 
 ```bash
-export GITHUB_WEBHOOK_SECRET="your_webhook_secret"
 export GITHUB_TOKEN="ghp_your_token_here"
 ```
 
@@ -153,8 +168,6 @@ const watcher = new Watcher({
   providers: {
     github: {
       enabled: true,
-      mode: 'webhook',
-      webhookSecret: 'your_secret',
       auth: { type: 'token', token: 'your_token' }
     }
   },
@@ -181,9 +194,13 @@ The watcher is configured via YAML files. See `config/watcher.example.yaml` for 
 Key configuration sections:
 
 - **server**: Webhook server settings (host, port, basePath)
-- **deduplication**: Event deduplication settings (enabled, ttl, maxSize)
-- **rateLimit**: Rate limiting for webhook endpoints
+- **deduplication**: Event deduplication settings (strategy, botUsername, ttl, maxSize)
 - **providers**: Provider-specific configurations
+- **logLevel**: Logging verbosity (debug, info, warn, error)
+
+**Error Handling:**
+- Automatic exponential retry for 409 (Conflict) errors from provider APIs
+- Base delay: 1 second, max delay: 30 seconds, max retries: 5
 
 ### Supported Providers
 
@@ -191,8 +208,8 @@ Currently supported providers:
 
 - **GitHub**: Full support for webhooks and polling
   - Events: issues, pull_request, issue_comment
-  - Authentication: Personal access token
-  - Webhook signature verification
+  - Authentication: Personal access token for polling and comment operations
+  - Webhook endpoints for real-time event delivery
 
 Additional providers (GitLab, Jira, Linear) can be added by implementing the `IProvider` interface.
 
@@ -300,7 +317,8 @@ export class CustomProvider extends BaseProvider {
   }
 
   async validateWebhook(headers, body, rawBody): Promise<WebhookValidationResult> {
-    // Validate webhook signature
+    // Validate required headers and payload structure
+    return { valid: true };
   }
 
   async normalizeWebhook(headers, body): Promise<NormalizedWebhookResult> {
@@ -325,7 +343,11 @@ watcher.registerProvider('custom', new CustomProvider());
 providers:
   custom:
     enabled: true
-    mode: both
+    # Webhook mode is always enabled
+    # Polling mode enabled if auth + repositories configured
+    auth:  # Optional: enables polling mode (if supported)
+      type: token
+      tokenEnv: CUSTOM_TOKEN
     # ... provider-specific config
 ```
 
