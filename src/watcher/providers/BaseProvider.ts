@@ -2,10 +2,7 @@ import type {
   IProvider,
   ProviderConfig,
   ProviderMetadata,
-  WebhookValidationResult,
-  NormalizedWebhookResult,
-  WatcherEvent,
-  CommentInfo,
+  EventHandler,
 } from '../types/index.js';
 import { ProviderError } from '../utils/errors.js';
 import { logger } from '../utils/logger.js';
@@ -24,35 +21,23 @@ export abstract class BaseProvider implements IProvider {
     headers: Record<string, string | string[] | undefined>,
     body: unknown,
     rawBody?: string | Buffer
-  ): Promise<WebhookValidationResult> {
-    return { valid: true };
+  ): Promise<boolean> {
+    return true;
   }
 
-  async normalizeWebhook(
+  async handleWebhook(
     headers: Record<string, string | string[] | undefined>,
-    body: unknown
-  ): Promise<NormalizedWebhookResult> {
+    body: unknown,
+    eventHandler: EventHandler
+  ): Promise<void> {
     throw new ProviderError(
-      'normalizeWebhook not implemented',
+      'handleWebhook not implemented',
       this.metadata.name
     );
   }
 
-  async poll(): Promise<WatcherEvent[]> {
-    return [];
-  }
-
-  async getLastComment(event: WatcherEvent): Promise<CommentInfo | null> {
-    logger.warn(
-      `Provider ${this.metadata.name} does not support comment-based operations`
-    );
-    return null;
-  }
-
-  async postComment(event: WatcherEvent, comment: string): Promise<void> {
-    logger.warn(
-      `Provider ${this.metadata.name} does not support posting comments`
-    );
+  async poll(eventHandler: EventHandler): Promise<void> {
+    // Default: do nothing (no polling)
   }
 
   async shutdown(): Promise<void> {

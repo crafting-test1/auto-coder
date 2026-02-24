@@ -18,8 +18,8 @@ deduplication:
   botUsername: auto-coder-bot
 
   # Comment template (optional)
-  # Use {timestamp} placeholder for ISO timestamp
-  commentTemplate: "🤖 Event processed by auto-coder watcher at {timestamp}"
+  # Use {id} placeholder for event ID
+  commentTemplate: "Agent is working on session {id}"
 
 # Log level: debug | info | warn | error
 logLevel: info

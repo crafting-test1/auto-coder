@@ -1,80 +1,33 @@
 # Tests
 
-Integration tests for the auto-coder watcher subsystem.
+This directory contains test files for the watcher subsystem.
 
-## Test Files
+## Status
 
-### test-webhook-executor.ts
+Test files have been removed during the provider abstraction refactor. New tests will need to be written to work with the new architecture where:
 
-**Purpose:** Integration test for the command executor feature via webhook delivery.
+- Providers handle their own internal event data structures
+- Event handlers receive `(event: unknown, reactor: Reactor)` parameters
+- No centralized WatcherEvent normalization
+- Comment-based deduplication only
 
-**What it tests:**
-- Watcher initialization with command executor enabled
-- Webhook server startup and registration
-- Receiving and processing GitHub webhook events
-- Template rendering with Handlebars
-- Command execution with environment variables
-- Event deduplication (memory strategy)
+## New Architecture
 
-**How to run:**
-```bash
-pnpm test
-# or
-npx tsx tests/test-webhook-executor.ts
-```
+The refactored watcher uses:
 
-**What it does:**
-1. Creates a Watcher instance with command executor configured
-2. Registers the GitHub provider
-3. Starts the webhook server on localhost:3003
-4. Sends a mock GitHub issue webhook
-5. Verifies the event is received and processed
-6. Shows the command output with event details
-7. Gracefully shuts down
+1. **Reactor Pattern**: Providers create Reactor instances that encapsulate commenting operations
+2. **Event Handler Callbacks**: Providers call event handlers with raw provider data (unknown type)
+3. **Provider Data Encapsulation**: Each provider keeps its own internal types (no WatcherEvent)
+4. **Simplified Interface**: Providers only need to implement handleWebhook() and poll()
 
-**Expected output:**
-- Event received and logged
-- Command executor renders template
-- Command executes with environment variables
-- Output shows event details and rendered prompt
+## TODO
 
-### test-command-executor.ts
-
-**Purpose:** Basic test for command executor event emission.
-
-**What it tests:**
-- Command executor configuration
-- Event emission from watcher
-- Manual event triggering
-
-**How to run:**
-```bash
-pnpm test:command
-# or
-npx tsx tests/test-command-executor.ts
-```
-
-**Note:** This test manually emits events rather than using webhooks. The webhook test is more comprehensive.
-
-## Quick Test
-
-For a quick verification with filtered output:
-
-```bash
-pnpm test:quick
-```
-
-This runs the webhook test and shows only the command output section.
-
-## Test Configuration
-
-Both tests use in-memory configuration (no config file required). Key settings:
-
-- **Server:** localhost on port 3002-3003
-- **Log level:** debug (shows all output)
-- **Deduplication:** memory strategy with 1-hour TTL
-- **Command executor:** Enabled with custom bash commands
-- **Provider:** GitHub (webhook mode only)
+- Add unit tests for GitHubProvider
+- Add unit tests for GitHubReactor
+- Add integration tests for webhook flow
+- Add integration tests for polling flow
+- Add tests for comment-based deduplication
+- Add tests for event emission to subscribers
 
 ## Adding New Tests
 
@@ -83,35 +36,6 @@ When adding new tests:
 1. Place test files in this directory
 2. Name them `test-*.ts` for consistency
 3. Use relative imports: `import { Watcher } from '../src/watcher/index.js'`
-4. Template files should use paths relative to project root: `./templates/file.hbs`
-5. Add npm script in package.json if needed
+4. Remember that events are now `(provider: string, event: unknown)` tuples
+5. Use Reactor for commenting operations in tests
 6. Document the test purpose in this README
-
-## Debugging Tests
-
-To see verbose output:
-
-```bash
-npx tsx tests/test-webhook-executor.ts
-```
-
-This shows:
-- Full event processing logs
-- Template rendering results
-- Command execution details
-- All stdout/stderr from commands
-- Shutdown sequence
-
-## CI/CD
-
-These tests can be integrated into CI/CD pipelines:
-
-```yaml
-# Example GitHub Actions
-- name: Run integration tests
-  run: pnpm test
-  env:
-    NODE_ENV: test
-```
-
-The tests are self-contained and don't require external services.

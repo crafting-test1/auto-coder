@@ -1,19 +1,10 @@
 export type {
-  WatcherEvent,
-  Actor,
-  ResourceInfo,
-  EventMetadata,
-} from './events.js';
-export { EventType, EventAction } from './events.js';
-
-export type {
   IProvider,
   ProviderAuth,
   ProviderConfig,
   ProviderMetadata,
-  WebhookValidationResult,
-  NormalizedWebhookResult,
-  CommentInfo,
+  Reactor,
+  EventHandler,
 } from './provider.js';
 
 export type {

@@ -248,7 +248,7 @@ Posts a comment to the source resource (issue/PR) after processing each event. B
 deduplication:
   enabled: true
   botUsername: auto-coder-bot
-  commentTemplate: "🤖 Event processed by auto-coder watcher at {timestamp}"
+  commentTemplate: "Agent is working on session {id}"
 ```
 
 **Requirements:**

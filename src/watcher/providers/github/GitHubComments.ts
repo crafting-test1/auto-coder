@@ -1,17 +1,21 @@
-import type { CommentInfo, WatcherEvent } from '../../types/index.js';
 import { logger } from '../../utils/logger.js';
 import { withExponentialRetry } from '../../utils/retry.js';
+
+export interface CommentInfo {
+  author: string;
+  body: string;
+  createdAt: Date;
+}
 
 export class GitHubComments {
   constructor(private readonly token: string) {}
 
-  async getLastComment(event: WatcherEvent): Promise<CommentInfo | null> {
-    const { repository, resourceNumber } = this.extractResourceInfo(event);
-    if (!repository || !resourceNumber) {
-      return null;
-    }
-
-    const endpoint = this.getCommentsEndpoint(repository, event.type, resourceNumber);
+  async getLastComment(
+    repository: string,
+    resourceType: string,
+    resourceNumber: number
+  ): Promise<CommentInfo | null> {
+    const endpoint = this.getCommentsEndpoint(repository, resourceType, resourceNumber);
     if (!endpoint) {
       return null;
     }
@@ -64,15 +68,15 @@ export class GitHubComments {
     }
   }
 
-  async postComment(event: WatcherEvent, comment: string): Promise<void> {
-    const { repository, resourceNumber } = this.extractResourceInfo(event);
-    if (!repository || !resourceNumber) {
-      throw new Error(`Cannot extract resource info from event ${event.id}`);
-    }
-
-    const endpoint = this.getCommentsEndpoint(repository, event.type, resourceNumber);
+  async postComment(
+    repository: string,
+    resourceType: string,
+    resourceNumber: number,
+    comment: string
+  ): Promise<void> {
+    const endpoint = this.getCommentsEndpoint(repository, resourceType, resourceNumber);
     if (!endpoint) {
-      throw new Error(`Unsupported resource type: ${event.type}`);
+      throw new Error(`Unsupported resource type: ${resourceType}`);
     }
 
     await withExponentialRetry(async () => {
@@ -98,22 +102,9 @@ export class GitHubComments {
       }
 
       logger.debug(
-        `Posted comment to ${event.type} #${resourceNumber} in ${repository}`
+        `Posted comment to ${resourceType} #${resourceNumber} in ${repository}`
       );
     });
-  }
-
-  private extractResourceInfo(event: WatcherEvent): {
-    repository: string | null;
-    resourceNumber: number | null;
-  } {
-    const repository = event.resource.repository || null;
-
-    // Extract resource number from URL
-    const match = event.resource.url.match(/\/(?:issues|pull)\/(\d+)/);
-    const resourceNumber = match?.[1] ? parseInt(match[1], 10) : null;
-
-    return { repository, resourceNumber };
   }
 
   private getCommentsEndpoint(

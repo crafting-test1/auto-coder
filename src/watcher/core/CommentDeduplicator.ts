@@ -13,7 +13,7 @@ export class CommentDeduplicator {
     this.botUsername = config.botUsername;
     this.commentTemplate =
       config.commentTemplate ||
-      '🤖 Event processed by auto-coder watcher at {timestamp}';
+      'Agent is working on session {id}';
   }
 
   setProviders(providers: Map<string, IProvider>): void {
@@ -60,10 +60,7 @@ export class CommentDeduplicator {
     }
 
     try {
-      const comment = this.commentTemplate.replace(
-        '{timestamp}',
-        new Date().toISOString()
-      );
+      const comment = this.commentTemplate.replace('{id}', event.id);
 
       await provider.postComment(event, comment);
 

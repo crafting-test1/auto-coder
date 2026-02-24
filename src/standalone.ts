@@ -16,18 +16,10 @@ async function main(): Promise<void> {
       watcher.registerProvider('github', new GitHubProvider());
     }
 
-    watcher.on('event', (event) => {
+    watcher.on('event', (provider, event) => {
       logger.info('Received event', {
-        id: event.id,
-        provider: event.provider,
-        type: event.type,
-        action: event.action,
-        resource: {
-          id: event.resource.id,
-          title: event.resource.title,
-          url: event.resource.url,
-        },
-        actor: event.actor.username,
+        provider,
+        event,
       });
     });
 

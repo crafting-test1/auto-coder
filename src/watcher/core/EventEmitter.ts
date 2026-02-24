@@ -1,8 +1,7 @@
 import { EventEmitter as NodeEventEmitter } from 'events';
-import type { WatcherEvent } from '../types/index.js';
 
 export interface WatcherEvents {
-  event: (event: WatcherEvent) => void;
+  event: (provider: string, event: unknown) => void;
   error: (error: Error) => void;
   started: () => void;
   stopped: () => void;

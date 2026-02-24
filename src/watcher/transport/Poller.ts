@@ -1,6 +1,5 @@
-import type { IProvider } from '../types/index.js';
+import type { IProvider, EventHandler } from '../types/index.js';
 import { logger } from '../utils/logger.js';
-import { ProviderError } from '../utils/errors.js';
 
 export class Poller {
   private intervalId: NodeJS.Timeout | undefined;
@@ -12,7 +11,7 @@ export class Poller {
   constructor(
     private readonly provider: IProvider,
     private readonly intervalMs: number,
-    private readonly onEvent: (events: Array<unknown>) => Promise<void>
+    private readonly eventHandler: EventHandler
   ) {}
 
   start(): void {
@@ -63,23 +62,8 @@ export class Poller {
     this.polling = true;
 
     try {
-      if (!this.provider.poll) {
-        throw new ProviderError(
-          'Provider does not support polling',
-          this.provider.metadata.name
-        );
-      }
-
       logger.debug(`Polling ${this.provider.metadata.name}...`);
-      const events = await this.provider.poll();
-
-      if (events.length > 0) {
-        logger.debug(
-          `Received ${events.length} events from ${this.provider.metadata.name} poll`
-        );
-        await this.onEvent(events);
-      }
-
+      await this.provider.poll(this.eventHandler);
       this.errorCount = 0;
     } catch (error) {
       this.errorCount++;

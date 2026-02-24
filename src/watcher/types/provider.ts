@@ -1,5 +1,3 @@
-import type { WatcherEvent } from './events.js';
-
 export interface ProviderAuth {
   type: 'token' | 'oauth' | 'basic' | 'none';
   token?: string;
@@ -23,21 +21,13 @@ export interface ProviderConfig {
   options?: Record<string, unknown>;
 }
 
-export interface WebhookValidationResult {
-  valid: boolean;
-  error?: string;
+export interface Reactor {
+  getLastComment(): Promise<{ author: string; body: string } | null>;
+  postComment(comment: string): Promise<string>;
+  updateComment(commentId: string, comment: string): Promise<void>;
 }
 
-export interface NormalizedWebhookResult {
-  events: WatcherEvent[];
-  deliveryId?: string;
-}
-
-export interface CommentInfo {
-  author: string;
-  body: string;
-  createdAt: Date;
-}
+export type EventHandler = (event: unknown, reactor: Reactor) => Promise<void>;
 
 export interface IProvider {
   readonly metadata: ProviderMetadata;
@@ -48,18 +38,15 @@ export interface IProvider {
     headers: Record<string, string | string[] | undefined>,
     body: unknown,
     rawBody?: string | Buffer
-  ): Promise<WebhookValidationResult>;
+  ): Promise<boolean>;
 
-  normalizeWebhook(
+  handleWebhook(
     headers: Record<string, string | string[] | undefined>,
-    body: unknown
-  ): Promise<NormalizedWebhookResult>;
+    body: unknown,
+    eventHandler: EventHandler
+  ): Promise<void>;
 
-  poll(): Promise<WatcherEvent[]>;
-
-  getLastComment(event: WatcherEvent): Promise<CommentInfo | null>;
-
-  postComment(event: WatcherEvent, comment: string): Promise<void>;
+  poll(eventHandler: EventHandler): Promise<void>;
 
   shutdown(): Promise<void>;
 }

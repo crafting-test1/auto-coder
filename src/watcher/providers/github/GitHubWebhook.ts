@@ -1,10 +1,8 @@
-import type { WebhookValidationResult } from '../../types/index.js';
-
 export class GitHubWebhook {
   validate(
     headers: Record<string, string | string[] | undefined>,
     rawBody: string | Buffer
-  ): WebhookValidationResult {
+  ): { valid: boolean; error?: string } {
     const event = this.getHeader(headers, 'x-github-event');
     const deliveryId = this.getHeader(headers, 'x-github-delivery');
 

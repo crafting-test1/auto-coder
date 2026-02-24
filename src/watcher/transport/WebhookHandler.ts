@@ -1,12 +1,11 @@
 import type { Request, Response } from 'express';
-import type { IProvider } from '../types/index.js';
+import type { IProvider, EventHandler } from '../types/index.js';
 import { logger } from '../utils/logger.js';
-import { ValidationError } from '../utils/errors.js';
 
 export class WebhookHandler {
   constructor(
     private readonly provider: IProvider,
-    private readonly onEvent: (events: Array<unknown>) => Promise<void>
+    private readonly eventHandler: EventHandler
   ) {}
 
   async handle(req: Request, res: Response): Promise<void> {
@@ -22,24 +21,19 @@ export class WebhookHandler {
         return;
       }
 
-      if (!this.provider.validateWebhook) {
-        res.status(501).json({ error: 'Provider does not support webhooks' });
-        return;
-      }
-
       const rawBody = (req as Request & { rawBody?: Buffer }).rawBody;
-      const validationResult = await this.provider.validateWebhook(
+      const isValid = await this.provider.validateWebhook(
         req.headers,
         req.body,
         rawBody
       );
 
-      if (!validationResult.valid) {
+      if (!isValid) {
         logger.warn(
-          `Webhook validation failed: ${validationResult.error}`,
+          'Webhook validation failed',
           { provider: this.provider.metadata.name }
         );
-        res.status(401).json({ error: validationResult.error || 'Invalid webhook' });
+        res.status(401).json({ error: 'Invalid webhook' });
         return;
       }
 
@@ -62,19 +56,6 @@ export class WebhookHandler {
     headers: Record<string, string | string[] | undefined>,
     body: unknown
   ): Promise<void> {
-    if (!this.provider.normalizeWebhook) {
-      throw new ValidationError('Provider does not implement normalizeWebhook');
-    }
-
-    const result = await this.provider.normalizeWebhook(headers, body);
-
-    logger.debug(
-      `Normalized ${result.events.length} events from webhook`,
-      { provider: this.provider.metadata.name, deliveryId: result.deliveryId }
-    );
-
-    if (result.events.length > 0) {
-      await this.onEvent(result.events);
-    }
+    await this.provider.handleWebhook(headers, body, this.eventHandler);
   }
 }

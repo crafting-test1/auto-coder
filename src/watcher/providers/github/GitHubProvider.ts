@@ -2,22 +2,41 @@ import { BaseProvider } from '../BaseProvider.js';
 import type {
   ProviderConfig,
   ProviderMetadata,
-  WebhookValidationResult,
-  NormalizedWebhookResult,
-  WatcherEvent,
-  CommentInfo,
+  EventHandler,
 } from '../../types/index.js';
 import { ConfigLoader } from '../../core/ConfigLoader.js';
 import { GitHubWebhook } from './GitHubWebhook.js';
-import { GitHubNormalizer } from './GitHubNormalizer.js';
 import { GitHubPoller } from './GitHubPoller.js';
 import { GitHubComments } from './GitHubComments.js';
+import { GitHubReactor } from './GitHubReactor.js';
 import { ProviderError } from '../../utils/errors.js';
 import { logger } from '../../utils/logger.js';
 
+interface GitHubWebhookPayload {
+  action: string;
+  issue?: {
+    id: number;
+    number: number;
+    pull_request?: unknown;
+  };
+  pull_request?: {
+    id: number;
+    number: number;
+  };
+  comment?: {
+    id: number;
+  };
+  repository: {
+    full_name: string;
+  };
+  sender: {
+    id: number;
+    login: string;
+  };
+}
+
 export class GitHubProvider extends BaseProvider {
   private webhook: GitHubWebhook | undefined;
-  private normalizer: GitHubNormalizer | undefined;
   private poller: GitHubPoller | undefined;
   private comments: GitHubComments | undefined;
   private token: string | undefined;
@@ -47,7 +66,6 @@ export class GitHubProvider extends BaseProvider {
     }
 
     this.webhook = new GitHubWebhook();
-    this.normalizer = new GitHubNormalizer();
     modes.push('webhook');
 
     const options = config.options as {
@@ -79,46 +97,69 @@ export class GitHubProvider extends BaseProvider {
     headers: Record<string, string | string[] | undefined>,
     body: unknown,
     rawBody?: string | Buffer
-  ): Promise<WebhookValidationResult> {
+  ): Promise<boolean> {
     if (!this.webhook) {
-      return {
-        valid: false,
-        error: 'GitHub webhook not initialized',
-      };
+      return false;
     }
 
-    return this.webhook.validate(headers, rawBody || '');
+    const result = this.webhook.validate(headers, rawBody || '');
+    return result.valid;
   }
 
-  async normalizeWebhook(
+  async handleWebhook(
     headers: Record<string, string | string[] | undefined>,
-    body: unknown
-  ): Promise<NormalizedWebhookResult> {
-    if (!this.webhook || !this.normalizer) {
+    body: unknown,
+    eventHandler: EventHandler
+  ): Promise<void> {
+    if (!this.webhook) {
+      throw new ProviderError('GitHub webhook not initialized', 'github');
+    }
+
+    if (!this.comments) {
       throw new ProviderError(
-        'GitHub webhook components not initialized',
+        'GitHub comments not initialized (token required)',
         'github'
       );
     }
 
     const { event, deliveryId } = this.webhook.extractMetadata(headers);
-    const events = this.normalizer.normalize(event, body, deliveryId);
+    const payload = body as GitHubWebhookPayload;
 
-    return { events, deliveryId };
+    logger.debug(`Processing GitHub ${event} event (delivery: ${deliveryId})`);
+
+    // Determine resource type and number for reactor
+    let resourceType: string;
+    let resourceNumber: number;
+
+    if (event === 'issues' && payload.issue) {
+      resourceType = 'issue';
+      resourceNumber = payload.issue.number;
+    } else if (event === 'pull_request' && payload.pull_request) {
+      resourceType = 'pull_request';
+      resourceNumber = payload.pull_request.number;
+    } else if (event === 'issue_comment' && payload.issue) {
+      resourceType = payload.issue.pull_request ? 'pull_request' : 'issue';
+      resourceNumber = payload.issue.number;
+    } else {
+      logger.debug(`Unsupported GitHub event type: ${event}`);
+      return;
+    }
+
+    const reactor = new GitHubReactor(
+      this.comments,
+      payload.repository.full_name,
+      resourceType,
+      resourceNumber
+    );
+
+    await eventHandler(payload, reactor);
   }
 
-  async poll(): Promise<WatcherEvent[]> {
+  async poll(eventHandler: EventHandler): Promise<void> {
     if (!this.poller) {
-      throw new ProviderError(
-        'GitHub poller not initialized',
-        'github'
-      );
+      throw new ProviderError('GitHub poller not initialized', 'github');
     }
 
-    return this.poller.poll();
-  }
-
-  async getLastComment(event: WatcherEvent): Promise<CommentInfo | null> {
     if (!this.comments) {
       throw new ProviderError(
         'GitHub comments not initialized (token required)',
@@ -126,24 +167,27 @@ export class GitHubProvider extends BaseProvider {
       );
     }
 
-    return this.comments.getLastComment(event);
-  }
+    const items = await this.poller.poll();
 
-  async postComment(event: WatcherEvent, comment: string): Promise<void> {
-    if (!this.comments) {
-      throw new ProviderError(
-        'GitHub comments not initialized (token required)',
-        'github'
+    for (const item of items) {
+      const repository = item.repository;
+      const resourceType = item.type === 'issue' ? 'issue' : 'pull_request';
+      const resourceNumber = item.number;
+
+      const reactor = new GitHubReactor(
+        this.comments,
+        repository,
+        resourceType,
+        resourceNumber
       );
-    }
 
-    return this.comments.postComment(event, comment);
+      await eventHandler(item, reactor);
+    }
   }
 
   async shutdown(): Promise<void> {
     await super.shutdown();
     this.webhook = undefined;
-    this.normalizer = undefined;
     this.poller = undefined;
     this.comments = undefined;
     this.token = undefined;

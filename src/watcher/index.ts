@@ -1,7 +1,6 @@
 export { Watcher } from './Watcher.js';
 
 export { ConfigLoader } from './core/ConfigLoader.js';
-export { CommentDeduplicator } from './core/CommentDeduplicator.js';
 
 export { BaseProvider } from './providers/BaseProvider.js';
 export { ProviderRegistry } from './providers/ProviderRegistry.js';
@@ -11,20 +10,13 @@ export type {
   WatcherConfig,
   ServerConfig,
   DeduplicationConfig,
-  WatcherEvent,
-  EventMetadata,
-  Actor,
-  ResourceInfo,
   IProvider,
   ProviderConfig,
   ProviderAuth,
   ProviderMetadata,
-  WebhookValidationResult,
-  NormalizedWebhookResult,
-  CommentInfo,
+  Reactor,
+  EventHandler,
 } from './types/index.js';
-
-export { EventType, EventAction } from './types/index.js';
 
 export {
   WatcherError,

@@ -1,18 +1,16 @@
-import type { WatcherConfig, IProvider, WatcherEvent } from './types/index.js';
+import type { WatcherConfig, IProvider, EventHandler, Reactor } from './types/index.js';
 import { WatcherEventEmitter } from './core/EventEmitter.js';
-import { CommentDeduplicator } from './core/CommentDeduplicator.js';
 import { ProviderRegistry } from './providers/ProviderRegistry.js';
 import { WebhookServer } from './transport/WebhookServer.js';
 import { WebhookHandler } from './transport/WebhookHandler.js';
 import { Poller } from './transport/Poller.js';
-import { CommandExecutor } from './utils/commandExecutor.js';
 import { logger } from './utils/logger.js';
 import { WatcherError, ProviderError } from './utils/errors.js';
 
 export class Watcher extends WatcherEventEmitter {
   private registry: ProviderRegistry;
-  private deduplicator: CommentDeduplicator;
-  private commandExecutor: CommandExecutor | undefined;
+  private botUsername: string;
+  private commentTemplate: string;
   private server: WebhookServer | undefined;
   private pollers: Map<string, Poller> = new Map();
   private started = false;
@@ -30,11 +28,14 @@ export class Watcher extends WatcherEventEmitter {
       throw new WatcherError('Deduplication configuration is required');
     }
 
-    this.deduplicator = new CommentDeduplicator(config.deduplication);
-
-    if (config.commandExecutor?.enabled) {
-      this.commandExecutor = new CommandExecutor(config.commandExecutor);
+    if (!config.deduplication.botUsername) {
+      throw new WatcherError('botUsername is required for comment-based deduplication');
     }
+
+    this.botUsername = config.deduplication.botUsername;
+    this.commentTemplate =
+      config.deduplication.commentTemplate ||
+      'Agent is working on session {id}';
   }
 
   registerProvider(name: string, provider: IProvider): void {
@@ -62,13 +63,6 @@ export class Watcher extends WatcherEventEmitter {
 
     try {
       await this.initializeProviders();
-
-      this.deduplicator.setProviders(this.registry.getAll());
-
-      if (this.commandExecutor) {
-        this.commandExecutor.setProviders(this.registry.getAll());
-      }
-
       await this.startWebhookServer();
       await this.startPollers();
 
@@ -98,8 +92,6 @@ export class Watcher extends WatcherEventEmitter {
       }
 
       await this.shutdownProviders();
-
-      this.deduplicator.shutdown();
 
       this.started = false;
       this.emit('stopped');
@@ -145,6 +137,83 @@ export class Watcher extends WatcherEventEmitter {
     }
   }
 
+  private createEventHandler(providerName: string): EventHandler {
+    return async (event: unknown, reactor: Reactor) => {
+      try {
+        // Check for duplicates using reactor
+        const isDuplicate = await this.isDuplicate(reactor);
+
+        if (isDuplicate) {
+          logger.debug(`Event from ${providerName} is a duplicate, skipping`);
+          return;
+        }
+
+        // Emit event to subscribers
+        logger.debug(`Emitting event from ${providerName}`);
+        this.emit('event', providerName, event);
+
+        // Mark as processed
+        await this.markAsProcessed(reactor, event);
+      } catch (error) {
+        logger.error(`Error handling event from ${providerName}`, error);
+        this.emit('error', error as Error);
+      }
+    };
+  }
+
+  private async isDuplicate(reactor: Reactor): Promise<boolean> {
+    try {
+      const lastComment = await reactor.getLastComment();
+
+      if (!lastComment) {
+        logger.debug('No comments found');
+        return false;
+      }
+
+      const isDuplicate = lastComment.author === this.botUsername;
+
+      if (isDuplicate) {
+        logger.info(`Duplicate detected (last comment by ${this.botUsername})`);
+      }
+
+      return isDuplicate;
+    } catch (error) {
+      logger.error('Error checking for duplicate via comments', error);
+      return false;
+    }
+  }
+
+  private async markAsProcessed(reactor: Reactor, event: unknown): Promise<void> {
+    try {
+      // Generate a simple ID from the event for the comment template
+      const eventId = this.generateEventId(event);
+      const comment = this.commentTemplate.replace('{id}', eventId);
+
+      await reactor.postComment(comment);
+      logger.debug(`Posted deduplication comment`);
+    } catch (error) {
+      logger.error('Error posting comment', error);
+    }
+  }
+
+  private generateEventId(event: unknown): string {
+    // Try to extract an ID from common event structures
+    if (event && typeof event === 'object') {
+      const obj = event as Record<string, unknown>;
+      if (obj.id) return String(obj.id);
+      if (obj.number) return String(obj.number);
+      if (obj.issue && typeof obj.issue === 'object') {
+        const issue = obj.issue as Record<string, unknown>;
+        if (issue.number) return String(issue.number);
+      }
+      if (obj.pull_request && typeof obj.pull_request === 'object') {
+        const pr = obj.pull_request as Record<string, unknown>;
+        if (pr.number) return String(pr.number);
+      }
+    }
+    return Date.now().toString();
+  }
+
   private async startWebhookServer(): Promise<void> {
     const needsWebhook = Array.from(this.registry.getAll().entries()).some(
       ([name]) => {
@@ -172,9 +241,8 @@ export class Watcher extends WatcherEventEmitter {
         continue;
       }
 
-      const handler = new WebhookHandler(provider, async (events) => {
-        await this.handleEvents(events as WatcherEvent[]);
-      });
+      const eventHandler = this.createEventHandler(name);
+      const handler = new WebhookHandler(provider, eventHandler);
 
       this.server.registerWebhook(name, handler.handle.bind(handler));
     }
@@ -200,10 +268,9 @@ export class Watcher extends WatcherEventEmitter {
       }
 
       const intervalMs = (config.pollingInterval || 60) * 1000;
+      const eventHandler = this.createEventHandler(name);
 
-      const poller = new Poller(provider, intervalMs, async (events) => {
-        await this.handleEvents(events as WatcherEvent[]);
-      });
+      const poller = new Poller(provider, intervalMs, eventHandler);
 
       this.pollers.set(name, poller);
       poller.start();
@@ -229,25 +296,6 @@ export class Watcher extends WatcherEventEmitter {
     }
   }
 
-  private async handleEvents(events: WatcherEvent[]): Promise<void> {
-    for (const event of events) {
-      const isDuplicate = await this.deduplicator.isDuplicate(event);
-
-      if (isDuplicate) {
-        continue;
-      }
-
-      logger.debug(`Emitting event: ${event.id}`);
-      this.emit('event', event);
-
-      if (this.commandExecutor) {
-        await this.commandExecutor.execute(event);
-      }
-
-      await this.deduplicator.markAsProcessed(event);
-    }
-  }
-
   private async cleanup(): Promise<void> {
     this.stopPollers();
 
@@ -259,8 +307,6 @@ export class Watcher extends WatcherEventEmitter {
       }
       this.server = undefined;
     }
-
-    this.deduplicator.shutdown();
   }
 
   get isStarted(): boolean {
