@@ -1,0 +1,109 @@
+# Watcher Configuration Example
+# Copy this file to watcher.yaml and update with your values
+
+# Server configuration for webhook endpoints
+server:
+  host: 0.0.0.0
+  port: 3000
+  # Optional base path for all webhook endpoints
+  # basePath: /api
+
+# Event deduplication configuration
+deduplication:
+  enabled: true
+
+  # Strategy: 'comment' | 'memory'
+  # - comment: Check last comment on issues/PRs to determine if already processed
+  # - memory: Use in-memory cache with TTL (default)
+  strategy: comment
+
+  # Bot username (required for comment strategy)
+  # This should be the username of the account posting comments
+  botUsername: auto-coder-bot
+
+  # Comment template (optional, for comment strategy)
+  # Use {timestamp} placeholder for ISO timestamp
+  commentTemplate: "🤖 Event processed by auto-coder watcher at {timestamp}"
+
+  # Memory strategy options (only used when strategy: memory)
+  ttl: 3600        # Time to live in seconds (1 hour)
+  maxSize: 10000   # Maximum number of event IDs to cache
+
+# Rate limiting configuration
+rateLimit:
+  enabled: true
+  windowMs: 60000  # Time window in milliseconds (1 minute)
+  max: 100         # Maximum requests per window
+
+# Log level: debug | info | warn | error
+logLevel: info
+
+# Provider configurations
+providers:
+  # GitHub Provider
+  github:
+    enabled: true
+
+    # Mode: 'webhook' | 'polling' | 'both'
+    mode: both
+
+    # Webhook configuration (required for webhook/both modes)
+    # Option 1: Direct secret (not recommended for production)
+    # webhookSecret: your_secret_here
+
+    # Option 2: From environment variable (recommended)
+    webhookSecretEnv: GITHUB_WEBHOOK_SECRET
+
+    # Option 3: From file
+    # webhookSecretFile: /path/to/secret.txt
+
+    # Option 4: Interpolate from environment in YAML
+    # webhookSecret: ${GITHUB_WEBHOOK_SECRET}
+
+    # Polling configuration (required for polling/both modes)
+    pollingInterval: 60  # Polling interval in seconds
+
+    # Authentication (required for polling mode)
+    auth:
+      type: token
+
+      # Option 1: Direct token (not recommended for production)
+      # token: ghp_your_token_here
+
+      # Option 2: From environment variable (recommended)
+      tokenEnv: GITHUB_TOKEN
+
+      # Option 3: From file
+      # tokenFile: /path/to/token.txt
+
+      # Option 4: Interpolate from environment in YAML
+      # token: ${GITHUB_TOKEN}
+
+    # GitHub-specific options
+    options:
+      # Repositories to monitor (required for polling mode)
+      repositories:
+        - owner/repo1
+        - owner/repo2
+
+      # Event types to monitor (optional, defaults to all)
+      events:
+        - issues
+        - pull_request
+        - issue_comment
+
+  # Additional providers can be configured here
+  # gitlab:
+  #   enabled: false
+  #   mode: webhook
+  #   ...
+
+  # jira:
+  #   enabled: false
+  #   mode: polling
+  #   ...
+
+  # linear:
+  #   enabled: false
+  #   mode: both
+  #   ...

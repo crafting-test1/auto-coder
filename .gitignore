@@ -21,6 +21,13 @@ pnpm-debug.log*
 # env file
 .env
 
+# Config files with secrets
+config/watcher.yaml
+config/*.local.yaml
+
 # Editor/IDE
 # .idea/
 # .vscode/
+
+
+samples

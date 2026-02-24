@@ -1,6 +1,6 @@
 # auto-coder
 
-A TypeScript project configured with modern tooling and best practices.
+An automated coding assistant with intelligent task monitoring and provider integration.
 
 ## Prerequisites
 
@@ -44,6 +44,7 @@ pnpm start
 ## Available Scripts
 
 - `pnpm run dev` - Run TypeScript directly with tsx (fast development)
+- `pnpm run dev:watcher` - Run the watcher subsystem in development mode
 - `pnpm run build` - Compile TypeScript to JavaScript
 - `pnpm start` - Run the compiled JavaScript
 - `pnpm run type-check` - Check types without building
@@ -67,3 +68,279 @@ auto-coder/
 - **Module**: NodeNext (ESM)
 - **Strict mode**: Enabled
 - Source maps and declaration files are generated during build
+
+## Watcher Subsystem
+
+The watcher subsystem monitors external task/issue providers (GitHub, GitLab, Jira, Linear, etc.) and normalizes their events into a unified internal event model.
+
+### Features
+
+- **Dual Mode Operation**: Support for both passive (webhook) and proactive (polling) modes
+- **Extensible Provider System**: Easy to add new providers via the `IProvider` interface
+- **Event Normalization**: All provider events normalized to a unified `WatcherEvent` format
+- **Smart Deduplication**: Two strategies available:
+  - **Comment-based**: Posts comments to issues/PRs after processing, checks last comment to avoid duplicates (persistent, works across restarts)
+  - **Memory-based**: In-memory TTL cache (fast, but not persistent)
+- **Graceful Shutdown**: Clean shutdown sequence with request draining
+- **Type-Safe**: Full TypeScript support with comprehensive type definitions
+
+### Quick Start
+
+1. Copy the example configuration:
+
+```bash
+cp config/watcher.example.yaml config/watcher.yaml
+```
+
+2. Update `config/watcher.yaml` with your provider credentials:
+
+```yaml
+providers:
+  github:
+    enabled: true
+    mode: both
+    webhookSecret: ${GITHUB_WEBHOOK_SECRET}
+    pollingInterval: 60
+    auth:
+      type: token
+      tokenEnv: GITHUB_TOKEN
+    options:
+      repositories:
+        - owner/repo
+      events:
+        - issues
+        - pull_request
+```
+
+3. Set environment variables:
+
+```bash
+export GITHUB_WEBHOOK_SECRET="your_webhook_secret"
+export GITHUB_TOKEN="ghp_your_token_here"
+```
+
+4. Run the watcher:
+
+```bash
+pnpm run dev:watcher
+```
+
+### Standalone Mode
+
+The watcher can run as a standalone service:
+
+```bash
+WATCHER_CONFIG=./config/watcher.yaml pnpm run dev:watcher
+```
+
+The standalone mode will:
+- Load configuration from the specified file
+- Register configured providers
+- Start webhook server (if needed)
+- Start pollers (if needed)
+- Log all received events
+- Handle graceful shutdown on SIGTERM/SIGINT
+
+### Library Mode
+
+The watcher can also be used as a library:
+
+```typescript
+import { Watcher, GitHubProvider } from './watcher/index.js';
+
+const watcher = new Watcher({
+  server: { host: 'localhost', port: 3000 },
+  providers: {
+    github: {
+      enabled: true,
+      mode: 'webhook',
+      webhookSecret: 'your_secret',
+      auth: { type: 'token', token: 'your_token' }
+    }
+  },
+  deduplication: {
+    enabled: true,
+    strategy: 'comment',
+    botUsername: 'auto-coder-bot'
+  }
+});
+
+watcher.registerProvider('github', new GitHubProvider());
+
+watcher.on('event', (event) => {
+  console.log('Received event:', event);
+});
+
+await watcher.start();
+```
+
+### Configuration
+
+The watcher is configured via YAML files. See `config/watcher.example.yaml` for a complete example.
+
+Key configuration sections:
+
+- **server**: Webhook server settings (host, port, basePath)
+- **deduplication**: Event deduplication settings (enabled, ttl, maxSize)
+- **rateLimit**: Rate limiting for webhook endpoints
+- **providers**: Provider-specific configurations
+
+### Supported Providers
+
+Currently supported providers:
+
+- **GitHub**: Full support for webhooks and polling
+  - Events: issues, pull_request, issue_comment
+  - Authentication: Personal access token
+  - Webhook signature verification
+
+Additional providers (GitLab, Jira, Linear) can be added by implementing the `IProvider` interface.
+
+### Event Model
+
+All provider events are normalized to the unified `WatcherEvent` format:
+
+```typescript
+interface WatcherEvent {
+  id: string;              // Unique event ID
+  provider: string;        // Provider name (e.g., 'github')
+  type: EventType;         // Event type (ISSUE, PULL_REQUEST, etc.)
+  action: EventAction;     // Action (CREATED, UPDATED, CLOSED, etc.)
+  resource: ResourceInfo;  // Resource details
+  actor: Actor;            // User who triggered the event
+  metadata: EventMetadata; // Additional metadata
+}
+```
+
+### Deduplication Strategies
+
+The watcher supports two deduplication strategies to prevent processing the same event multiple times:
+
+#### Comment-Based Deduplication (Recommended)
+
+Posts a comment to the source resource (issue/PR) after processing each event. Before processing, checks if the last comment was posted by the watcher bot.
+
+**Advantages:**
+- Persistent across restarts and deployments
+- Works in distributed environments (multiple watcher instances)
+- Provides visibility into what the watcher has processed
+- Self-documenting event processing history
+
+**Configuration:**
+
+```yaml
+deduplication:
+  enabled: true
+  strategy: comment
+  botUsername: auto-coder-bot
+  commentTemplate: "🤖 Event processed by auto-coder watcher at {timestamp}"
+```
+
+**Requirements:**
+- Provider must support comment operations (GitHub ✅)
+- Bot account needs write access to post comments
+- `botUsername` must match the account posting comments
+
+#### Memory-Based Deduplication
+
+Maintains an in-memory cache of event IDs with TTL expiration.
+
+**Advantages:**
+- Fast lookup (no API calls)
+- No write permissions needed
+- Works with any provider
+
+**Disadvantages:**
+- Not persistent (lost on restart)
+- Doesn't work in distributed setups
+- No visibility into processing history
+
+**Configuration:**
+
+```yaml
+deduplication:
+  enabled: true
+  strategy: memory
+  ttl: 3600      # seconds
+  maxSize: 10000 # max event IDs to cache
+```
+
+### Webhook Endpoints
+
+Webhook endpoints are automatically registered at:
+
+```
+POST /webhook/{provider}
+```
+
+For example:
+- GitHub: `POST http://localhost:3000/webhook/github`
+
+### Adding Custom Providers
+
+To add a custom provider:
+
+1. Create a new provider class extending `BaseProvider`:
+
+```typescript
+import { BaseProvider } from './watcher/providers/BaseProvider.js';
+
+export class CustomProvider extends BaseProvider {
+  get metadata(): ProviderMetadata {
+    return {
+      name: 'custom',
+      version: '1.0.0',
+      capabilities: { webhook: true, polling: true }
+    };
+  }
+
+  async initialize(config: ProviderConfig): Promise<void> {
+    await super.initialize(config);
+    // Initialize provider
+  }
+
+  async validateWebhook(headers, body, rawBody): Promise<WebhookValidationResult> {
+    // Validate webhook signature
+  }
+
+  async normalizeWebhook(headers, body): Promise<NormalizedWebhookResult> {
+    // Normalize webhook to WatcherEvent[]
+  }
+
+  async poll(): Promise<WatcherEvent[]> {
+    // Poll provider API
+  }
+}
+```
+
+2. Register the provider:
+
+```typescript
+watcher.registerProvider('custom', new CustomProvider());
+```
+
+3. Add configuration:
+
+```yaml
+providers:
+  custom:
+    enabled: true
+    mode: both
+    # ... provider-specific config
+```
+
+### Architecture
+
+```
+src/watcher/
+├── types/              # Type definitions
+├── core/               # Core components (ConfigLoader, Deduplicator, EventEmitter)
+├── transport/          # Transport layer (WebhookServer, Poller)
+├── providers/          # Provider implementations
+│   ├── BaseProvider.ts
+│   ├── ProviderRegistry.ts
+│   └── github/        # GitHub provider
+└── utils/             # Utilities (logger, crypto, errors)
+```
+
+For detailed architecture and design decisions, see `spec/watcher.md`.
