@@ -1,6 +1,7 @@
 export { Watcher } from './Watcher.js';
 
 export { ConfigLoader } from './core/ConfigLoader.js';
+export { CommandExecutor } from './utils/CommandExecutor.js';
 
 export { BaseProvider } from './providers/BaseProvider.js';
 export { ProviderRegistry } from './providers/ProviderRegistry.js';

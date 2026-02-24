@@ -18,9 +18,7 @@ export interface CommandExecutorConfig {
   promptTemplate?: string;
   promptTemplateFile?: string;
   useStdin?: boolean;
-  postInitialComment?: boolean;
-  initialCommentTemplate?: string;
-  postOutputComment?: boolean;
+  followUp?: boolean;
 }
 
 export interface WatcherConfig {

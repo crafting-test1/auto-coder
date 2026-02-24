@@ -1,5 +1,5 @@
-# Test Configuration for Command Executor
-# This demonstrates the command executor functionality
+# Test Configuration for Watcher
+# This is a minimal config for testing the watcher functionality
 
 server:
   host: localhost
@@ -8,42 +8,29 @@ server:
 deduplication:
   enabled: true
   botUsername: test-bot
+  commentTemplate: "Agent is working on session {id}"
 
 logLevel: debug
-
-# Command executor configuration
-commandExecutor:
-  enabled: true
-
-  # Simple test command that echoes event details
-  command: |
-    echo "=== Event Processed ==="
-    echo "Event ID: $EVENT_ID"
-    echo "Provider: $EVENT_PROVIDER"
-    echo "Type: $EVENT_TYPE"
-    echo "Action: $EVENT_ACTION"
-    echo "Resource: $RESOURCE_TITLE"
-    echo "URL: $RESOURCE_URL"
-    echo "Actor: $ACTOR_USERNAME"
-    echo ""
-    echo "=== Prompt Preview ==="
-    echo "$PROMPT" | head -20
-
-  # Use the example template
-  promptTemplateFile: ./config/event-prompt.example.hbs
-
-  # Pass prompt via environment variable (default)
-  useStdin: false
-
-  # Don't post comments in test mode
-  postInitialComment: false
-  postOutputComment: false
 
 providers:
   github:
     enabled: true
 
-    # For testing, we only enable webhook mode
-    # (no auth needed for webhook-only mode)
+    # For testing webhooks
+    auth:
+      type: token
+      tokenEnv: GITHUB_TOKEN
 
-    # No polling in test mode (would require auth + repositories)
+    # For testing polling (optional)
+    pollingInterval: 60
+
+    options:
+      repositories:
+        - owner/test-repo
+
+      events:
+        - issues
+        - pull_request
+
+      initialLookbackHours: 1
+      maxItemsPerPoll: 10

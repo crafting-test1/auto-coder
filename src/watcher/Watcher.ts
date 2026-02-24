@@ -4,6 +4,7 @@ import { ProviderRegistry } from './providers/ProviderRegistry.js';
 import { WebhookServer } from './transport/WebhookServer.js';
 import { WebhookHandler } from './transport/WebhookHandler.js';
 import { Poller } from './transport/Poller.js';
+import { CommandExecutor } from './utils/CommandExecutor.js';
 import { logger } from './utils/logger.js';
 import { WatcherError, ProviderError } from './utils/errors.js';
 
@@ -11,6 +12,7 @@ export class Watcher extends WatcherEventEmitter {
   private registry: ProviderRegistry;
   private botUsername: string;
   private commentTemplate: string;
+  private commandExecutor: CommandExecutor | undefined;
   private server: WebhookServer | undefined;
   private pollers: Map<string, Poller> = new Map();
   private started = false;
@@ -36,6 +38,10 @@ export class Watcher extends WatcherEventEmitter {
     this.commentTemplate =
       config.deduplication.commentTemplate ||
       'Agent is working on session {id}';
+
+    if (config.commandExecutor?.enabled) {
+      this.commandExecutor = new CommandExecutor(config.commandExecutor);
+    }
   }
 
   registerProvider(name: string, provider: IProvider): void {
@@ -152,8 +158,14 @@ export class Watcher extends WatcherEventEmitter {
         logger.debug(`Emitting event from ${providerName}`);
         this.emit('event', providerName, event);
 
-        // Mark as processed
-        await this.markAsProcessed(reactor, event);
+        // Execute command if configured
+        if (this.commandExecutor) {
+          const eventId = this.generateEventId(event);
+          await this.commandExecutor.execute(eventId, event, reactor);
+        } else {
+          // If no command executor, mark as processed manually
+          await this.markAsProcessed(reactor, event);
+        }
       } catch (error) {
         logger.error(`Error handling event from ${providerName}`, error);
         this.emit('error', error as Error);

@@ -25,35 +25,38 @@ deduplication:
 logLevel: info
 
 # Command executor configuration
+# When enabled, executes a command for each event with the prompt and event data
 commandExecutor:
-  enabled: false  # Set to true to enable command execution for events
+  enabled: false  # Set to true to enable command execution
 
   # Command to execute (required if enabled)
-  # The command receives event data via environment variables or stdin
-  command: "echo 'Event received: $EVENT_ID'"
+  # The command receives event data via environment variables:
+  # - EVENT_ID: Unique event identifier
+  # - PROMPT: Rendered prompt (if promptTemplate is provided)
+  # - EVENT_ACTION: Event action (e.g., "opened", "closed")
+  # - EVENT_REPOSITORY: Repository full name (e.g., "owner/repo")
+  command: "echo \"Processing event $EVENT_ID\""
 
   # Prompt template (optional)
   # Uses Handlebars syntax to render event data into a prompt
+  # The template receives the raw provider event data
   # promptTemplate: |
-  #   Event: {{provider}}/{{type}}/{{action}}
-  #   Resource: {{resource.title}}
-  #   URL: {{resource.url}}
+  #   Issue: {{issue.title}}
+  #   Action: {{action}}
+  #   Repository: {{repository.full_name}}
 
   # Or load template from file (recommended)
-  # Use the production-tested template from samples/watch.go:
+  # Use the production-tested template adapted from samples/watch.go:
   # promptTemplateFile: ./config/event-prompt.example.hbs
 
   # Pass prompt via stdin instead of environment variable (default: false)
+  # If true, prompt is sent to command's stdin; if false, via $PROMPT env var
   useStdin: false
 
-  # Post initial comment before executing command (default: false)
-  postInitialComment: false
-
-  # Initial comment template (optional, uses default if not specified)
-  # initialCommentTemplate: "🤖 Agent is processing event {{id}}"
-
-  # Post command output as comment (default: false)
-  postOutputComment: false
+  # Post command output as follow-up comment (default: false)
+  # If true, updates the initial "Agent is working" comment with command output
+  # If false, only posts the initial comment
+  followUp: false
 
 # Provider configurations
 providers:
