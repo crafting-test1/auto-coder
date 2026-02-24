@@ -96,6 +96,17 @@ providers:
         - pull_request
         - issue_comment
 
+      # Initial lookback period for first poll (optional, default: 1 hour)
+      # When first polling a repository, only fetch items from the last N hours
+      # This prevents overwhelming the system with hundreds of old issues
+      # Examples: 1 (1 hour, default), 6 (6 hours), 24 (1 day), 168 (1 week)
+      initialLookbackHours: 1
+
+      # Maximum items to process per poll (optional, default: unlimited)
+      # Limits the total number of issues/PRs processed across all repositories
+      # Useful to prevent rate limiting and reduce processing load
+      maxItemsPerPoll: 50
+
   # Additional providers can be configured here
   # gitlab:
   #   enabled: false

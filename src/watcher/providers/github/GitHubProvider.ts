@@ -71,19 +71,35 @@ export class GitHubProvider extends BaseProvider {
     const options = config.options as {
       repositories?: string[];
       events?: string[];
+      initialLookbackHours?: number;
+      maxItemsPerPoll?: number;
     } | undefined;
 
     const hasPollingConfig =
       this.token && options?.repositories && options.repositories.length > 0;
 
     if (hasPollingConfig) {
-      const pollerConfig: { token: string; repositories: string[]; events?: string[] } = {
+      const pollerConfig: {
+        token: string;
+        repositories: string[];
+        events?: string[];
+        initialLookbackHours?: number;
+        maxItemsPerPoll?: number;
+      } = {
         token: this.token!,
         repositories: options!.repositories!,
       };
 
       if (options!.events) {
         pollerConfig.events = options.events;
+      }
+
+      if (options!.initialLookbackHours !== undefined) {
+        pollerConfig.initialLookbackHours = options.initialLookbackHours;
+      }
+
+      if (options!.maxItemsPerPoll !== undefined) {
+        pollerConfig.maxItemsPerPoll = options.maxItemsPerPoll;
       }
 
       this.poller = new GitHubPoller(pollerConfig);
@@ -169,10 +185,14 @@ export class GitHubProvider extends BaseProvider {
 
     const items = await this.poller.poll();
 
+    logger.debug(`Processing ${items.length} items from GitHub poll`);
+
     for (const item of items) {
       const repository = item.repository;
       const resourceType = item.type === 'issue' ? 'issue' : 'pull_request';
       const resourceNumber = item.number;
+
+      logger.debug(`Creating reactor for ${resourceType} #${resourceNumber} in ${repository}`);
 
       const reactor = new GitHubReactor(
         this.comments,
@@ -181,8 +201,11 @@ export class GitHubProvider extends BaseProvider {
         resourceNumber
       );
 
-      await eventHandler(item, reactor);
+      logger.debug(`Calling event handler for ${resourceType} #${resourceNumber}`);
+      await eventHandler(item.data, reactor);
     }
+
+    logger.debug(`Finished processing ${items.length} items from GitHub poll`);
   }
 
   async shutdown(): Promise<void> {
