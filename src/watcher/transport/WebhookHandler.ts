@@ -15,16 +15,24 @@ export class WebhookHandler {
         return;
       }
 
-      const contentType = req.get('content-type');
-      if (!contentType?.includes('application/json')) {
-        res.status(400).json({ error: 'Content-Type must be application/json' });
-        return;
+      // GitHub can send webhooks as either:
+      // - application/json: body is the JSON object directly
+      // - application/x-www-form-urlencoded: body.payload is a JSON string
+      let body = req.body;
+      if (body && typeof body.payload === 'string') {
+        try {
+          body = JSON.parse(body.payload);
+        } catch (error) {
+          logger.error('Failed to parse form-encoded payload', error);
+          res.status(400).json({ error: 'Invalid payload format' });
+          return;
+        }
       }
 
       const rawBody = (req as Request & { rawBody?: Buffer }).rawBody;
       const isValid = await this.provider.validateWebhook(
         req.headers,
-        req.body,
+        body,
         rawBody
       );
 
@@ -40,7 +48,7 @@ export class WebhookHandler {
       res.status(202).json({ status: 'accepted' });
 
       setImmediate(() => {
-        this.processWebhook(req.headers, req.body).catch((error) => {
+        this.processWebhook(req.headers, body).catch((error) => {
           logger.error('Failed to process webhook', error);
         });
       });

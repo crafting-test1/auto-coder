@@ -12,8 +12,18 @@ export class WebhookServer {
   constructor(private readonly config: ServerConfig) {
     this.app = express();
 
+    // Support both JSON and form-encoded webhooks
     this.app.use(
       express.json({
+        verify: (req, res, buf) => {
+          (req as Request & { rawBody?: Buffer }).rawBody = buf;
+        },
+      })
+    );
+
+    this.app.use(
+      express.urlencoded({
+        extended: true,
         verify: (req, res, buf) => {
           (req as Request & { rawBody?: Buffer }).rawBody = buf;
         },
