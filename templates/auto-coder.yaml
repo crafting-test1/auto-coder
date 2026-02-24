@@ -1,6 +1,45 @@
+endpoints:
+  - name: webhook
+    http:
+      routes:
+        - backend:
+            target: dev
+            port: webhook
+          path_prefix: /
+      auth_proxy:
+        disabled: true
+  - name: github-mcp
+    type: INTERNAL
+    http:
+      routes:
+        - backend:
+            target: github-mcp
+            port: github
+          path_prefix: /
+      auth_proxy:
+        disabled: true
+      path: /mcp
 workspaces:
-  - name: app
+  - name: dev
+    ports:
+      - name: webhook
+        port: 3000
+        protocol: HTTP/TCP
     checkouts:
       - path: auto-coder
         repo:
-          git: git@github.com:crafting-test1/auto-coder.git
+          git: https://github.com/crafting-test1/auto-coder
+containers:
+  - name: github-mcp
+    image: ghcr.io/github/github-mcp-server
+    args:
+      - http
+    env:
+      - GITHUB_PERSONAL_ACCESS_TOKEN=${secret:github_pat}
+    ports:
+      - name: github
+        port: 8082
+        protocol: HTTP/TCP
+customizations:
+  - mcp_server:
+    endpoint: github
