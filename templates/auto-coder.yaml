@@ -42,4 +42,4 @@ containers:
         protocol: HTTP/TCP
 customizations:
   - mcp_server:
-    endpoint: github
+      endpoint: github-mcp
