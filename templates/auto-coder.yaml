@@ -40,28 +40,6 @@ workspaces:
       - path: auto-coder
         repo:
           git: https://github.com/crafting-test1/auto-coder
-  - name: slack-mcp
-    ports:
-      - name: slack
-        port: 13080
-        protocol: HTTP/TCP
-    checkouts:
-      - path: slack-mcp-server
-        repo:
-          git: https://github.com/korotovsky/slack-mcp-server.git
-        manifest:
-          overlays:
-            - inline:
-                hooks:
-                  build:
-                    cmd: go build -o slack-mcp-server ./cmd/slack-mcp-server
-                daemons:
-                  server:
-                    run:
-                      cmd: ./slack-mcp-server --transport http
-    env:
-      - SLACK_MCP_XOXB_TOKEN=${secret:slack_token}
-      - SLACK_MCP_HOST=0.0.0.0
 containers:
   - name: github-mcp
     image: ghcr.io/github/github-mcp-server
@@ -72,6 +50,21 @@ containers:
     ports:
       - name: github
         port: 8082
+        protocol: HTTP/TCP
+  - name: slack-mcp
+    image: ghcr.io/korotovsky/slack-mcp-server:latest
+    entrypoint:
+      - mcp-server
+    args:
+      - --transport
+      - http
+    env:
+      - SLACK_MCP_PORT=3001
+      - SLACK_MCP_HOST=0.0.0.0
+      - SLACK_MCP_XOXB_TOKEN=${secret:slack_token}
+    ports:
+      - name: slack
+        port: 3001
         protocol: HTTP/TCP
 customizations:
   - mcp_server:
