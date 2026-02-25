@@ -17,6 +17,10 @@ logLevel: info
 commandExecutor:
   enabled: true
 
+  # Dry-run mode: Print command without executing (for testing/debugging)
+  # When enabled, logs the command, environment variables, and prompt without execution
+  dryRun: false
+
   # Command to execute for each event
   # This could be any command, such as:
   # - An AI agent CLI: "claude-code" or "openai-cli"

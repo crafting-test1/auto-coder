@@ -11,6 +11,7 @@ export interface CommandExecutorConfig {
   promptTemplateFile?: string;
   useStdin?: boolean;
   followUp?: boolean;  // Post/update comment with command output
+  dryRun?: boolean;    // Print command instead of executing (for testing)
 }
 
 export class CommandExecutor {
@@ -111,6 +112,13 @@ export class CommandExecutor {
         prompt = this.promptTemplate(event);
       }
 
+      // Dry-run mode: print command details without executing
+      if (this.config.dryRun) {
+        logger.info(`[DRY-RUN] Would execute command for event ${eventId}`);
+        this.logDryRun(event, prompt);
+        return;
+      }
+
       // Post initial comment with user-friendly display string
       logger.info(`Executing command for event ${eventId}`);
       const commentRef = await reactor.postComment(`Agent is working on ${displayString}`);
@@ -130,6 +138,34 @@ export class CommandExecutor {
       }
     } catch (error) {
       logger.error('Command execution failed', error);
+    }
+  }
+
+  private logDryRun(event: NormalizedEvent, prompt: string): void {
+    // Build environment variables that would be used
+    const env: Record<string, string> = {
+      EVENT_ID: event.id,
+      EVENT_SAFE_ID: this.sanitizeForShell(event.id),
+      EVENT_SHORT_ID: this.generateShortId(event),
+    };
+
+    if (!this.config.useStdin) {
+      env.PROMPT = prompt;
+    }
+
+    logger.info('[DRY-RUN] Command:', this.config.command);
+    logger.info('[DRY-RUN] Environment variables:');
+    for (const [key, value] of Object.entries(env)) {
+      if (key === 'PROMPT') {
+        logger.info(`  ${key}=${value.substring(0, 100)}${value.length > 100 ? '...' : ''}`);
+      } else {
+        logger.info(`  ${key}=${value}`);
+      }
+    }
+
+    if (this.config.useStdin && prompt) {
+      logger.info('[DRY-RUN] Stdin input:');
+      logger.info(prompt.substring(0, 500) + (prompt.length > 500 ? '\n...(truncated)' : ''));
     }
   }
 

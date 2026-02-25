@@ -29,6 +29,9 @@ logLevel: info
 commandExecutor:
   enabled: false  # Set to true to enable command execution
 
+  # Dry-run mode: Print command without executing (for testing/debugging)
+  dryRun: false  # Set to true to see what would be executed without running it
+
   # Command to execute (required if enabled)
   # The command receives minimal environment variables:
   #
