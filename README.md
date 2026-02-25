@@ -1,5 +1,20 @@
 # auto-coder
 
+## Table of Contents
+
+- [Features](#features)
+- [Prerequisites](#prerequisites)
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+- [Development](#development)
+- [Architecture](#architecture)
+- [Configuration](#configuration)
+- [Security Considerations](#security-considerations)
+- [Troubleshooting](#troubleshooting)
+- [License](#license)
+- [Contributing](#contributing)
+
+
 An automated coding assistant with intelligent task monitoring and provider integration.
 
 ## Features
