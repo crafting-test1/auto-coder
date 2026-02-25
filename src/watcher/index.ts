@@ -6,6 +6,7 @@ export { CommandExecutor } from './utils/CommandExecutor.js';
 export { BaseProvider } from './providers/BaseProvider.js';
 export { ProviderRegistry } from './providers/ProviderRegistry.js';
 export { GitHubProvider } from './providers/github/GitHubProvider.js';
+export { GitLabProvider } from './providers/gitlab/GitLabProvider.js';
 
 export type {
   WatcherConfig,

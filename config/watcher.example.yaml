@@ -124,18 +124,46 @@ providers:
       # Useful to prevent rate limiting and reduce processing load
       maxItemsPerPoll: 50
 
-  # Additional providers can be configured here
-  # gitlab:
-  #   enabled: false
-  #   mode: webhook
-  #   ...
+  # GitLab Provider (similar to GitHub)
+  gitlab:
+    enabled: false
+    pollingInterval: 60  # Poll every 60 seconds
 
+    auth:
+      type: token
+      tokenEnv: GITLAB_TOKEN  # Personal access token with api scope
+
+    options:
+      # GitLab instance URL (optional, defaults to gitlab.com)
+      # baseUrl: https://gitlab.example.com/api/v4
+
+      # Webhook token for validation (optional but recommended)
+      # webhookToken: "your-webhook-token"
+      webhookTokenEnv: GITLAB_WEBHOOK_TOKEN
+      # webhookTokenFile: /path/to/token
+
+      # Projects to monitor (for polling)
+      # Format: "group/project" or "username/project"
+      projects:
+        - group/project1
+        - username/project2
+
+      # Event types to monitor
+      events:
+        - issues
+        - merge_requests
+
+      # Initial lookback period for first poll (default: 1 hour)
+      initialLookbackHours: 1
+
+      # Maximum items to process per poll (default: unlimited)
+      maxItemsPerPoll: 50
+
+  # Other providers can be added here
   # jira:
   #   enabled: false
-  #   mode: polling
   #   ...
-
+  #
   # linear:
   #   enabled: false
-  #   mode: both
   #   ...
