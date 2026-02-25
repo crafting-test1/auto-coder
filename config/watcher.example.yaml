@@ -159,11 +159,34 @@ providers:
       # Maximum items to process per poll (default: unlimited)
       maxItemsPerPoll: 50
 
+  # Linear Provider (uses GraphQL API)
+  linear:
+    enabled: false
+    pollingInterval: 60  # Poll every 60 seconds
+
+    auth:
+      type: token
+      tokenEnv: LINEAR_API_KEY  # API key from Linear settings
+
+    options:
+      # Webhook secret for signature verification (optional but recommended)
+      # webhookSecret: "your-webhook-secret"
+      webhookSecretEnv: LINEAR_WEBHOOK_SECRET
+      # webhookSecretFile: /path/to/secret
+
+      # Teams to monitor (optional, defaults to all teams)
+      # Team keys are short identifiers like "ENG", "DESIGN", etc.
+      teams:
+        - ENG
+        - PRODUCT
+
+      # Initial lookback period for first poll (default: 1 hour)
+      initialLookbackHours: 1
+
+      # Maximum items to process per poll (default: unlimited)
+      maxItemsPerPoll: 50
+
   # Other providers can be added here
   # jira:
-  #   enabled: false
-  #   ...
-  #
-  # linear:
   #   enabled: false
   #   ...

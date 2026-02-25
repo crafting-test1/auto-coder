@@ -1,4 +1,3 @@
-import { logger } from '../../utils/logger.js';
 import { withExponentialRetry } from '../../utils/retry.js';
 
 interface GitLabComment {

@@ -3,7 +3,7 @@ export class GitLabWebhook {
 
   validate(
     headers: Record<string, string | string[] | undefined>,
-    rawBody: string | Buffer
+    _rawBody: string | Buffer
   ): { valid: boolean; error?: string } {
     const event = this.getHeader(headers, 'x-gitlab-event');
 
