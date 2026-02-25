@@ -29,13 +29,22 @@ logLevel: info
 commandExecutor:
   enabled: false  # Set to true to enable command execution
 
+  # Dry-run mode: Print command without executing (for testing/debugging)
+  dryRun: false  # Set to true to see what would be executed without running it
+
   # Command to execute (required if enabled)
-  # The command receives event data via environment variables:
-  # - EVENT_ID: Unique event identifier
-  # - PROMPT: Rendered prompt (if promptTemplate is provided)
-  # - EVENT_ACTION: Event action (e.g., "opened", "closed")
-  # - EVENT_REPOSITORY: Repository full name (e.g., "owner/repo")
-  command: "echo \"Processing event $EVENT_ID\""
+  # The command receives minimal environment variables:
+  #
+  # - EVENT_ID: Full event identifier (e.g., "github:owner/repo:opened:123:uuid")
+  # - EVENT_SAFE_ID: Sanitized ID safe for shell (e.g., "github_owner_repo_opened_123_uuid")
+  # - EVENT_SHORT_ID: Short, clean ID (e.g., "github-owner-repo-123") RECOMMENDED
+  # - PROMPT: Rendered prompt with all event details (if promptTemplateFile provided and useStdin=false)
+  #
+  # All event context (provider, type, action, title, URL, etc.) is included in the PROMPT
+  # which is rendered from the promptTemplateFile template.
+  #
+  # Use EVENT_SHORT_ID for command/session names
+  command: "cs llm session run --approval=auto --name=$EVENT_SHORT_ID"
 
   # Prompt template (optional)
   # Uses Handlebars syntax to render event data into a prompt
@@ -118,18 +127,69 @@ providers:
       # Useful to prevent rate limiting and reduce processing load
       maxItemsPerPoll: 50
 
-  # Additional providers can be configured here
-  # gitlab:
-  #   enabled: false
-  #   mode: webhook
-  #   ...
+  # GitLab Provider (similar to GitHub)
+  gitlab:
+    enabled: false
+    pollingInterval: 60  # Poll every 60 seconds
 
+    auth:
+      type: token
+      tokenEnv: GITLAB_TOKEN  # Personal access token with api scope
+
+    options:
+      # GitLab instance URL (optional, defaults to gitlab.com)
+      # baseUrl: https://gitlab.example.com/api/v4
+
+      # Webhook token for validation (optional but recommended)
+      # webhookToken: "your-webhook-token"
+      webhookTokenEnv: GITLAB_WEBHOOK_TOKEN
+      # webhookTokenFile: /path/to/token
+
+      # Projects to monitor (for polling)
+      # Format: "group/project" or "username/project"
+      projects:
+        - group/project1
+        - username/project2
+
+      # Event types to monitor
+      events:
+        - issues
+        - merge_requests
+
+      # Initial lookback period for first poll (default: 1 hour)
+      initialLookbackHours: 1
+
+      # Maximum items to process per poll (default: unlimited)
+      maxItemsPerPoll: 50
+
+  # Linear Provider (uses GraphQL API)
+  linear:
+    enabled: false
+    pollingInterval: 60  # Poll every 60 seconds
+
+    auth:
+      type: token
+      tokenEnv: LINEAR_API_KEY  # API key from Linear settings
+
+    options:
+      # Webhook secret for signature verification (optional but recommended)
+      # webhookSecret: "your-webhook-secret"
+      webhookSecretEnv: LINEAR_WEBHOOK_SECRET
+      # webhookSecretFile: /path/to/secret
+
+      # Teams to monitor (optional, defaults to all teams)
+      # Team keys are short identifiers like "ENG", "DESIGN", etc.
+      teams:
+        - ENG
+        - PRODUCT
+
+      # Initial lookback period for first poll (default: 1 hour)
+      initialLookbackHours: 1
+
+      # Maximum items to process per poll (default: unlimited)
+      maxItemsPerPoll: 50
+
+  # Other providers can be added here
   # jira:
   #   enabled: false
-  #   mode: polling
-  #   ...
-
-  # linear:
-  #   enabled: false
-  #   mode: both
   #   ...
