@@ -112,16 +112,17 @@ export class CommandExecutor {
         prompt = this.promptTemplate(event);
       }
 
+      // Post initial comment with user-friendly display string (always, even in dry-run)
+      logger.info(`Executing command for event ${eventId}`);
+      const commentRef = await reactor.postComment(`Agent is working on ${displayString}`);
+
       // Dry-run mode: print command details without executing
       if (this.config.dryRun) {
         logger.info(`[DRY-RUN] Would execute command for event ${eventId}`);
         this.logDryRun(event, prompt);
+        logger.info(`[DRY-RUN] Command execution skipped, but deduplication comment posted`);
         return;
       }
-
-      // Post initial comment with user-friendly display string
-      logger.info(`Executing command for event ${eventId}`);
-      const commentRef = await reactor.postComment(`Agent is working on ${displayString}`);
 
       // Run command
       const output = await this.runCommand(eventId, prompt, event);
