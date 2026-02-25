@@ -34,6 +34,7 @@ interface GitHubWebhookPayload {
     body?: string;
     html_url: string;
     state: string;
+    merged?: boolean;
     assignees?: any[];
     labels?: any[];
     user?: { login: string; id: number };
@@ -188,6 +189,12 @@ export class GitHubProvider extends BaseProvider {
       return;
     }
 
+    // Skip closed/merged items unless they're being reopened
+    if (this.shouldSkipClosedItem(payload)) {
+      logger.debug(`Skipping closed/merged ${resourceType} #${resourceNumber}`);
+      return;
+    }
+
     const reactor = new GitHubReactor(
       this.comments,
       payload.repository.full_name,
@@ -199,6 +206,40 @@ export class GitHubProvider extends BaseProvider {
     const normalizedEvent = this.normalizeEvent(payload, deliveryId);
 
     await eventHandler(normalizedEvent, reactor);
+  }
+
+  private shouldSkipClosedItem(payload: GitHubWebhookPayload): boolean {
+    // Allow reopened events through
+    if (payload.action === 'reopened') {
+      return false;
+    }
+
+    // Check if issue/PR is closed or merged
+    const state = payload.issue?.state || payload.pull_request?.state;
+    if (state === 'closed') {
+      return true;
+    }
+
+    // For PRs, also check merged state
+    if (payload.pull_request?.merged) {
+      return true;
+    }
+
+    return false;
+  }
+
+  private shouldSkipClosedPolledItem(item: any): boolean {
+    // Check if item is closed
+    if (item.data.state === 'closed') {
+      return true;
+    }
+
+    // For PRs, also check merged state
+    if (item.type === 'pull_request' && item.data.merged) {
+      return true;
+    }
+
+    return false;
   }
 
   async poll(eventHandler: EventHandler): Promise<void> {
@@ -221,6 +262,12 @@ export class GitHubProvider extends BaseProvider {
       const repository = item.repository;
       const resourceType = item.type === 'issue' ? 'issue' : 'pull_request';
       const resourceNumber = item.number;
+
+      // Skip closed/merged items from polling
+      if (this.shouldSkipClosedPolledItem(item)) {
+        logger.debug(`Skipping closed/merged ${resourceType} #${resourceNumber} in ${repository}`);
+        continue;
+      }
 
       logger.debug(`Creating reactor for ${resourceType} #${resourceNumber} in ${repository}`);
 

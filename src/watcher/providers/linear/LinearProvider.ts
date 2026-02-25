@@ -168,12 +168,43 @@ export class LinearProvider extends BaseProvider {
 
     const issueId = payload.data.id;
 
+    // Skip completed/cancelled items unless they're being reopened
+    if (this.shouldSkipClosedItem(payload)) {
+      logger.debug(`Skipping completed/cancelled issue ${payload.data.identifier}`);
+      return;
+    }
+
     const reactor = new LinearReactor(this.comments, issueId);
 
     // Normalize Linear event for template rendering
     const normalizedEvent = this.normalizeEvent(payload, webhookId);
 
     await eventHandler(normalizedEvent, reactor);
+  }
+
+  private shouldSkipClosedItem(payload: LinearWebhookPayload): boolean {
+    // Linear doesn't have a simple "closed" state
+    // States can be: "Backlog", "Todo", "In Progress", "Done", "Cancelled", etc.
+    // We skip "Done" and "Cancelled" states
+    const stateName = payload.data.state.name.toLowerCase();
+
+    // Skip if state is done or cancelled
+    if (stateName === 'done' || stateName === 'cancelled' || stateName === 'canceled') {
+      return true;
+    }
+
+    return false;
+  }
+
+  private shouldSkipClosedPolledItem(item: any): boolean {
+    // Check if item state is done or cancelled
+    const stateName = item.data.state.name.toLowerCase();
+
+    if (stateName === 'done' || stateName === 'cancelled' || stateName === 'canceled') {
+      return true;
+    }
+
+    return false;
   }
 
   async poll(eventHandler: EventHandler): Promise<void> {
@@ -194,6 +225,12 @@ export class LinearProvider extends BaseProvider {
 
     for (const item of items) {
       const issueId = item.data.id;
+
+      // Skip completed/cancelled items from polling
+      if (this.shouldSkipClosedPolledItem(item)) {
+        logger.debug(`Skipping completed/cancelled issue ${item.data.identifier}`);
+        continue;
+      }
 
       logger.debug(`Creating reactor for issue ${item.data.identifier}`);
 

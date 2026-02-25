@@ -195,6 +195,12 @@ export class GitLabProvider extends BaseProvider {
 
     const projectId = payload.project.path_with_namespace;
 
+    // Skip closed/merged items unless they're being reopened
+    if (this.shouldSkipClosedItem(payload)) {
+      logger.debug(`Skipping closed/merged ${resourceType} !${resourceNumber}`);
+      return;
+    }
+
     const reactor = new GitLabReactor(
       this.comments,
       projectId,
@@ -206,6 +212,30 @@ export class GitLabProvider extends BaseProvider {
     const normalizedEvent = this.normalizeEvent(payload);
 
     await eventHandler(normalizedEvent, reactor);
+  }
+
+  private shouldSkipClosedItem(payload: GitLabWebhookPayload): boolean {
+    // Allow reopen events through
+    if (payload.object_attributes.action === 'reopen') {
+      return false;
+    }
+
+    // Check if issue/MR is closed or merged
+    const state = payload.object_attributes.state;
+    if (state === 'closed') {
+      return true;
+    }
+
+    return false;
+  }
+
+  private shouldSkipClosedPolledItem(item: any): boolean {
+    // Check if item is closed
+    if (item.data.state === 'closed') {
+      return true;
+    }
+
+    return false;
   }
 
   async poll(eventHandler: EventHandler): Promise<void> {
@@ -228,6 +258,12 @@ export class GitLabProvider extends BaseProvider {
       const projectId = item.project;
       const resourceType = item.type === 'issue' ? 'issue' : 'merge_request';
       const resourceNumber = item.number;
+
+      // Skip closed/merged items from polling
+      if (this.shouldSkipClosedPolledItem(item)) {
+        logger.debug(`Skipping closed/merged ${resourceType} !${resourceNumber} in ${projectId}`);
+        continue;
+      }
 
       logger.debug(`Creating reactor for ${resourceType} !${resourceNumber} in ${projectId}`);
 
