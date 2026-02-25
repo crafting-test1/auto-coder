@@ -1,0 +1,80 @@
+endpoints:
+  - name: webhook
+    http:
+      routes:
+        - backend:
+            target: dev
+            port: webhook
+          path_prefix: /
+      auth_proxy:
+        disabled: true
+  - name: github-mcp
+    type: INTERNAL
+    http:
+      routes:
+        - backend:
+            target: github-mcp
+            port: github
+          path_prefix: /
+      auth_proxy:
+        disabled: true
+      path: /mcp
+  - name: slack-mcp
+    type: INTERNAL
+    http:
+      routes:
+        - backend:
+            target: slack-mcp
+            port: slack
+          path_prefix: /
+      auth_proxy:
+        disabled: true
+      path: /mcp
+workspaces:
+  - name: dev
+    ports:
+      - name: webhook
+        port: 3000
+        protocol: HTTP/TCP
+    checkouts:
+      - path: auto-coder
+        repo:
+          git: https://github.com/crafting-test1/auto-coder
+  - name: slack-mcp
+    ports:
+      - name: slack
+        port: 13080
+        protocol: HTTP/TCP
+    checkouts:
+      - path: slack-mcp-server
+        repo:
+          git: https://github.com/korotovsky/slack-mcp-server.git
+        manifest:
+          overlays:
+            - inline:
+                hooks:
+                  build:
+                    cmd: go build -o slack-mcp-server ./cmd/slack-mcp-server
+                daemons:
+                  server:
+                    run:
+                      cmd: ./slack-mcp-server --transport http
+    env:
+      - SLACK_MCP_XOXB_TOKEN=${secret:slack_token}
+      - SLACK_MCP_HOST=0.0.0.0
+containers:
+  - name: github-mcp
+    image: ghcr.io/github/github-mcp-server
+    args:
+      - http
+    env:
+      - GITHUB_PERSONAL_ACCESS_TOKEN=${secret:github_pat}
+    ports:
+      - name: github
+        port: 8082
+        protocol: HTTP/TCP
+customizations:
+  - mcp_server:
+      endpoint: github-mcp
+  - mcp_server:
+      endpoint: slack-mcp

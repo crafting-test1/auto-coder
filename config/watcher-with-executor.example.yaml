@@ -1,0 +1,64 @@
+# Watcher Configuration with Command Executor
+# This example shows how to configure the watcher with command execution
+
+server:
+  host: 0.0.0.0
+  port: 3000
+
+deduplication:
+  enabled: true
+  botUsername: auto-coder-bot
+  commentTemplate: "Agent is working on {id}"
+
+logLevel: info
+
+# Command executor configuration
+# This is the core workflow: execute a command when events are received
+commandExecutor:
+  enabled: true
+
+  # Command to execute for each event
+  # This could be any command, such as:
+  # - An AI agent CLI: "claude-code" or "openai-cli"
+  # - A custom script: "./scripts/process-issue.sh"
+  # - A pipeline: "parse-event | analyze | respond"
+  command: "echo \"$PROMPT\" | your-ai-agent-command"
+
+  # Load prompt template from file (recommended)
+  # The template receives the raw GitHub webhook/API event data
+  promptTemplateFile: ./config/event-prompt.example.hbs
+
+  # Pass prompt via stdin (recommended for large prompts)
+  useStdin: true
+
+  # Post command output as follow-up comment
+  # If true: Updates the "Agent is working" comment with command output
+  # If false: Only posts the initial comment
+  followUp: true
+
+providers:
+  github:
+    enabled: true
+    pollingInterval: 60
+
+    auth:
+      type: token
+      tokenEnv: GITHUB_TOKEN
+
+    options:
+      # Webhook secret for signature verification (recommended for production)
+      # You can provide the secret directly, via environment variable, or from a file
+      # webhookSecret: "your-secret-here"
+      webhookSecretEnv: GITHUB_WEBHOOK_SECRET
+      # webhookSecretFile: /path/to/secret/file
+
+      repositories:
+        - owner/repo1
+        - owner/repo2
+
+      events:
+        - issues
+        - pull_request
+
+      initialLookbackHours: 1
+      maxItemsPerPoll: 50

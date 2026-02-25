@@ -1,0 +1,43 @@
+{
+  "name": "auto-coder",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "rebuild": "pnpm run clean && pnpm run build",
+    "dev": "tsx src/index.ts",
+    "dev:watcher": "WATCHER_CONFIG=./config/watcher.yaml tsx src/standalone.ts",
+    "start": "node dist/index.js",
+    "type-check": "tsc --noEmit",
+    "test": "npx tsx tests/test-webhook-executor.ts",
+    "test:command": "npx tsx tests/test-command-executor.ts",
+    "test:quick": "echo 'Running command executor test...' && npx tsx tests/test-webhook-executor.ts 2>&1 | grep -A 30 'Command output'"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/crafting-test1/auto-coder.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/crafting-test1/auto-coder/issues"
+  },
+  "homepage": "https://github.com/crafting-test1/auto-coder#readme",
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/handlebars": "^4.1.0",
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^25.3.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "express": "^5.2.1",
+    "handlebars": "^4.7.8",
+    "js-yaml": "^4.1.1"
+  }
+}

@@ -1,0 +1,36 @@
+# Test Configuration for Watcher
+# This is a minimal config for testing the watcher functionality
+
+server:
+  host: localhost
+  port: 3001
+
+deduplication:
+  enabled: true
+  botUsername: test-bot
+  commentTemplate: "Agent is working on session {id}"
+
+logLevel: debug
+
+providers:
+  github:
+    enabled: true
+
+    # For testing webhooks
+    auth:
+      type: token
+      tokenEnv: GITHUB_TOKEN
+
+    # For testing polling (optional)
+    pollingInterval: 60
+
+    options:
+      repositories:
+        - owner/test-repo
+
+      events:
+        - issues
+        - pull_request
+
+      initialLookbackHours: 1
+      maxItemsPerPoll: 10
