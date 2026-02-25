@@ -18,8 +18,8 @@ deduplication:
   botUsername: auto-coder-bot
 
   # Comment template (optional)
-  # Use {id} placeholder for event ID
-  commentTemplate: "Agent is working on session {id}"
+  # Use {id} placeholder for event display (e.g., "owner/repo#123")
+  commentTemplate: "Agent is working on {id}"
 
 # Log level: debug | info | warn | error
 logLevel: info

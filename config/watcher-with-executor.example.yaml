@@ -8,7 +8,7 @@ server:
 deduplication:
   enabled: true
   botUsername: auto-coder-bot
-  commentTemplate: "Agent is working on session {id}"
+  commentTemplate: "Agent is working on {id}"
 
 logLevel: info
 

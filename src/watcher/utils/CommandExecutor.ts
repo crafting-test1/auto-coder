@@ -76,7 +76,7 @@ export class CommandExecutor {
     });
   }
 
-  async execute(eventId: string, event: unknown, reactor: Reactor): Promise<void> {
+  async execute(eventId: string, displayString: string, event: unknown, reactor: Reactor): Promise<void> {
     if (!this.config.enabled) {
       return;
     }
@@ -89,9 +89,9 @@ export class CommandExecutor {
         prompt = this.promptTemplate(event);
       }
 
-      // Post initial comment
+      // Post initial comment with user-friendly display string
       logger.info(`Executing command for event ${eventId}`);
-      const commentRef = await reactor.postComment(`Agent is working on session ${eventId}`);
+      const commentRef = await reactor.postComment(`Agent is working on ${displayString}`);
 
       // Run command
       const output = await this.runCommand(eventId, prompt, event);

@@ -160,9 +160,10 @@ export class Watcher extends WatcherEventEmitter {
 
         // Execute command if configured
         if (this.commandExecutor) {
-          // Extract event ID from normalized event
+          // Extract event ID and display string from normalized event
           const eventId = this.extractEventId(event);
-          await this.commandExecutor.execute(eventId, event, reactor);
+          const displayString = this.generateDisplayString(event);
+          await this.commandExecutor.execute(eventId, displayString, event, reactor);
         } else {
           // If no command executor, mark as processed manually
           await this.markAsProcessed(reactor, event);
@@ -198,9 +199,9 @@ export class Watcher extends WatcherEventEmitter {
 
   private async markAsProcessed(reactor: Reactor, event: unknown): Promise<void> {
     try {
-      // Generate a simple ID from the event for the comment template
-      const eventId = this.generateEventId(event);
-      const comment = this.commentTemplate.replace('{id}', eventId);
+      // Generate a user-friendly display string from the event for the comment template
+      const displayString = this.generateDisplayString(event);
+      const comment = this.commentTemplate.replace('{id}', displayString);
 
       await reactor.postComment(comment);
       logger.debug(`Posted deduplication comment`);
@@ -226,6 +227,35 @@ export class Watcher extends WatcherEventEmitter {
 
   private generateEventId(event: unknown): string {
     // Try to extract an ID from normalized event structure
+    return this.extractEventId(event);
+  }
+
+  private generateDisplayString(event: unknown): string {
+    // Generate a user-friendly display string from normalized event
+    if (event && typeof event === 'object') {
+      const obj = event as Record<string, unknown>;
+
+      if (obj.resource && typeof obj.resource === 'object') {
+        const resource = obj.resource as Record<string, unknown>;
+        const type = obj.type as string;
+        const number = resource.number;
+        const repository = resource.repository as string;
+
+        if (number && type) {
+          // Format: "issue #123" or "pull_request #456"
+          const typeLabel = type === 'pull_request' ? 'PR' : type;
+
+          if (repository) {
+            // Include repo: "owner/repo#123"
+            return `${repository}#${number}`;
+          }
+
+          return `${typeLabel} #${number}`;
+        }
+      }
+    }
+
+    // Fallback to event ID
     return this.extractEventId(event);
   }
 
