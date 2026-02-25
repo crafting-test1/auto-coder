@@ -35,89 +35,15 @@ Copy the example configuration:
 cp config/watcher-with-executor.example.yaml config/watcher.yaml
 ```
 
-### 2. Set Up GitHub Access
+### 2. Set Up Provider Access
 
-Create a GitHub Personal Access Token with the following permissions:
+Configure your provider credentials (GitHub token, GitLab token, etc.) as environment variables. See the individual provider examples for detailed setup instructions.
 
-**For Fine-Grained Tokens:**
-- Repository permissions:
-  - Issues: Read and write
-  - Pull requests: Read and write
-  - Metadata: Read-only (automatically included)
+### 3. Update Configuration
 
-**For Classic Tokens:**
-- `repo` scope (full repository access)
+Edit `config/watcher.yaml` with your server settings, provider configuration, and command executor options. See the Configuration section below for details.
 
-Set the token as an environment variable:
-
-```bash
-export GITHUB_TOKEN="ghp_your_token_here"
-```
-
-### 3. Configure Webhook Secret (Optional but Recommended)
-
-Generate a webhook secret:
-
-```bash
-openssl rand -hex 32
-```
-
-Set it as an environment variable:
-
-```bash
-export GITHUB_WEBHOOK_SECRET="your-secret-here"
-```
-
-Configure the same secret in your GitHub webhook settings (Repository → Settings → Webhooks).
-
-### 4. Update Configuration
-
-Edit `config/watcher.yaml`:
-
-```yaml
-server:
-  host: 0.0.0.0
-  port: 3000
-
-deduplication:
-  enabled: true
-  botUsername: your-bot-username  # Your GitHub account username
-  commentTemplate: "Agent is working on {id}"
-
-commandExecutor:
-  enabled: true
-  command: "echo \"$PROMPT\" | your-ai-agent"
-  promptTemplateFile: ./config/event-prompt.example.hbs
-  useStdin: true
-  followUp: true
-
-providers:
-  github:
-    enabled: true
-    pollingInterval: 60
-
-    auth:
-      type: token
-      tokenEnv: GITHUB_TOKEN
-
-    options:
-      # Webhook secret for signature verification
-      webhookSecretEnv: GITHUB_WEBHOOK_SECRET
-
-      # Repositories to monitor (for polling)
-      repositories:
-        - owner/repo1
-        - owner/repo2
-
-      events:
-        - issues
-        - pull_request
-
-      initialLookbackHours: 1  # Only fetch items from last hour on first poll
-      maxItemsPerPoll: 50      # Limit items per poll to prevent overload
-```
-
-### 5. Run the Watcher
+### 4. Run the Watcher
 
 ```bash
 pnpm run dev:watcher
@@ -125,7 +51,7 @@ pnpm run dev:watcher
 
 The watcher will:
 - Start the webhook server on the configured port
-- Begin polling configured repositories
+- Begin polling configured repositories (if enabled)
 - Execute commands when events are received
 - Post comments to prevent duplicate processing
 
@@ -324,19 +250,14 @@ providers:
 
 ## Webhook Setup
 
-### GitHub Webhooks
-
-1. Go to your repository → Settings → Webhooks → Add webhook
-2. Set Payload URL: `http://your-server:3000/webhook/github`
-3. Set Content type: `application/json`
-4. Set Secret: Your webhook secret (same as `GITHUB_WEBHOOK_SECRET`)
-5. Select events: **Issues**, **Pull requests**, **Issue comments**
-6. Ensure webhook is active
+Configure webhooks in your provider's settings to point to your watcher endpoint. The watcher validates webhook signatures and processes events in real-time.
 
 The watcher will:
-- Validate webhook signatures using HMAC SHA-256
+- Validate webhook signatures based on provider requirements
 - Reject requests with invalid signatures
-- Support both `application/json` and `application/x-www-form-urlencoded` payloads
+- Support provider-specific payload formats
+
+See the individual provider examples for detailed webhook configuration instructions.
 
 ## Library Usage
 
@@ -503,22 +424,23 @@ logLevel: info  # debug | info | warn | error
 
 ### Polling Not Working
 
-- Verify `GITHUB_TOKEN` is set and has correct permissions
-- Check that `repositories` are configured in `options`
-- Ensure `auth` section is present with token configuration
+- Verify provider credentials are set with correct permissions
+- Check that repositories/projects are configured in provider `options`
+- Ensure `auth` section is present with valid authentication
+- Review watcher logs for authentication or API errors
 
 ### Webhooks Not Received
 
-- Verify webhook URL is accessible from GitHub (public or tunneled)
+- Verify webhook URL is accessible from provider (public or tunneled)
 - Check webhook secret matches configuration
-- Review webhook delivery logs in GitHub (Settings → Webhooks → Recent Deliveries)
+- Review webhook delivery logs in provider settings
 - Check for signature validation errors in watcher logs
 
 ### Duplicate Events
 
-- Verify `botUsername` matches the GitHub account posting comments
-- Check that bot account has write access to repositories
-- Review comment history on issues/PRs
+- Verify `botUsername` matches the account posting comments
+- Check that bot account has write access to repositories/projects
+- Review comment history on items to verify deduplication is working
 
 ### Command Not Executing
 
@@ -526,6 +448,8 @@ logLevel: info  # debug | info | warn | error
 - Check command is in PATH or use absolute path
 - Review logs for command execution errors
 - If using `useStdin: true`, ensure command reads from stdin
+
+For provider-specific troubleshooting, see the individual provider examples.
 
 ## License
 
