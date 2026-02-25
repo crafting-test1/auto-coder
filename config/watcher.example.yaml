@@ -30,12 +30,18 @@ commandExecutor:
   enabled: false  # Set to true to enable command execution
 
   # Command to execute (required if enabled)
-  # The command receives event data via environment variables:
-  # - EVENT_ID: Unique event identifier
-  # - PROMPT: Rendered prompt (if promptTemplate is provided)
-  # - EVENT_ACTION: Event action (e.g., "opened", "closed")
-  # - EVENT_REPOSITORY: Repository full name (e.g., "owner/repo")
-  command: "echo \"Processing event $EVENT_ID\""
+  # The command receives minimal environment variables:
+  #
+  # - EVENT_ID: Full event identifier (e.g., "github:owner/repo:opened:123:uuid")
+  # - EVENT_SAFE_ID: Sanitized ID safe for shell (e.g., "github_owner_repo_opened_123_uuid")
+  # - EVENT_SHORT_ID: Short, clean ID (e.g., "github-owner-repo-123") ⭐ RECOMMENDED
+  # - PROMPT: Rendered prompt with all event details (if promptTemplateFile provided and useStdin=false)
+  #
+  # All event context (provider, type, action, title, URL, etc.) is included in the PROMPT
+  # which is rendered from the promptTemplateFile template.
+  #
+  # Use EVENT_SHORT_ID for command/session names
+  command: "cs llm session run --approval=auto --name=$EVENT_SHORT_ID"
 
   # Prompt template (optional)
   # Uses Handlebars syntax to render event data into a prompt

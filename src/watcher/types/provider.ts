@@ -27,7 +27,88 @@ export interface Reactor {
   updateComment(commentId: string, comment: string): Promise<void>;
 }
 
-export type EventHandler = (event: unknown, reactor: Reactor) => Promise<void>;
+/**
+ * Normalized event structure that all providers must map to.
+ * This provides a consistent interface for command execution and event handling.
+ */
+export interface NormalizedEvent {
+  /** Unique event identifier (e.g., "github:owner/repo:opened:123:uuid") */
+  id: string;
+
+  /** Provider name (e.g., "github", "gitlab", "jira") */
+  provider: string;
+
+  /** Event type (e.g., "issue", "pull_request", "task") */
+  type: string;
+
+  /** Action that triggered the event (e.g., "opened", "closed", "edited") */
+  action: string;
+
+  /** Resource information */
+  resource: {
+    /** Resource number/ID (e.g., issue #123) */
+    number: number;
+
+    /** Resource title/summary */
+    title: string;
+
+    /** Resource description/body */
+    description: string;
+
+    /** Resource URL */
+    url: string;
+
+    /** Resource state (e.g., "open", "closed") */
+    state: string;
+
+    /** Repository full name (e.g., "owner/repo") */
+    repository: string;
+
+    /** Author username */
+    author?: string;
+
+    /** Assignees (provider-specific structure) */
+    assignees?: unknown[];
+
+    /** Labels/tags */
+    labels?: string[];
+
+    /** Branch name (for PRs/MRs) */
+    branch?: string;
+
+    /** Target branch (for PRs/MRs) */
+    mergeTo?: string;
+  };
+
+  /** Actor who triggered the event */
+  actor: {
+    /** Actor username */
+    username: string;
+
+    /** Actor ID (provider-specific) */
+    id: number | string;
+  };
+
+  /** Event metadata */
+  metadata: {
+    /** Event timestamp */
+    timestamp: string;
+
+    /** Delivery ID (for webhooks) */
+    deliveryId?: string;
+
+    /** Whether this was from polling */
+    polled?: boolean;
+
+    /** Additional provider-specific metadata */
+    [key: string]: unknown;
+  };
+
+  /** Original raw event from provider (for debugging/templates) */
+  raw: unknown;
+}
+
+export type EventHandler = (event: NormalizedEvent, reactor: Reactor) => Promise<void>;
 
 export interface IProvider {
   readonly metadata: ProviderMetadata;

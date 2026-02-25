@@ -5,6 +5,7 @@ export type {
   ProviderMetadata,
   Reactor,
   EventHandler,
+  NormalizedEvent,
 } from './provider.js';
 
 export type {

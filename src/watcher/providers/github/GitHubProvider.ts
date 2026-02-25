@@ -3,6 +3,7 @@ import type {
   ProviderConfig,
   ProviderMetadata,
   EventHandler,
+  NormalizedEvent,
 } from '../../types/index.js';
 import { ConfigLoader } from '../../core/ConfigLoader.js';
 import { GitHubWebhook } from './GitHubWebhook.js';
@@ -240,44 +241,63 @@ export class GitHubProvider extends BaseProvider {
     logger.debug(`Finished processing ${items.length} items from GitHub poll`);
   }
 
-  private normalizeEvent(payload: GitHubWebhookPayload, deliveryId: string): unknown {
+  private normalizeEvent(payload: GitHubWebhookPayload, deliveryId: string): NormalizedEvent {
     let type = 'issue';
-    let resource: any = {};
     let eventId = '';
+    let number = 0;
+    let title = '';
+    let description = '';
+    let url = '';
+    let state = '';
+    let author: string | undefined;
+    let assignees: unknown[] | undefined;
+    let labels: string[] | undefined;
+    let branch: string | undefined;
+    let mergeTo: string | undefined;
 
     if (payload.pull_request) {
       type = 'pull_request';
       const pr = payload.pull_request;
       eventId = `github:${payload.repository.full_name}:${payload.action}:${pr.id}:${deliveryId}`;
-      resource = {
-        number: pr.number,
-        title: pr.title,
-        description: pr.body || '',
-        url: pr.html_url,
-        state: pr.state,
-        repository: payload.repository.full_name,
-        assignees: pr.assignees && pr.assignees.length > 0 ? pr.assignees : undefined,
-        labels: pr.labels?.map((l: any) => l.name),
-        author: pr.user?.login,
-        branch: pr.head?.ref,
-        mergeTo: pr.base?.ref,
-      };
+      number = pr.number;
+      title = pr.title;
+      description = pr.body || '';
+      url = pr.html_url;
+      state = pr.state;
+      author = pr.user?.login;
+      assignees = pr.assignees && pr.assignees.length > 0 ? pr.assignees : undefined;
+      labels = pr.labels?.map((l: any) => l.name);
+      branch = pr.head?.ref;
+      mergeTo = pr.base?.ref;
     } else if (payload.issue) {
       type = 'issue';
       const issue = payload.issue;
       eventId = `github:${payload.repository.full_name}:${payload.action}:${issue.id}:${deliveryId}`;
-      resource = {
-        number: issue.number,
-        title: issue.title,
-        description: issue.body || '',
-        url: issue.html_url,
-        state: issue.state,
-        repository: payload.repository.full_name,
-        assignees: issue.assignees && issue.assignees.length > 0 ? issue.assignees : undefined,
-        labels: issue.labels?.map((l: any) => l.name),
-        author: issue.user?.login,
-      };
+      number = issue.number;
+      title = issue.title;
+      description = issue.body || '';
+      url = issue.html_url;
+      state = issue.state;
+      author = issue.user?.login;
+      assignees = issue.assignees && issue.assignees.length > 0 ? issue.assignees : undefined;
+      labels = issue.labels?.map((l: any) => l.name);
     }
+
+    // Build resource object with only defined optional properties
+    const resource: NormalizedEvent['resource'] = {
+      number,
+      title,
+      description,
+      url,
+      state,
+      repository: payload.repository.full_name,
+    };
+
+    if (author) resource.author = author;
+    if (assignees) resource.assignees = assignees;
+    if (labels) resource.labels = labels;
+    if (branch) resource.branch = branch;
+    if (mergeTo) resource.mergeTo = mergeTo;
 
     return {
       id: eventId,
@@ -286,8 +306,8 @@ export class GitHubProvider extends BaseProvider {
       action: payload.action,
       resource,
       actor: {
-        username: payload.sender?.login,
-        id: payload.sender?.id,
+        username: payload.sender?.login || 'unknown',
+        id: payload.sender?.id || 0,
       },
       metadata: {
         timestamp: new Date().toISOString(),
@@ -297,27 +317,32 @@ export class GitHubProvider extends BaseProvider {
     };
   }
 
-  private normalizePolledEvent(item: any): unknown {
+  private normalizePolledEvent(item: any): NormalizedEvent {
     const data = item.data;
     const type = item.type;
     const eventId = `github:${item.repository}:poll:${data.number}:${Date.now()}`;
 
-    const resource: any = {
+    // Build resource object with only defined optional properties
+    const resource: NormalizedEvent['resource'] = {
       number: data.number,
       title: data.title,
       description: data.body || '',
       url: data.html_url,
       state: data.state,
       repository: item.repository,
-      assignees: data.assignees && data.assignees.length > 0 ? data.assignees : undefined,
-      labels: data.labels?.map((l: any) => l.name),
-      author: data.user?.login,
     };
 
-    if (type === 'pull_request' && data.head) {
-      resource.branch = data.head.ref;
-      resource.mergeTo = data.base?.ref;
-    }
+    const author = data.user?.login;
+    const assignees = data.assignees && data.assignees.length > 0 ? data.assignees : undefined;
+    const labels = data.labels?.map((l: any) => l.name);
+    const branch = type === 'pull_request' && data.head ? data.head.ref : undefined;
+    const mergeTo = type === 'pull_request' && data.base ? data.base.ref : undefined;
+
+    if (author) resource.author = author;
+    if (assignees) resource.assignees = assignees;
+    if (labels) resource.labels = labels;
+    if (branch) resource.branch = branch;
+    if (mergeTo) resource.mergeTo = mergeTo;
 
     return {
       id: eventId,
@@ -326,8 +351,8 @@ export class GitHubProvider extends BaseProvider {
       action: 'poll',
       resource,
       actor: {
-        username: data.user?.login,
-        id: data.user?.id,
+        username: data.user?.login || 'unknown',
+        id: data.user?.id || 0,
       },
       metadata: {
         timestamp: new Date().toISOString(),

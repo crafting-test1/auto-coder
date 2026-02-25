@@ -1,4 +1,4 @@
-import type { WatcherConfig, IProvider, EventHandler, Reactor } from './types/index.js';
+import type { WatcherConfig, IProvider, EventHandler, Reactor, NormalizedEvent } from './types/index.js';
 import { WatcherEventEmitter } from './core/EventEmitter.js';
 import { ProviderRegistry } from './providers/ProviderRegistry.js';
 import { WebhookServer } from './transport/WebhookServer.js';
@@ -144,7 +144,7 @@ export class Watcher extends WatcherEventEmitter {
   }
 
   private createEventHandler(providerName: string): EventHandler {
-    return async (event: unknown, reactor: Reactor) => {
+    return async (event: NormalizedEvent, reactor: Reactor) => {
       try {
         // Check for duplicates using reactor
         const isDuplicate = await this.isDuplicate(reactor);
@@ -160,10 +160,9 @@ export class Watcher extends WatcherEventEmitter {
 
         // Execute command if configured
         if (this.commandExecutor) {
-          // Extract event ID and display string from normalized event
-          const eventId = this.extractEventId(event);
+          // Generate display string from normalized event
           const displayString = this.generateDisplayString(event);
-          await this.commandExecutor.execute(eventId, displayString, event, reactor);
+          await this.commandExecutor.execute(event.id, displayString, event, reactor);
         } else {
           // If no command executor, mark as processed manually
           await this.markAsProcessed(reactor, event);
@@ -197,7 +196,7 @@ export class Watcher extends WatcherEventEmitter {
     }
   }
 
-  private async markAsProcessed(reactor: Reactor, event: unknown): Promise<void> {
+  private async markAsProcessed(reactor: Reactor, event: NormalizedEvent): Promise<void> {
     try {
       // Generate a user-friendly display string from the event for the comment template
       const displayString = this.generateDisplayString(event);
@@ -210,53 +209,10 @@ export class Watcher extends WatcherEventEmitter {
     }
   }
 
-  private extractEventId(event: unknown): string {
-    // Extract ID from normalized event structure
-    if (event && typeof event === 'object') {
-      const obj = event as Record<string, unknown>;
-      if (obj.id) return String(obj.id);
-
-      // Fallback to resource number if available
-      if (obj.resource && typeof obj.resource === 'object') {
-        const resource = obj.resource as Record<string, unknown>;
-        if (resource.number) return String(resource.number);
-      }
-    }
-    return Date.now().toString();
-  }
-
-  private generateEventId(event: unknown): string {
-    // Try to extract an ID from normalized event structure
-    return this.extractEventId(event);
-  }
-
-  private generateDisplayString(event: unknown): string {
+  private generateDisplayString(event: NormalizedEvent): string {
     // Generate a user-friendly display string from normalized event
-    if (event && typeof event === 'object') {
-      const obj = event as Record<string, unknown>;
-
-      if (obj.resource && typeof obj.resource === 'object') {
-        const resource = obj.resource as Record<string, unknown>;
-        const type = obj.type as string;
-        const number = resource.number;
-        const repository = resource.repository as string;
-
-        if (number && type) {
-          // Format: "issue #123" or "pull_request #456"
-          const typeLabel = type === 'pull_request' ? 'PR' : type;
-
-          if (repository) {
-            // Include repo: "owner/repo#123"
-            return `${repository}#${number}`;
-          }
-
-          return `${typeLabel} #${number}`;
-        }
-      }
-    }
-
-    // Fallback to event ID
-    return this.extractEventId(event);
+    // Format: "owner/repo#123"
+    return `${event.resource.repository}#${event.resource.number}`;
   }
 
   private async startWebhookServer(): Promise<void> {
