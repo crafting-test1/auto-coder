@@ -4,13 +4,13 @@ An automated coding assistant with intelligent task monitoring and provider inte
 
 ## Features
 
-- **Multi-Provider Event Monitoring**: Watch for events from GitHub (issues, PRs, comments)
-- **Dual Operation Modes**: Webhook-based (passive) and polling-based (proactive) event delivery
-- **Command Execution**: Execute custom commands when events are received with templated prompts
-- **Comment-Based Deduplication**: Prevent duplicate event processing using provider comments
-- **Extensible Provider System**: Easy to add new providers (GitLab, Jira, Linear, etc.)
-- **Secure Webhooks**: HMAC signature verification for webhook security
-- **Graceful Shutdown**: Clean shutdown handling with proper cleanup
+- - **Multi-Provider Event Monitoring**: Watch for events from GitHub (issues, PRs, comments)
+- - **Dual Operation Modes**: Webhook-based (passive) and polling-based (proactive) event delivery
+- - **Command Execution**: Execute custom commands when events are received with templated prompts
+- - **Comment-Based Deduplication**: Prevent duplicate event processing using provider comments
+- - **Extensible Provider System**: Easy to add new providers (GitLab, Jira, Linear, etc.)
+- - **Secure Webhooks**: HMAC signature verification for webhook security
+- - **Graceful Shutdown**: Clean shutdown handling with proper cleanup
 
 ## Prerequisites
 
@@ -535,7 +535,7 @@ ISC
 
 Contributions are welcome! Please ensure:
 
-- TypeScript code passes type checking (`pnpm run type-check`)
-- Code follows existing patterns and conventions
-- New providers implement the full `IProvider` interface
-- Configuration examples are updated for new features
+- [ ] TypeScript code passes type checking (`pnpm run type-check`)
+- [ ] Code follows existing patterns and conventions
+- [ ] New providers implement the full `IProvider` interface
+- [ ] Configuration examples are updated for new features
