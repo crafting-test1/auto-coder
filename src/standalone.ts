@@ -1,6 +1,8 @@
 import { Watcher } from './watcher/Watcher.js';
 import { ConfigLoader } from './watcher/core/ConfigLoader.js';
 import { GitHubProvider } from './watcher/providers/github/GitHubProvider.js';
+import { GitLabProvider } from './watcher/providers/gitlab/GitLabProvider.js';
+import { LinearProvider } from './watcher/providers/linear/LinearProvider.js';
 import { logger } from './watcher/utils/logger.js';
 
 async function main(): Promise<void> {
@@ -14,6 +16,14 @@ async function main(): Promise<void> {
 
     if (config.providers.github?.enabled) {
       watcher.registerProvider('github', new GitHubProvider());
+    }
+
+    if (config.providers.gitlab?.enabled) {
+      watcher.registerProvider('gitlab', new GitLabProvider());
+    }
+
+    if (config.providers.linear?.enabled) {
+      watcher.registerProvider('linear', new LinearProvider());
     }
 
     watcher.on('event', (provider, event) => {

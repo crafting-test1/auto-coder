@@ -1,3 +1,6 @@
+env:
+  - GITHUB_PERSONAL_ACCESS_TOKEN=${secret:github_pat}
+  - LINEAR_API_TOKEN=${secret:linear_api_key}
 endpoints:
   - name: webhook
     http:
@@ -50,7 +53,7 @@ workspaces:
     checkouts:
       - path: auto-coder
         repo:
-          git: https://github.com/crafting-test1/auto-coder
+          git: git@github.com:crafting-test1/auto-coder.git
 containers:
   - name: mcp-proxy
     image: nginx:alpine

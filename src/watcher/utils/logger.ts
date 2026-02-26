@@ -90,15 +90,33 @@ class Logger {
     }
   }
 
+  private formatErrorChain(error: Error): Record<string, unknown> {
+    const formatted: Record<string, unknown> = {
+      message: error.message,
+      name: error.name,
+    };
+
+    if (error.stack) {
+      formatted.stack = error.stack;
+    }
+
+    // Recursively format the cause chain
+    if (error.cause) {
+      if (error.cause instanceof Error) {
+        formatted.cause = this.formatErrorChain(error.cause);
+      } else {
+        formatted.cause = error.cause;
+      }
+    }
+
+    return formatted;
+  }
+
   error(message: string, error?: unknown): void {
     if (this.shouldLog('error')) {
       let meta: unknown = error;
       if (error instanceof Error) {
-        meta = {
-          message: error.message,
-          stack: error.stack,
-          cause: error.cause,
-        };
+        meta = this.formatErrorChain(error);
       }
       console.error(this.formatMessage('error', message, meta));
     }

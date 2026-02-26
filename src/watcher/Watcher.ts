@@ -10,7 +10,7 @@ import { WatcherError, ProviderError } from './utils/errors.js';
 
 export class Watcher extends WatcherEventEmitter {
   private registry: ProviderRegistry;
-  private botUsername: string;
+  private botUsernames: string[];  // Support multiple identifiers for deduplication
   private commentTemplate: string;
   private commandExecutor: CommandExecutor | undefined;
   private server: WebhookServer | undefined;
@@ -34,7 +34,12 @@ export class Watcher extends WatcherEventEmitter {
       throw new WatcherError('botUsername is required for comment-based deduplication');
     }
 
-    this.botUsername = config.deduplication.botUsername;
+    // Normalize botUsername to array for flexible matching
+    const botUsername = config.deduplication.botUsername;
+    this.botUsernames = Array.isArray(botUsername) ? botUsername : [botUsername];
+
+    logger.debug(`Deduplication configured with identifiers: ${this.botUsernames.join(', ')}`);
+
     this.commentTemplate =
       config.deduplication.commentTemplate ||
       'Agent is working on session {id}';
@@ -134,8 +139,9 @@ export class Watcher extends WatcherEventEmitter {
         await provider.initialize(providerConfig);
         logger.info(`Initialized provider: ${name}`);
       } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
         throw new ProviderError(
-          `Failed to initialize provider: ${name}`,
+          `Failed to initialize provider '${name}': ${errorMessage}`,
           name,
           error
         );
@@ -179,14 +185,23 @@ export class Watcher extends WatcherEventEmitter {
       const lastComment = await reactor.getLastComment();
 
       if (!lastComment) {
-        logger.debug('No comments found');
+        logger.debug('No comments found, not a duplicate');
         return false;
       }
 
-      const isDuplicate = lastComment.author === this.botUsername;
+      // Check if last comment author matches any of the configured bot identifiers
+      const isDuplicate = this.botUsernames.includes(lastComment.author);
+
+      logger.debug('Checking for duplicate:', {
+        lastCommentAuthor: lastComment.author,
+        configuredBotIdentifiers: this.botUsernames,
+        isDuplicate,
+      });
 
       if (isDuplicate) {
-        logger.info(`Duplicate detected (last comment by ${this.botUsername})`);
+        logger.info(`Duplicate detected - last comment by bot (matched: ${lastComment.author})`);
+      } else {
+        logger.debug(`Not a duplicate - last comment by ${lastComment.author}, looking for one of: ${this.botUsernames.join(', ')}`);
       }
 
       return isDuplicate;
@@ -259,22 +274,45 @@ export class Watcher extends WatcherEventEmitter {
         continue;
       }
 
-      const hasAuth = config.auth !== undefined;
-      const options = config.options as { repositories?: string[] } | undefined;
-      const hasRepositories = options?.repositories && options.repositories.length > 0;
-
-      // Only start poller if auth and repositories are configured
-      if (!hasAuth || !hasRepositories) {
+      // Skip if no pollingInterval configured
+      if (!config.pollingInterval) {
+        logger.debug(`Skipping poller for ${name}: no pollingInterval configured`);
         continue;
       }
 
-      const intervalMs = (config.pollingInterval || 60) * 1000;
+      // Check if provider has necessary configuration for polling
+      const hasAuth = config.auth !== undefined;
+      if (!hasAuth) {
+        logger.debug(`Skipping poller for ${name}: no auth configured`);
+        continue;
+      }
+
+      // Provider-specific checks for polling configuration
+      const options = config.options as {
+        repositories?: string[];
+        projects?: string[];
+        teams?: string[];
+      } | undefined;
+
+      const hasPollingConfig =
+        (options?.repositories && options.repositories.length > 0) ||  // GitHub/GitLab
+        (options?.projects && options.projects.length > 0) ||          // GitLab
+        (options?.teams && options.teams.length > 0) ||                // Linear
+        (name === 'linear' && hasAuth);                                 // Linear can poll all teams
+
+      if (!hasPollingConfig) {
+        logger.debug(`Skipping poller for ${name}: no repositories/projects/teams configured`);
+        continue;
+      }
+
+      const intervalMs = config.pollingInterval * 1000;
       const eventHandler = this.createEventHandler(name);
 
       const poller = new Poller(provider, intervalMs, eventHandler);
 
       this.pollers.set(name, poller);
       poller.start();
+      logger.info(`Started poller for ${name} (interval: ${config.pollingInterval}s)`);
     }
   }
 
