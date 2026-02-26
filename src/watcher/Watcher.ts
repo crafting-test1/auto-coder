@@ -134,8 +134,9 @@ export class Watcher extends WatcherEventEmitter {
         await provider.initialize(providerConfig);
         logger.info(`Initialized provider: ${name}`);
       } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
         throw new ProviderError(
-          `Failed to initialize provider: ${name}`,
+          `Failed to initialize provider '${name}': ${errorMessage}`,
           name,
           error
         );
