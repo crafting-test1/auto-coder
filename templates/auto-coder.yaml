@@ -13,8 +13,19 @@ endpoints:
     http:
       routes:
         - backend:
-            target: github-mcp
+            target: mcp-proxy
             port: github
+          path_prefix: /
+      auth_proxy:
+        disabled: true
+      path: /mcp
+  - name: linear-mcp
+    type: INTERNAL
+    http:
+      routes:
+        - backend:
+            target: mcp-proxy
+            port: linear
           path_prefix: /
       auth_proxy:
         disabled: true
@@ -30,17 +41,6 @@ endpoints:
       auth_proxy:
         disabled: true
       path: /mcp
-  - name: linear-mcp
-    type: INTERNAL
-    http:
-      routes:
-        - backend:
-            target: linear-mcp
-            port: linear
-          path_prefix: /
-      auth_proxy:
-        disabled: true
-      path: /mcp
 workspaces:
   - name: dev
     ports:
@@ -52,17 +52,46 @@ workspaces:
         repo:
           git: https://github.com/crafting-test1/auto-coder
 containers:
-  - name: github-mcp
+  - name: mcp-proxy
     image: nginx:alpine
     args:
       - /bin/sh
       - -c
-      - printf 'events {} http { server { listen 8082; location /mcp { proxy_set_header Authorization "Bearer $GITHUB_PERSONAL_ACCESS_TOKEN"; proxy_set_header Host api.githubcopilot.com; proxy_pass https://api.githubcopilot.com/mcp/; proxy_http_version 1.1; proxy_buffering off; proxy_ssl_server_name on;} } }' > /etc/nginx/nginx.conf && nginx -g 'daemon off;'
+      - |
+        printf 'events {} 
+        http { 
+          server { 
+            listen 8082; 
+            location /mcp { 
+              proxy_set_header Authorization "Bearer $GITHUB_PERSONAL_ACCESS_TOKEN"; 
+              proxy_set_header Host api.githubcopilot.com; 
+              proxy_pass https://api.githubcopilot.com/mcp/; 
+              proxy_http_version 1.1; 
+              proxy_buffering off; 
+              proxy_ssl_server_name on;
+            } 
+          } 
+          server { 
+            listen 8080; 
+            location /mcp { 
+              proxy_set_header Authorization "Bearer $LINEAR_API_TOKEN"; 
+              proxy_set_header Host mcp.linear.app; 
+              proxy_pass https://mcp.linear.app/mcp; 
+              proxy_http_version 1.1; 
+              proxy_buffering off; 
+              proxy_ssl_server_name on;
+            } 
+          } 
+        }' > /etc/nginx/nginx.conf && nginx -g 'daemon off;'
     env:
       - GITHUB_PERSONAL_ACCESS_TOKEN=${secret:github_pat}
+      - LINEAR_API_TOKEN=${secret:linear_api_key}
     ports:
       - name: github
         port: 8082
+        protocol: HTTP/TCP
+      - name: linear
+        port: 8080
         protocol: HTTP/TCP
   - name: slack-mcp
     image: ghcr.io/korotovsky/slack-mcp-server:latest
@@ -72,24 +101,12 @@ containers:
       - --transport
       - http
     env:
-      - SLACK_MCP_PORT=3001
+      - SLACK_MCP_PORT=8081
       - SLACK_MCP_HOST=0.0.0.0
       - SLACK_MCP_XOXB_TOKEN=${secret:slack_token}
     ports:
       - name: slack
-        port: 3001
-        protocol: HTTP/TCP
-  - name: linear-mcp
-    image: nginx:alpine
-    args:
-      - /bin/sh
-      - -c
-      - printf 'events {} http { server { listen 8080; location /mcp { proxy_set_header Authorization "Bearer $LINEAR_API_TOKEN"; proxy_set_header Host mcp.linear.app; proxy_pass https://mcp.linear.app/mcp; proxy_http_version 1.1; proxy_buffering off; proxy_ssl_server_name on;} } }' > /etc/nginx/nginx.conf && nginx -g 'daemon off;'
-    env:
-      - LINEAR_API_TOKEN=${secret:linear_api_key}
-    ports:
-      - name: linear
-        port: 8080
+        port: 8081
         protocol: HTTP/TCP
 customizations:
   - mcp_server:
