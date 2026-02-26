@@ -72,8 +72,8 @@ providers:
 Configure authentication for your provider:
 
 - **[GitHub Setup](examples/github.md)** - Personal access tokens, webhooks
+- **[Linear Setup](examples/linear.md)** - API keys, webhooks, team monitoring
 - **GitLab** (coming soon)
-- **Linear** (coming soon)
 
 ### 5. Run
 
@@ -166,6 +166,7 @@ For detailed troubleshooting, see provider guides in `examples/`.
 ## Documentation
 
 - [GitHub Setup Guide](examples/github.md)
+- [Linear Setup Guide](examples/linear.md)
 - [Development Guide](DEVELOPMENT.md) - Architecture, API, contributing
 - [Configuration Examples](config/)
 
