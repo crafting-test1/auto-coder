@@ -189,6 +189,12 @@ export class GitHubProvider extends BaseProvider {
       return;
     }
 
+    // Skip newly opened PRs - nothing to do yet
+    if (event === 'pull_request' && payload.action === 'opened') {
+      logger.debug(`Skipping newly opened PR #${resourceNumber} - nothing to do`);
+      return;
+    }
+
     // Skip closed/merged items unless they're being reopened
     if (this.shouldSkipClosedItem(payload)) {
       logger.debug(`Skipping closed/merged ${resourceType} #${resourceNumber}`);
