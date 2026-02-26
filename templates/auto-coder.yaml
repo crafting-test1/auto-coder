@@ -53,9 +53,11 @@ workspaces:
           git: https://github.com/crafting-test1/auto-coder
 containers:
   - name: github-mcp
-    image: ghcr.io/github/github-mcp-server
+    image: nginx:alpine
     args:
-      - http
+      - /bin/sh
+      - -c
+      - printf 'events {} http { server { listen 8082; location /mcp { proxy_set_header Authorization "Bearer $GITHUB_PERSONAL_ACCESS_TOKEN"; proxy_set_header Host api.githubcopilot.com; proxy_pass https://api.githubcopilot.com/mcp/; proxy_http_version 1.1; proxy_buffering off; proxy_ssl_server_name on;} } }' > /etc/nginx/nginx.conf && nginx -g 'daemon off;'
     env:
       - GITHUB_PERSONAL_ACCESS_TOKEN=${secret:github_pat}
     ports:
