@@ -2,6 +2,7 @@ env:
   - GITHUB_PERSONAL_ACCESS_TOKEN=${secret:github_pat}
   - LINEAR_API_TOKEN=${secret:linear_api_key}
   - LINEAR_WEBHOOK_SECRET=${secret:linear_webhook_secret}
+  - SLACK_MCP_XOXB_TOKEN=${secret:slack_token}
 endpoints:
   - name: webhook
     http:
@@ -56,6 +57,16 @@ workspaces:
         repo:
           git: git@github.com:crafting-test1/auto-coder.git
 containers:
+  - name: github-mcp
+    image: ghcr.io/github/github-mcp-server
+    args:
+      - http
+    env:
+      - GITHUB_TOOLSETS=repos,issues,pull_requests
+    ports:
+      - name: github
+        port: 8082
+        protocol: HTTP/TCP
   - name: mcp-proxy
     image: nginx:alpine
     args:
@@ -68,11 +79,10 @@ containers:
             listen 8082; 
             location /mcp { 
               proxy_set_header Authorization "Bearer $GITHUB_PERSONAL_ACCESS_TOKEN"; 
-              proxy_set_header Host api.githubcopilot.com; 
-              proxy_pass https://api.githubcopilot.com/mcp/; 
+              proxy_set_header Host github-mcp; 
+              proxy_pass http://github-mcp:8082/mcp; 
               proxy_http_version 1.1; 
               proxy_buffering off; 
-              proxy_ssl_server_name on;
             } 
           } 
           server { 
@@ -87,9 +97,6 @@ containers:
             } 
           } 
         }' > /etc/nginx/nginx.conf && nginx -g 'daemon off;'
-    env:
-      - GITHUB_PERSONAL_ACCESS_TOKEN=${secret:github_pat}
-      - LINEAR_API_TOKEN=${secret:linear_api_key}
     ports:
       - name: github
         port: 8082
@@ -107,7 +114,6 @@ containers:
     env:
       - SLACK_MCP_PORT=8081
       - SLACK_MCP_HOST=0.0.0.0
-      - SLACK_MCP_XOXB_TOKEN=${secret:slack_token}
     ports:
       - name: slack
         port: 8081
