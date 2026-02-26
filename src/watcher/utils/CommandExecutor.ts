@@ -89,32 +89,26 @@ export class CommandExecutor {
 
   /**
    * Generate a short, clean ID from the normalized event.
-   * Format: provider-repository-number-type-action-hash (e.g., "github-owner-repo-123-i-opn-a1b2c3")
+   * Format: provider-repository-number-hash (e.g., "github-owner-repo-123-a1b2c3")
    * Works across providers (GitHub, GitLab, Jira, Linear, etc.)
    *
-   * Includes type, action, and unique hash suffix to ensure complete uniqueness:
-   * - Issue #123 opened: github-owner-repo-123-i-opn-a1b2c3
-   * - PR #123 opened: github-owner-repo-123-pr-opn-d4e5f6
-   * - Comment 1 on PR #123: github-owner-repo-123-pr-cmt-7g8h9i
-   * - Comment 2 on PR #123: github-owner-repo-123-pr-cmt-j0k1l2
+   * Hash suffix ensures uniqueness across all related events:
+   * - Issue #123 opened: github-owner-repo-123-abc123
+   * - PR #123 opened: github-owner-repo-123-def456
+   * - Comment 1 on PR #123: github-owner-repo-123-ghi789
+   * - Comment 2 on PR #123: github-owner-repo-123-jkl012
    */
   private generateShortId(event: NormalizedEvent): string {
     const provider = event.provider;
     const repo = event.resource.repository.replace(/\//g, '-');
     const number = event.resource.number;
 
-    // Abbreviate type for brevity
-    const typeAbbrev = this.abbreviateType(event.type);
-
-    // Abbreviate action for brevity
-    const actionAbbrev = this.abbreviateAction(event.action);
-
     // Extract a short hash from the event ID to ensure uniqueness
     // Event IDs like "github:owner/repo:opened:123:uuid" contain unique identifiers
     // We'll take the last 6 characters of the ID as a short hash
     const shortHash = this.extractShortHash(event.id);
 
-    return `${provider}-${repo}-${number}-${typeAbbrev}-${actionAbbrev}-${shortHash}`;
+    return `${provider}-${repo}-${number}-${shortHash}`;
   }
 
   /**
@@ -125,45 +119,6 @@ export class CommandExecutor {
     // Remove all non-alphanumeric characters and take last 6 chars
     const cleaned = eventId.replace(/[^a-zA-Z0-9]/g, '');
     return cleaned.slice(-6).toLowerCase();
-  }
-
-  /**
-   * Abbreviate resource type to 1-2 characters
-   */
-  private abbreviateType(type: string): string {
-    switch (type) {
-      case 'issue': return 'i';
-      case 'pull_request': return 'pr';
-      case 'merge_request': return 'mr';
-      default: return type.substring(0, 2);
-    }
-  }
-
-  /**
-   * Abbreviate action to 3-4 characters
-   */
-  private abbreviateAction(action: string): string {
-    switch (action) {
-      case 'opened': return 'opn';
-      case 'closed': return 'cls';
-      case 'reopened': return 'ropn';
-      case 'edited': return 'edt';
-      case 'created': return 'crt';
-      case 'deleted': return 'del';
-      case 'comment': return 'cmt';
-      case 'commented': return 'cmt';
-      case 'review_requested': return 'rvw';
-      case 'review': return 'rvw';
-      case 'assigned': return 'asgn';
-      case 'unassigned': return 'uasgn';
-      case 'labeled': return 'lbl';
-      case 'unlabeled': return 'ulbl';
-      case 'synchronize': return 'sync';
-      case 'updated': return 'upd';
-      case 'merged': return 'mrg';
-      case 'poll': return 'pol';
-      default: return action.substring(0, 4);
-    }
   }
 
   async execute(eventId: string, displayString: string, event: NormalizedEvent, reactor: Reactor): Promise<void> {

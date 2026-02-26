@@ -30,10 +30,10 @@ commandExecutor:
   # Available environment variables:
   # - EVENT_ID: Full event identifier (e.g., "github:owner/repo:opened:123:uuid")
   # - EVENT_SAFE_ID: Sanitized ID safe for shell (e.g., "github_owner_repo_opened_123_uuid")
-  # - EVENT_SHORT_ID: Short, unique ID (e.g., "github-owner-repo-123-i-opn-a1b2c3") RECOMMENDED
-  #   Format: provider-repo-number-type-action-hash
-  #   Examples: "github-owner-repo-123-i-opn-a1b2c3", "github-owner-repo-123-pr-cmt-d4e5f6"
-  #   Hash suffix ensures uniqueness for multiple events on same resource
+  # - EVENT_SHORT_ID: Short, unique ID (e.g., "github-owner-repo-123-abc123") RECOMMENDED
+  #   Format: provider-repo-number-hash
+  #   Examples: "github-owner-repo-123-abc123", "linear-ENG-456-def789"
+  #   Hash suffix (6 chars) ensures uniqueness for all events
   # - PROMPT: Rendered prompt with all event details (if useStdin=false)
   #
   # All event context is included in the PROMPT (rendered from promptTemplateFile).
