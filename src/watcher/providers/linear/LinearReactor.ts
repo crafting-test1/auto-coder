@@ -13,6 +13,7 @@ export class LinearReactor implements Reactor {
       const comments = await this.comments.getComments(this.issueId);
 
       if (comments.length === 0) {
+        logger.debug(`No comments found for Linear issue ${this.issueId}`);
         return null;
       }
 
@@ -23,8 +24,23 @@ export class LinearReactor implements Reactor {
         return null;
       }
 
+      // Linear API returns:
+      // - name: username (e.g., "john-doe")
+      // - displayName: display name (e.g., "John Doe")
+      // - email: email address
+      // Use name (username) as the primary identifier for deduplication
+      const author = lastComment.user.name;
+
+      logger.debug(`Last comment on Linear issue ${this.issueId}:`, {
+        author,
+        username: lastComment.user.name,
+        displayName: lastComment.user.displayName,
+        email: lastComment.user.email,
+        bodyPreview: lastComment.body.substring(0, 100),
+      });
+
       return {
-        author: lastComment.user.name,
+        author,
         body: lastComment.body,
       };
     } catch (error) {

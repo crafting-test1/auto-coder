@@ -8,7 +8,7 @@ export interface ServerConfig {
 
 export interface DeduplicationConfig {
   enabled: boolean;
-  botUsername: string;
+  botUsername: string | string[];  // Support single username or array of identifiers
   commentTemplate?: string;
 }
 

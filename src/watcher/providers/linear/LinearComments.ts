@@ -1,10 +1,14 @@
 import { withExponentialRetry } from '../../utils/retry.js';
+import { logger } from '../../utils/logger.js';
 
 interface LinearComment {
   id: string;
   body: string;
   user: {
+    id: string;
     name: string;
+    email: string;
+    displayName: string;
   };
   createdAt: string;
 }
@@ -23,7 +27,10 @@ export class LinearComments {
               id
               body
               user {
+                id
                 name
+                email
+                displayName
               }
               createdAt
             }
@@ -32,6 +39,12 @@ export class LinearComments {
       }
     `;
 
+    logger.debug('Fetching comments from Linear', {
+      endpoint: this.apiUrl,
+      issueId,
+    });
+
+    const startTime = Date.now();
     const response = await fetch(this.apiUrl, {
       method: 'POST',
       headers: {
@@ -43,8 +56,17 @@ export class LinearComments {
         variables: { issueId },
       }),
     });
+    const duration = Date.now() - startTime;
+
+    logger.debug(`Linear API response received`, {
+      operation: 'getComments',
+      status: response.status,
+      duration: `${duration}ms`,
+    });
 
     if (!response.ok) {
+      const errorText = await response.text();
+      logger.error(`Failed to fetch comments from Linear: ${response.status} ${response.statusText} - ${errorText}`);
       throw new Error(`Failed to fetch comments: ${response.status} ${response.statusText}`);
     }
 
@@ -52,10 +74,14 @@ export class LinearComments {
     const data = result as any;
 
     if (data.errors) {
+      logger.error(`Linear GraphQL errors while fetching comments`, { errors: data.errors });
       throw new Error(`GraphQL errors: ${JSON.stringify(data.errors)}`);
     }
 
-    return data.data?.issue?.comments?.nodes || [];
+    const comments = data.data?.issue?.comments?.nodes || [];
+    logger.debug(`Fetched ${comments.length} comments from Linear issue ${issueId}`);
+
+    return comments;
   }
 
   async postComment(issueId: string, body: string): Promise<string> {
@@ -70,7 +96,14 @@ export class LinearComments {
       }
     `;
 
+    logger.debug('Posting comment to Linear', {
+      issueId,
+      bodyLength: body.length,
+      bodyPreview: body.substring(0, 100),
+    });
+
     const executePost = async () => {
+      const startTime = Date.now();
       const response = await fetch(this.apiUrl, {
         method: 'POST',
         headers: {
@@ -82,9 +115,17 @@ export class LinearComments {
           variables: { issueId, body },
         }),
       });
+      const duration = Date.now() - startTime;
+
+      logger.debug(`Linear API response received`, {
+        operation: 'postComment',
+        status: response.status,
+        duration: `${duration}ms`,
+      });
 
       if (!response.ok) {
         const errorText = await response.text();
+        logger.error(`Failed to post comment to Linear: ${response.status} ${response.statusText} - ${errorText}`);
         throw new Error(`Failed to post comment: ${response.status} ${response.statusText} - ${errorText}`);
       }
 
@@ -92,14 +133,19 @@ export class LinearComments {
       const data = result as any;
 
       if (data.errors) {
+        logger.error(`Linear GraphQL errors while posting comment`, { errors: data.errors });
         throw new Error(`GraphQL errors: ${JSON.stringify(data.errors)}`);
       }
 
       if (!data.data?.commentCreate?.success) {
+        logger.error('Linear commentCreate returned success=false');
         throw new Error('Failed to create comment');
       }
 
-      return data.data.commentCreate.comment.id;
+      const commentId = data.data.commentCreate.comment.id;
+      logger.info(`Posted comment to Linear issue ${issueId}`, { commentId });
+
+      return commentId;
     };
 
     return withExponentialRetry(executePost, {

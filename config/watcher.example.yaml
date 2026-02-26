@@ -14,8 +14,23 @@ deduplication:
   enabled: true
 
   # Bot username (required)
-  # This should be the username of the account posting comments
+  # Can be a single string or array of identifiers to match against
+  # If any identifier matches the last comment author, it's considered a duplicate
+  #
+  # Single identifier:
   botUsername: auto-coder-bot
+  #
+  # Multiple identifiers (recommended for cross-provider support):
+  # botUsername:
+  #   - "auto-coder-bot"      # GitHub/GitLab username
+  #   - "Auto Coder Bot"      # Display name
+  #   - "bot@example.com"     # Email address
+  #
+  # Provider-specific notes:
+  # - GitHub: Use GitHub username (e.g., "auto-coder-bot")
+  # - GitLab: Use GitLab username (e.g., "auto-coder-bot")
+  # - Linear: Use Linear username (e.g., "john-doe")
+  #   If unsure, run with logLevel: debug to see which identifier is returned
 
   # Comment template (optional)
   # Use {id} placeholder for event display (e.g., "owner/repo#123")
