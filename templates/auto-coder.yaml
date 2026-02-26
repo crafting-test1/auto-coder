@@ -1,6 +1,7 @@
 env:
   - GITHUB_PERSONAL_ACCESS_TOKEN=${secret:github_pat}
   - LINEAR_API_TOKEN=${secret:linear_api_key}
+  - LINEAR_WEBHOOK_SECRET=${secret:linear_webhook_secret}
 endpoints:
   - name: webhook
     http:
