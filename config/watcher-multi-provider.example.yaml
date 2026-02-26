@@ -1,0 +1,123 @@
+# Multi-Provider Watcher Configuration Example
+# This example shows how to configure multiple providers with provider-specific prompt templates
+
+server:
+  host: 0.0.0.0
+  port: 3000
+
+deduplication:
+  enabled: true
+  # Use array of identifiers to match across different platforms
+  botUsername:
+    - "auto-coder-bot"      # GitHub/GitLab username
+    - "Auto Coder Bot"      # Display name for Linear
+    - "bot@example.com"     # Email fallback
+  commentTemplate: "Agent is working on {id}"
+
+logLevel: info
+
+# Command executor configuration
+commandExecutor:
+  enabled: true
+
+  # Command to execute - receives rendered prompt via stdin or $PROMPT
+  command: "cs llm session run --approval=auto --name=$EVENT_SHORT_ID"
+
+  # Single template works for all current providers (GitHub, GitLab, Linear)
+  # All three are code platforms with similar PR-based workflows
+  promptTemplateFile: ./config/event-prompt.example.hbs
+
+  # Provider-specific templates (for future use with different platform types)
+  # Uncomment when you need different workflows for different providers:
+  # prompts:
+  #   slack: ./config/event-prompt-slack.example.hbs  # When Slack provider is added
+  #   # github, gitlab, linear will fall back to promptTemplateFile above
+
+  useStdin: true
+  followUp: true
+
+# Multiple providers configuration
+providers:
+  # GitHub: Issues and Pull Requests
+  github:
+    enabled: true
+    pollingInterval: 60
+
+    auth:
+      type: token
+      tokenEnv: GITHUB_TOKEN
+
+    options:
+      webhookSecretEnv: GITHUB_WEBHOOK_SECRET
+
+      repositories:
+        - owner/backend-api
+        - owner/frontend-app
+
+      events:
+        - issues
+        - pull_request
+        - issue_comment
+
+      initialLookbackHours: 1
+      maxItemsPerPoll: 50
+
+  # GitLab: Issues and Merge Requests
+  gitlab:
+    enabled: true
+    pollingInterval: 60
+
+    auth:
+      type: token
+      tokenEnv: GITLAB_TOKEN
+
+    options:
+      webhookTokenEnv: GITLAB_WEBHOOK_TOKEN
+
+      projects:
+        - group/infrastructure
+        - group/tooling
+
+      events:
+        - issues
+        - merge_requests
+
+      initialLookbackHours: 1
+      maxItemsPerPoll: 50
+
+  # Linear: Team-based task tracking
+  linear:
+    enabled: true
+    pollingInterval: 60
+
+    auth:
+      type: token
+      tokenEnv: LINEAR_API_KEY
+
+    options:
+      webhookSecretEnv: LINEAR_WEBHOOK_SECRET
+
+      # Monitor specific teams
+      teams:
+        - ENG      # Engineering
+        - PRODUCT  # Product Management
+
+      initialLookbackHours: 1
+      maxItemsPerPoll: 50
+
+  # Slack: Conversational coordination (future)
+  # slack:
+  #   enabled: false
+  #
+  #   auth:
+  #     type: token
+  #     tokenEnv: SLACK_BOT_TOKEN
+  #
+  #   options:
+  #     # Channels to monitor
+  #     channels:
+  #       - engineering
+  #       - product-requests
+  #
+  #     # Only respond when mentioned
+  #     mentionOnly: true

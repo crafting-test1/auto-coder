@@ -1,3 +1,11 @@
+{{!--
+  Event Prompt Template for Code Platforms
+
+  This template is designed for code repository platforms (GitHub, GitLab, Linear)
+  where the workflow involves creating/updating code via branches, PRs, and commits.
+
+  For conversational platforms (Slack), use event-prompt-slack.example.hbs instead.
+--}}
 {{#eq type "pull_request"}}You are an AI developer handling Pull Request related to the following:{{else}}You are an AI developer handling Issue related to the following:{{/eq}}
 
 ## General Information

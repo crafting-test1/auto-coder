@@ -41,8 +41,13 @@ commandExecutor:
   command: "echo \"$PROMPT\" | your-ai-agent-command"
 
   # Load prompt template from file (recommended)
-  # The template receives the raw GitHub webhook/API event data
+  # The template receives the normalized event data from any provider
   promptTemplateFile: ./config/event-prompt.example.hbs
+
+  # For future multi-provider setups with different platform types:
+  # prompts:
+  #   slack: ./config/event-prompt-slack.example.hbs  # Different workflow for conversational platforms
+  # promptTemplateFile: ./config/event-prompt.example.hbs  # Fallback for code platforms
 
   # Pass prompt via stdin (recommended for large prompts)
   useStdin: true
