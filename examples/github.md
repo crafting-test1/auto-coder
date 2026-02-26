@@ -153,8 +153,17 @@ options:
 
 Supported event types:
 - `issues` - Issue opened, closed, reopened, edited, assigned, etc.
-- `pull_request` - PR opened, closed, merged, edited, review requested, etc.
+- `pull_request` - PR closed, merged, edited, review requested, etc.
+  - **Note**: Newly opened PRs (`action: opened`) are automatically skipped since they represent work already being done, not new tasks to handle
 - `issue_comment` - Comments on issues and pull requests
+
+**Event Filtering Logic:**
+
+The GitHub provider automatically filters events:
+- ✅ **Issues (all actions)** - These are tasks that need work
+- ✅ **PR updates** - Review requests, edits, synchronize, etc.
+- ❌ **Newly opened PRs** - Already work in progress, not new tasks
+- ❌ **Closed/merged items** - Already completed (unless reopened)
 
 #### Polling Options
 

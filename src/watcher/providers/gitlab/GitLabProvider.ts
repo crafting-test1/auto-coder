@@ -195,6 +195,12 @@ export class GitLabProvider extends BaseProvider {
 
     const projectId = payload.project.path_with_namespace;
 
+    // Skip newly opened MRs - nothing to do yet
+    if (resourceType === 'merge_request' && payload.object_attributes.action === 'open') {
+      logger.debug(`Skipping newly opened MR !${resourceNumber} - nothing to do`);
+      return;
+    }
+
     // Skip closed/merged items unless they're being reopened
     if (this.shouldSkipClosedItem(payload)) {
       logger.debug(`Skipping closed/merged ${resourceType} !${resourceNumber}`);

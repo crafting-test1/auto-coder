@@ -89,14 +89,36 @@ export class CommandExecutor {
 
   /**
    * Generate a short, clean ID from the normalized event.
-   * Format: provider-repository-number (e.g., "github-owner-repo-123")
+   * Format: provider-repository-number-hash (e.g., "github-owner-repo-123-a1b2c3")
    * Works across providers (GitHub, GitLab, Jira, Linear, etc.)
+   *
+   * Hash suffix ensures uniqueness across all related events:
+   * - Issue #123 opened: github-owner-repo-123-abc123
+   * - PR #123 opened: github-owner-repo-123-def456
+   * - Comment 1 on PR #123: github-owner-repo-123-ghi789
+   * - Comment 2 on PR #123: github-owner-repo-123-jkl012
    */
   private generateShortId(event: NormalizedEvent): string {
     const provider = event.provider;
     const repo = event.resource.repository.replace(/\//g, '-');
     const number = event.resource.number;
-    return `${provider}-${repo}-${number}`;
+
+    // Extract a short hash from the event ID to ensure uniqueness
+    // Event IDs like "github:owner/repo:opened:123:uuid" contain unique identifiers
+    // We'll take the last 6 characters of the ID as a short hash
+    const shortHash = this.extractShortHash(event.id);
+
+    return `${provider}-${repo}-${number}-${shortHash}`;
+  }
+
+  /**
+   * Extract a short hash from the event ID for uniqueness.
+   * Takes the last 6 alphanumeric characters from the event ID.
+   */
+  private extractShortHash(eventId: string): string {
+    // Remove all non-alphanumeric characters and take last 6 chars
+    const cleaned = eventId.replace(/[^a-zA-Z0-9]/g, '');
+    return cleaned.slice(-6).toLowerCase();
   }
 
   async execute(eventId: string, displayString: string, event: NormalizedEvent, reactor: Reactor): Promise<void> {
