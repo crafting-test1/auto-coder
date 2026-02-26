@@ -61,7 +61,6 @@ containers:
     args:
       - http
     env:
-      - GITHUB_PERSONAL_ACCESS_TOKEN=${secret:github_pat}
       - GITHUB_TOOLSETS=repos,issues,pull_requests
     ports:
       - name: github
@@ -76,7 +75,7 @@ containers:
         printf 'events {} 
         http { 
           server { 
-            listen 8083; 
+            listen 8082; 
             location /mcp { 
               proxy_set_header Authorization "Bearer $GITHUB_PERSONAL_ACCESS_TOKEN"; 
               proxy_set_header Host github-mcp; 
@@ -97,12 +96,9 @@ containers:
             } 
           } 
         }' > /etc/nginx/nginx.conf && nginx -g 'daemon off;'
-    env:
-      - GITHUB_PERSONAL_ACCESS_TOKEN=${secret:github_pat}
-      - LINEAR_API_TOKEN=${secret:linear_api_key}
     ports:
       - name: github
-        port: 8083
+        port: 8082
         protocol: HTTP/TCP
       - name: linear
         port: 8080
