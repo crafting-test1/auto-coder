@@ -1,3 +1,11 @@
+{{!--
+  Event Prompt Template for Code Platforms
+
+  This template is designed for code repository platforms (GitHub, GitLab, Linear)
+  where the workflow involves creating/updating code via branches, PRs, and commits.
+
+  For conversational platforms (Slack), use event-prompt-slack.example.hbs instead.
+--}}
 {{#eq type "pull_request"}}You are an AI developer handling Pull Request related to the following:{{else}}You are an AI developer handling Issue related to the following:{{/eq}}
 
 ## General Information
@@ -33,12 +41,35 @@ Pull Request:
 {{resource.description}}
 {{/if}}
 
+{{#if resource.comment}}
+## New Comment
+
+**Author**: @{{resource.comment.author}}
+
+{{resource.comment.body}}
+
+{{#if resource.comment.url}}
+**Comment URL**: {{resource.comment.url}}
+{{/if}}
+
+**Important**: This event was triggered by a NEW COMMENT. Make sure to:
+- Read and understand what the comment is asking for
+- Address the specific request or question in the comment
+- Respond directly to the comment author's concerns
+
+{{/if}}
+
 ## Instructions
 
 - Find the best Template according to Source Repository
 - Create a sandbox using that Template with a unique name like "ai-{{#if id}}{{id}}{{/if}}-<UNIQUE>"
 - Target that sandbox and start working in the related workspace
-  - Fetch all comments and context related to this {{#eq type "pull_request"}}Pull Request{{else}}Issue{{/eq}}, especially the new comments and understand the task accurately
+  {{#if resource.comment}}
+  - **This event was triggered by a comment** - Focus on addressing what was requested in the comment above
+  - Fetch all previous comments for full context, but prioritize the new comment's request
+  {{else}}
+  - Fetch all comments and context related to this {{#eq type "pull_request"}}Pull Request{{else}}Issue{{/eq}} and understand the task accurately
+  {{/if}}
   {{#eq type "pull_request"}}
   - Make sure the branch related to this Pull Request is checked out
   {{else}}

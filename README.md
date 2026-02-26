@@ -88,6 +88,25 @@ pnpm run build
 pnpm start
 ```
 
+## Features
+
+### Provider-Specific Prompt Templates
+
+All current providers (GitHub, GitLab, Linear) are code platforms with similar PR-based workflows, so they work well with a single shared template.
+
+auto-coder supports provider-specific prompt templates for future extensibility when adding providers with fundamentally different workflows (like conversational platforms).
+
+Configure in `commandExecutor`:
+```yaml
+# Current: Single template for all providers
+promptTemplateFile: ./config/event-prompt.example.hbs
+
+# Future: Provider-specific templates when needed
+# prompts:
+#   slack: ./config/event-prompt-slack.example.hbs  # Different workflow
+# promptTemplateFile: ./config/event-prompt.example.hbs  # Fallback
+```
+
 ## Configuration
 
 ### Basic Configuration Options
@@ -113,7 +132,8 @@ deduplication:
 commandExecutor:
   enabled: true
   command: "your-command"
-  promptTemplateFile: ./prompt.hbs
+  # Single template works for all current providers (GitHub, GitLab, Linear)
+  promptTemplateFile: ./config/event-prompt.example.hbs
   useStdin: true
   followUp: true
 ```

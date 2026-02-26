@@ -68,17 +68,24 @@ commandExecutor:
   # Use EVENT_SHORT_ID for command/session names (guaranteed unique per event)
   command: "cs llm session run --approval=auto --name=$EVENT_SHORT_ID"
 
-  # Prompt template (optional)
-  # Uses Handlebars syntax to render event data into a prompt
-  # The template receives the raw provider event data
-  # promptTemplate: |
-  #   Issue: {{issue.title}}
-  #   Action: {{action}}
-  #   Repository: {{repository.full_name}}
+  # Prompt template configuration (optional)
+  # There are three ways to configure prompt templates:
 
-  # Or load template from file (recommended)
-  # Use the production-tested template adapted from samples/watch.go:
+  # Option 1: Single template file (RECOMMENDED - works for all current providers)
+  # GitHub, GitLab, and Linear are all code platforms with similar workflows:
   # promptTemplateFile: ./config/event-prompt.example.hbs
+
+  # Option 2: Provider-specific templates (for future multi-platform setups)
+  # Use this when you have providers with fundamentally different workflows:
+  # prompts:
+  #   slack: ./config/event-prompt-slack.example.hbs  # When Slack provider is added
+  # promptTemplateFile: ./config/event-prompt.example.hbs  # Fallback for GitHub/GitLab/Linear
+
+  # Option 3: Inline template (not recommended, use files instead)
+  # promptTemplate: |
+  #   Issue: {{resource.title}}
+  #   Action: {{action}}
+  #   Repository: {{resource.repository}}
 
   # Pass prompt via stdin instead of environment variable (default: false)
   # If true, prompt is sent to command's stdin; if false, via $PROMPT env var

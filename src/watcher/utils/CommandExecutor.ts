@@ -9,6 +9,8 @@ export interface CommandExecutorConfig {
   command: string;
   promptTemplate?: string;
   promptTemplateFile?: string;
+  /** Provider-specific prompt templates. Maps provider name to template file path. */
+  prompts?: Record<string, string>;
   useStdin?: boolean;
   followUp?: boolean;  // Post/update comment with command output
   dryRun?: boolean;    // Print command instead of executing (for testing)
@@ -16,6 +18,7 @@ export interface CommandExecutorConfig {
 
 export class CommandExecutor {
   private promptTemplate: HandlebarsTemplateDelegate | undefined;
+  private providerTemplates: Map<string, HandlebarsTemplateDelegate> = new Map();
 
   constructor(private readonly config: CommandExecutorConfig) {
     if (!config.enabled) {
@@ -25,11 +28,26 @@ export class CommandExecutor {
     // Register Handlebars helpers
     this.registerHelpers();
 
-    // Load prompt template if provided
+    // Load provider-specific prompt templates if provided
+    if (config.prompts) {
+      for (const [provider, templatePath] of Object.entries(config.prompts)) {
+        try {
+          const content = readFileSync(templatePath, 'utf-8');
+          this.providerTemplates.set(provider, Handlebars.compile(content));
+          logger.debug(`Loaded prompt template for provider: ${provider}`);
+        } catch (error) {
+          logger.error(`Failed to load template file for ${provider}: ${templatePath}`, error);
+          throw error;
+        }
+      }
+    }
+
+    // Load default prompt template if provided (fallback)
     if (config.promptTemplateFile) {
       try {
         const content = readFileSync(config.promptTemplateFile, 'utf-8');
         this.promptTemplate = Handlebars.compile(content);
+        logger.debug('Loaded default prompt template');
       } catch (error) {
         logger.error(`Failed to load template file: ${config.promptTemplateFile}`, error);
         throw error;
@@ -130,8 +148,13 @@ export class CommandExecutor {
       // Render prompt template if available
       // Event is already normalized by the provider
       let prompt = '';
-      if (this.promptTemplate) {
-        prompt = this.promptTemplate(event);
+
+      // Select template based on provider (provider-specific or fallback to default)
+      const template = this.providerTemplates.get(event.provider) || this.promptTemplate;
+
+      if (template) {
+        prompt = template(event);
+        logger.debug(`Rendered prompt using ${this.providerTemplates.has(event.provider) ? 'provider-specific' : 'default'} template for ${event.provider}`);
       }
 
       // Post initial comment with user-friendly display string (always, even in dry-run)

@@ -43,6 +43,9 @@ interface GitHubWebhookPayload {
   };
   comment?: {
     id: number;
+    body?: string;
+    html_url?: string;
+    user?: { login: string; id: number };
   };
   repository: {
     full_name: string;
@@ -307,6 +310,7 @@ export class GitHubProvider extends BaseProvider {
     let labels: string[] | undefined;
     let branch: string | undefined;
     let mergeTo: string | undefined;
+    let comment: { body: string; author: string; url?: string } | undefined;
 
     if (payload.pull_request) {
       type = 'pull_request';
@@ -334,6 +338,25 @@ export class GitHubProvider extends BaseProvider {
       author = issue.user?.login;
       assignees = issue.assignees && issue.assignees.length > 0 ? issue.assignees : undefined;
       labels = issue.labels?.map((l: any) => l.name);
+
+      // If this is a PR issue (from issue_comment event), mark it as pull_request type
+      if (issue.pull_request) {
+        type = 'pull_request';
+      }
+    }
+
+    // Extract comment information if present (for issue_comment events)
+    if (payload.comment) {
+      const commentObj: { body: string; author: string; url?: string } = {
+        body: payload.comment.body || '',
+        author: payload.comment.user?.login || 'unknown',
+      };
+      if (payload.comment.html_url) {
+        commentObj.url = payload.comment.html_url;
+      }
+      comment = commentObj;
+      // Update eventId to include comment ID for uniqueness
+      eventId = `github:${payload.repository.full_name}:${payload.action}:comment:${payload.comment.id}:${deliveryId}`;
     }
 
     // Build resource object with only defined optional properties
@@ -351,6 +374,7 @@ export class GitHubProvider extends BaseProvider {
     if (labels) resource.labels = labels;
     if (branch) resource.branch = branch;
     if (mergeTo) resource.mergeTo = mergeTo;
+    if (comment) resource.comment = comment;
 
     return {
       id: eventId,
