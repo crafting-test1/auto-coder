@@ -164,7 +164,14 @@ export class LinearComments {
       }
     `;
 
+    logger.debug('Updating comment on Linear', {
+      commentId,
+      bodyLength: body.length,
+      bodyPreview: body.substring(0, 100),
+    });
+
     const executeUpdate = async () => {
+      const startTime = Date.now();
       const response = await fetch(this.apiUrl, {
         method: 'POST',
         headers: {
@@ -176,9 +183,17 @@ export class LinearComments {
           variables: { commentId, body },
         }),
       });
+      const duration = Date.now() - startTime;
+
+      logger.debug(`Linear API response received`, {
+        operation: 'updateComment',
+        status: response.status,
+        duration: `${duration}ms`,
+      });
 
       if (!response.ok) {
         const errorText = await response.text();
+        logger.error(`Failed to update comment on Linear: ${response.status} ${response.statusText} - ${errorText}`);
         throw new Error(`Failed to update comment: ${response.status} ${response.statusText} - ${errorText}`);
       }
 
@@ -186,12 +201,16 @@ export class LinearComments {
       const data = result as any;
 
       if (data.errors) {
+        logger.error(`Linear GraphQL errors while updating comment`, { errors: data.errors });
         throw new Error(`GraphQL errors: ${JSON.stringify(data.errors)}`);
       }
 
       if (!data.data?.commentUpdate?.success) {
+        logger.error('Linear commentUpdate returned success=false');
         throw new Error('Failed to update comment');
       }
+
+      logger.info(`Updated comment on Linear`, { commentId });
     };
 
     await withExponentialRetry(executeUpdate, {
