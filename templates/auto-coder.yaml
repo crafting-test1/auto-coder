@@ -2,6 +2,7 @@ env:
   - GITHUB_PERSONAL_ACCESS_TOKEN=${secret:github_pat}
   - LINEAR_API_TOKEN=${secret:linear_api_key}
   - LINEAR_WEBHOOK_SECRET=${secret:linear_webhook_secret}
+  - SLACK_MCP_XOXB_TOKEN=${secret:slack_token}
 endpoints:
   - name: webhook
     http:
@@ -113,7 +114,6 @@ containers:
     env:
       - SLACK_MCP_PORT=8081
       - SLACK_MCP_HOST=0.0.0.0
-      - SLACK_MCP_XOXB_TOKEN=${secret:slack_token}
     ports:
       - name: slack
         port: 8081
