@@ -78,6 +78,16 @@ export interface NormalizedEvent {
 
     /** Target branch (for PRs/MRs) */
     mergeTo?: string;
+
+    /** Comment information (when event is triggered by a comment) */
+    comment?: {
+      /** Comment body/content */
+      body: string;
+      /** Comment author */
+      author: string;
+      /** Comment URL (if available) */
+      url?: string;
+    };
   };
 
   /** Actor who triggered the event */
