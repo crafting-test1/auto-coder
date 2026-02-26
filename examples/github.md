@@ -34,16 +34,7 @@ Create a GitHub Personal Access Token with the following permissions:
 
 ### Create a Sandbox secret 
 
-```bash
-export GITHUB_TOKEN="ghp_your_token_here"
-```
-
-For persistent configuration, add it to your shell profile (`~/.bashrc`, `~/.zshrc`, etc.):
-
-```bash
-echo 'export GITHUB_TOKEN="ghp_your_token_here"' >> ~/.bashrc
-source ~/.bashrc
-```
+create a Sandbox secret `github_pat` from the generated PAT.
 
 ## Webhook Secret Setup (Optional but Recommended)
 
@@ -55,25 +46,12 @@ Webhook secrets provide security by verifying that webhook requests come from Gi
 openssl rand -hex 32
 ```
 
-### Set as Environment Variable
-
-```bash
-export GITHUB_WEBHOOK_SECRET="your-secret-here"
-```
-
-For persistent configuration:
-
-```bash
-echo 'export GITHUB_WEBHOOK_SECRET="your-secret-here"' >> ~/.bashrc
-source ~/.bashrc
-```
-
 ### Configure in GitHub
 
 1. Go to your repository → Settings → Webhooks → Add webhook
 2. Set **Payload URL**: `http://your-server:3000/webhook/github`
 3. Set **Content type**: `application/json`
-4. Set **Secret**: Your webhook secret (same as `GITHUB_WEBHOOK_SECRET`)
+4. Set **Secret**: Your webhook secret
 5. Select events:
    - **Issues** (check this)
    - **Pull requests** (check this)
