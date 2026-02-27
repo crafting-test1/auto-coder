@@ -241,8 +241,12 @@ commandExecutor:
 **Required Slack App Scopes:**
 - `app_mentions:read` - Detect @mentions
 - `chat:write` - Post messages
+- `im:write`
 - `channels:history` - Read thread context
 - `users:read` - Resolve user names
+- `groups.history`
+- `im:read`
+
 
 **Event Subscription:**
 - Subscribe to `app_mention` events
