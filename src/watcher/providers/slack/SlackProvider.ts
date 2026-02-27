@@ -1,0 +1,357 @@
+import { BaseProvider } from '../BaseProvider.js';
+import type {
+  ProviderConfig,
+  ProviderMetadata,
+  EventHandler,
+  NormalizedEvent,
+} from '../../types/index.js';
+import { ConfigLoader } from '../../core/ConfigLoader.js';
+import { SlackWebhook } from './SlackWebhook.js';
+import { SlackComments } from './SlackComments.js';
+import { SlackReactor } from './SlackReactor.js';
+import { SlackPoller } from './SlackPoller.js';
+import { ProviderError } from '../../utils/errors.js';
+import { logger } from '../../utils/logger.js';
+
+interface SlackEventPayload {
+  type: string;
+  event?: {
+    type: string;
+    channel: string;
+    user: string;
+    text: string;
+    ts: string;
+    thread_ts?: string;
+    channel_type?: string;
+  };
+  team_id?: string;
+  event_id?: string;
+  event_time?: number;
+}
+
+/**
+ * Slack provider that processes app_mention events.
+ *
+ * Unlike GitHub/GitLab/Linear, Slack only processes events where the bot is mentioned.
+ * This prevents the bot from triggering on every message in high-traffic channels.
+ *
+ * Supports both webhook (real-time) and polling (fallback for missed mentions) modes.
+ */
+export class SlackProvider extends BaseProvider {
+  private webhook: SlackWebhook | undefined;
+  private comments: SlackComments | undefined;
+  private poller: SlackPoller | undefined;
+  private token: string | undefined;
+  private botUserId: string | undefined;
+
+  get metadata(): ProviderMetadata {
+    return {
+      name: 'slack',
+      version: '1.0.0',
+    };
+  }
+
+  async initialize(config: ProviderConfig): Promise<void> {
+    await super.initialize(config);
+
+    // Get OAuth token from config
+    this.token = ConfigLoader.resolveSecret(
+      config.auth?.token,
+      config.auth?.tokenEnv,
+      config.auth?.tokenFile
+    );
+
+    if (!this.token) {
+      throw new ProviderError(
+        'Slack bot token is required. Set SLACK_BOT_TOKEN environment variable or configure token/tokenFile in auth section. See examples/slack.md for setup instructions.',
+        'slack'
+      );
+    }
+
+    // Validate token format (should start with xoxb- for bot tokens)
+    if (!this.token.startsWith('xoxb-')) {
+      logger.warn(
+        'Slack token does not start with "xoxb-". Make sure you are using a Bot User OAuth Token, not a User OAuth Token or other token type.'
+      );
+    }
+
+    // Initialize Slack API client
+    this.comments = new SlackComments(this.token);
+
+    // Get bot user ID for mention detection and deduplication
+    try {
+      this.botUserId = await this.comments.getBotUserId();
+      logger.info(`Slack bot user ID: ${this.botUserId}`);
+      logger.info('Slack authentication successful');
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      logger.error('Failed to authenticate with Slack API', { error: errorMessage });
+
+      // Provide helpful error messages based on common issues
+      if (errorMessage.includes('invalid_auth') || errorMessage.includes('not_authed')) {
+        throw new ProviderError(
+          'Slack authentication failed: Invalid bot token. Please verify your SLACK_BOT_TOKEN is correct. Token should start with "xoxb-" and be a valid Bot User OAuth Token from your Slack app.',
+          'slack',
+          error
+        );
+      } else if (errorMessage.includes('token_revoked')) {
+        throw new ProviderError(
+          'Slack authentication failed: Token has been revoked. Please generate a new Bot User OAuth Token in your Slack app settings.',
+          'slack',
+          error
+        );
+      } else if (errorMessage.includes('account_inactive')) {
+        throw new ProviderError(
+          'Slack authentication failed: Account is inactive. Please check your Slack workspace status.',
+          'slack',
+          error
+        );
+      } else {
+        throw new ProviderError(
+          `Slack authentication failed: ${errorMessage}. Please verify your bot token and network connectivity. See examples/slack.md for setup instructions.`,
+          'slack',
+          error
+        );
+      }
+    }
+
+    // Initialize webhook handler
+    const signingSecret = ConfigLoader.resolveSecret(
+      config.options?.signingSecret as string | undefined,
+      config.options?.signingSecretEnv as string | undefined,
+      config.options?.signingSecretFile as string | undefined
+    );
+
+    this.webhook = new SlackWebhook(signingSecret);
+
+    // Initialize poller if explicitly enabled
+    // Unlike other providers, Slack polling is opt-in via pollingEnabled flag
+    const pollingEnabled = config.options?.pollingEnabled as boolean | undefined;
+    if (config.pollingInterval && pollingEnabled) {
+      const initialLookbackHours = (config.options?.initialLookbackHours as number) || 1;
+      this.poller = new SlackPoller(this.token, this.botUserId, initialLookbackHours);
+      logger.info('Slack polling enabled (fallback for missed mentions)');
+    } else if (config.pollingInterval && !pollingEnabled) {
+      logger.info('Slack polling disabled (pollingEnabled=false). Set pollingEnabled=true to enable polling fallback.');
+    }
+
+    logger.info('Slack provider initialized');
+  }
+
+  async validateWebhook(
+    headers: Record<string, string | string[] | undefined>,
+    body: unknown,
+    rawBody?: string | Buffer
+  ): Promise<boolean> {
+    if (!this.webhook) {
+      throw new ProviderError('Slack webhook not initialized', 'slack');
+    }
+
+    if (!rawBody) {
+      throw new ProviderError('Raw body required for Slack signature verification', 'slack');
+    }
+
+    const result = this.webhook.validate(headers, body, rawBody);
+
+    // Handle URL verification challenge
+    if (result.challenge) {
+      logger.info('Received Slack URL verification challenge');
+      // The webhook handler should return the challenge
+      // This is handled at the transport layer
+    }
+
+    return result.valid;
+  }
+
+  async handleWebhook(
+    headers: Record<string, string | string[] | undefined>,
+    body: unknown,
+    eventHandler: EventHandler
+  ): Promise<void> {
+    if (!this.webhook) {
+      throw new ProviderError('Slack webhook not initialized', 'slack');
+    }
+
+    if (!this.comments) {
+      throw new ProviderError('Slack comments not initialized', 'slack');
+    }
+
+    const payload = body as SlackEventPayload;
+
+    // Handle URL verification challenge (webhook setup)
+    if (payload.type === 'url_verification') {
+      logger.debug('URL verification challenge handled by validateWebhook');
+      return;
+    }
+
+    // Only process event_callback type (actual events)
+    if (payload.type !== 'event_callback' || !payload.event) {
+      logger.debug(`Ignoring Slack event type: ${payload.type}`);
+      return;
+    }
+
+    const event = payload.event;
+
+    // Only process app_mention events (when bot is @mentioned)
+    if (event.type !== 'app_mention') {
+      logger.debug(`Ignoring Slack event: ${event.type} (only app_mention is processed)`);
+      return;
+    }
+
+    logger.debug(`Processing Slack app_mention in channel ${event.channel}`);
+
+    const reactor = new SlackReactor(
+      this.comments,
+      event.channel,
+      event.thread_ts // If part of a thread, reply in thread
+    );
+
+    // Normalize Slack event for template rendering
+    const normalizedEvent = this.normalizeEvent(payload);
+
+    await eventHandler(normalizedEvent, reactor);
+  }
+
+  private normalizeEvent(payload: SlackEventPayload): NormalizedEvent {
+    const event = payload.event!;
+
+    // Event ID for deduplication
+    const eventId = `slack:${event.channel}:${event.ts}:${payload.event_id || Date.now()}`;
+
+    // Extract channel name (use channel ID as we don't have name in event)
+    const channelId = event.channel;
+
+    // For Slack, we treat the channel as the "repository"
+    // and the message as an "issue" that needs a response
+    const resource: NormalizedEvent['resource'] = {
+      number: 0, // Slack doesn't have issue numbers, use timestamp as unique ID
+      title: `Message in #${channelId}`,
+      description: event.text || '',
+      url: '', // Slack message URLs require workspace context
+      state: 'open', // Messages are always "open" until resolved
+      repository: channelId,
+      comment: {
+        body: event.text || '',
+        author: event.user,
+      },
+    };
+
+    return {
+      id: eventId,
+      provider: 'slack',
+      type: 'message',
+      action: 'created',
+      resource,
+      actor: {
+        username: event.user,
+        id: event.user,
+      },
+      metadata: {
+        timestamp: event.ts,
+        channel: channelId,
+        threadTs: event.thread_ts,
+        channelType: event.channel_type,
+      },
+      raw: payload,
+    };
+  }
+
+  async poll(eventHandler: EventHandler): Promise<void> {
+    if (!this.poller) {
+      logger.debug('Slack polling not configured');
+      return;
+    }
+
+    if (!this.comments) {
+      throw new ProviderError('Slack comments not initialized', 'slack');
+    }
+
+    try {
+      const mentions = await this.poller.poll();
+
+      if (mentions.length === 0) {
+        logger.debug('No new Slack mentions found');
+        return;
+      }
+
+      logger.info(`Processing ${mentions.length} Slack mentions from polling`);
+
+      for (const mention of mentions) {
+        logger.debug(`Processing polled mention in channel ${mention.channel}`);
+
+        const reactor = new SlackReactor(
+          this.comments,
+          mention.channel,
+          mention.threadTs
+        );
+
+        // Normalize polled mention for template rendering
+        const normalizedEvent = this.normalizePolledMention(mention);
+
+        await eventHandler(normalizedEvent, reactor);
+      }
+    } catch (error) {
+      logger.error('Error polling Slack mentions', error);
+      throw error;
+    }
+  }
+
+  private normalizePolledMention(mention: {
+    channel: string;
+    ts: string;
+    threadTs?: string;
+    text: string;
+    user: string;
+    permalink?: string;
+  }): NormalizedEvent {
+    // Event ID for deduplication
+    const eventId = `slack:${mention.channel}:${mention.ts}:polled`;
+
+    const commentObj: { body: string; author: string; url?: string } = {
+      body: mention.text || '',
+      author: mention.user,
+    };
+
+    if (mention.permalink) {
+      commentObj.url = mention.permalink;
+    }
+
+    const resource: NormalizedEvent['resource'] = {
+      number: 0,
+      title: `Message in #${mention.channel}`,
+      description: mention.text || '',
+      url: mention.permalink || '',
+      state: 'open',
+      repository: mention.channel,
+      comment: commentObj,
+    };
+
+    return {
+      id: eventId,
+      provider: 'slack',
+      type: 'message',
+      action: 'created',
+      resource,
+      actor: {
+        username: mention.user,
+        id: mention.user,
+      },
+      metadata: {
+        timestamp: mention.ts,
+        channel: mention.channel,
+        threadTs: mention.threadTs,
+        polled: true,
+      },
+      raw: mention,
+    };
+  }
+
+  async shutdown(): Promise<void> {
+    await super.shutdown();
+    this.webhook = undefined;
+    this.comments = undefined;
+    this.poller = undefined;
+    this.token = undefined;
+    this.botUserId = undefined;
+  }
+}

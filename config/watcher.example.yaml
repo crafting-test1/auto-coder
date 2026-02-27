@@ -218,7 +218,31 @@ providers:
       # Maximum items to process per poll (default: unlimited)
       maxItemsPerPoll: 50
 
-  # Other providers can be added here
-  # jira:
-  #   enabled: false
-  #   ...
+  # Slack Provider (mention-triggered only)
+  slack:
+    enabled: false
+
+    # Optional: Enable polling to catch missed mentions
+    # Unlike other providers, Slack polling is opt-in via pollingEnabled flag
+    # pollingInterval: 300  # Poll every 5 minutes (only if pollingEnabled=true)
+
+    auth:
+      type: token
+      tokenEnv: SLACK_BOT_TOKEN  # Bot User OAuth Token from Slack app
+
+    options:
+      # Signing secret for webhook verification (recommended)
+      signingSecretEnv: SLACK_SIGNING_SECRET
+
+      # Enable polling fallback (opt-in)
+      # Set to true to search for missed mentions when webhooks fail
+      # Requires search:read scope in Slack app
+      # pollingEnabled: false
+
+      # Initial lookback period for first poll (default: 1 hour)
+      # initialLookbackHours: 1
+
+      # Note: Slack provider only processes app_mention events
+      # Bot must be added to channels and @mentioned to trigger
+      # Webhook is the primary mechanism (real-time)
+      # Polling is optional fallback (requires pollingEnabled=true)
