@@ -164,7 +164,7 @@ export class SlackProvider extends BaseProvider {
   }
 
   async handleWebhook(
-    headers: Record<string, string | string[] | undefined>,
+    _headers: Record<string, string | string[] | undefined>,
     body: unknown,
     eventHandler: EventHandler
   ): Promise<void> {
