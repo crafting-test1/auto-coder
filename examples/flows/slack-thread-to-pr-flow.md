@@ -195,7 +195,7 @@ The bot detects Bob's new @mention and starts another investigation!
 └──────────┘
 ```
 
-⏱️ **Total time**: ~2-3 minutes from @mention to PR + security analysis
+⏱️ **Total time**: a few minutes from @mention to PR + security analysis
 
 ---
 

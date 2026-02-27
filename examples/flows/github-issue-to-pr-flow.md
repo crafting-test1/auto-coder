@@ -173,7 +173,7 @@ The PR is ready for your review. The Crafting Sandbox Coding Agent has done all 
 └──────────┘
 ```
 
-⏱️ **Total time**: ~2-3 minutes from issue creation to PR ready for review
+⏱️ **Total time**: a few minutes from issue creation to PR ready for review
 
 ---
 
