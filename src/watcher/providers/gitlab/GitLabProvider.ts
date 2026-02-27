@@ -47,6 +47,7 @@ export class GitLabProvider extends BaseProvider {
   private poller: GitLabPoller | undefined;
   private comments: GitLabComments | undefined;
   private token: string | undefined;
+  private botUsernames: string[] = [];
   private baseUrl: string | undefined;
 
   get metadata(): ProviderMetadata {
@@ -87,7 +88,18 @@ export class GitLabProvider extends BaseProvider {
       events?: string[];
       initialLookbackHours?: number;
       maxItemsPerPoll?: number;
+      botUsername?: string | string[];
     } | undefined;
+
+    // Read bot username(s) for deduplication
+    if (options?.botUsername) {
+      this.botUsernames = Array.isArray(options.botUsername)
+        ? options.botUsername
+        : [options.botUsername];
+      logger.debug(`GitLab bot usernames configured: ${this.botUsernames.join(', ')}`);
+    } else {
+      logger.warn('GitLab: No botUsername configured - deduplication will not work');
+    }
 
     // Resolve webhook token if provided
     const webhookToken = ConfigLoader.resolveSecret(
@@ -216,7 +228,8 @@ export class GitLabProvider extends BaseProvider {
       this.comments,
       projectId,
       resourceType,
-      resourceNumber
+      resourceNumber,
+      this.botUsernames
     );
 
     await eventHandler(normalizedEvent, reactor);
@@ -349,7 +362,8 @@ export class GitLabProvider extends BaseProvider {
         this.comments,
         projectId,
         resourceType,
-        resourceNumber
+        resourceNumber,
+        this.botUsernames
       );
 
       logger.debug(`Calling event handler for ${resourceType} !${resourceNumber}`);

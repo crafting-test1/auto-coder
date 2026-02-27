@@ -7,7 +7,8 @@ export class GitLabReactor implements Reactor {
     private readonly comments: GitLabComments,
     private readonly projectId: string,
     private readonly resourceType: string,
-    private readonly resourceNumber: number
+    private readonly resourceNumber: number,
+    private readonly botUsernames: string[]
   ) {}
 
   async getLastComment(): Promise<{ author: string; body: string } | null> {
@@ -53,5 +54,9 @@ export class GitLabReactor implements Reactor {
       logger.error('Failed to post comment to GitLab', error);
       throw error;
     }
+  }
+
+  isBotAuthor(author: string): boolean {
+    return this.botUsernames.includes(author);
   }
 }

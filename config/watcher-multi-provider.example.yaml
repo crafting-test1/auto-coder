@@ -7,11 +7,8 @@ server:
 
 deduplication:
   enabled: true
-  # Use array of identifiers to match across different platforms
-  botUsername:
-    - "auto-coder-bot"      # GitHub/GitLab username
-    - "Auto Coder Bot"      # Display name for Linear
-    - "bot@example.com"     # Email fallback
+  # Prevents duplicate work by skipping events where the bot already commented
+  # Bot username configuration is provider-specific (see each provider's options)
   commentTemplate: "Agent is working on {id}"
 
 logLevel: info
@@ -50,6 +47,9 @@ providers:
     options:
       webhookSecretEnv: GITHUB_WEBHOOK_SECRET
 
+      # Bot username(s) for deduplication, activity from this user will be skipped.
+      botUsername: auto-coder-bot
+
       repositories:
         - owner/backend-api
         - owner/frontend-app
@@ -74,6 +74,9 @@ providers:
     options:
       webhookTokenEnv: GITLAB_WEBHOOK_TOKEN
 
+      # Bot username(s) for deduplication, activity from this user will be skipped.
+      botUsername: auto-coder-bot
+
       projects:
         - group/infrastructure
         - group/tooling
@@ -97,6 +100,10 @@ providers:
     options:
       webhookSecretEnv: LINEAR_WEBHOOK_SECRET
 
+      # Bot username(s) for deduplication, activity from this user will be skipped.
+      # Linear usernames are in the format "john-doe"
+      botUsername: auto-coder-bot
+
       # Monitor specific teams
       teams:
         - ENG      # Engineering
@@ -117,6 +124,9 @@ providers:
     options:
       # Signing secret for webhook verification
       signingSecretEnv: SLACK_SIGNING_SECRET
+
+      # Note: Bot user ID is automatically detected via Slack API
+      # No botUsername configuration is needed for Slack
 
       # Note: Slack provider automatically filters to app_mention events only
       # No need to configure channels - bot responds in any channel where it's added

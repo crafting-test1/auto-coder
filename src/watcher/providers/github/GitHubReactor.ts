@@ -7,17 +7,20 @@ export class GitHubReactor implements Reactor {
   private repository: string;
   private resourceType: string;
   private resourceNumber: number;
+  private botUsernames: string[];
 
   constructor(
     comments: GitHubComments,
     repository: string,
     resourceType: string,
-    resourceNumber: number
+    resourceNumber: number,
+    botUsernames: string[]
   ) {
     this.comments = comments;
     this.repository = repository;
     this.resourceType = resourceType;
     this.resourceNumber = resourceNumber;
+    this.botUsernames = botUsernames;
   }
 
   async getLastComment(): Promise<{ author: string; body: string } | null> {
@@ -57,5 +60,9 @@ export class GitHubReactor implements Reactor {
       logger.error('Failed to post comment via reactor', error);
       throw error;
     }
+  }
+
+  isBotAuthor(author: string): boolean {
+    return this.botUsernames.includes(author);
   }
 }

@@ -9,7 +9,8 @@ export class SlackReactor implements Reactor {
   constructor(
     private readonly comments: SlackComments,
     private readonly channel: string,
-    private readonly threadTs?: string
+    private readonly threadTs: string | undefined,
+    private readonly botUsernames: string[]
   ) {}
 
   async getLastComment(): Promise<{ author: string; body: string } | null> {
@@ -46,5 +47,9 @@ export class SlackReactor implements Reactor {
       logger.error('Failed to post message to Slack', error);
       throw error;
     }
+  }
+
+  isBotAuthor(author: string): boolean {
+    return this.botUsernames.includes(author);
   }
 }

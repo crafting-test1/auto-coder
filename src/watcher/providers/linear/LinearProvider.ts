@@ -51,6 +51,7 @@ export class LinearProvider extends BaseProvider {
   private poller: LinearPoller | undefined;
   private comments: LinearComments | undefined;
   private apiKey: string | undefined;
+  private botUsernames: string[] = [];
 
   get metadata(): ProviderMetadata {
     return {
@@ -83,7 +84,18 @@ export class LinearProvider extends BaseProvider {
       teams?: string[];
       initialLookbackHours?: number;
       maxItemsPerPoll?: number;
+      botUsername?: string | string[];
     } | undefined;
+
+    // Read bot username(s) for deduplication
+    if (options?.botUsername) {
+      this.botUsernames = Array.isArray(options.botUsername)
+        ? options.botUsername
+        : [options.botUsername];
+      logger.debug(`Linear bot usernames configured: ${this.botUsernames.join(', ')}`);
+    } else {
+      logger.warn('Linear: No botUsername configured - deduplication will not work');
+    }
 
     // Resolve webhook secret if provided
     const webhookSecret = ConfigLoader.resolveSecret(
@@ -174,7 +186,7 @@ export class LinearProvider extends BaseProvider {
       return;
     }
 
-    const reactor = new LinearReactor(this.comments, issueId);
+    const reactor = new LinearReactor(this.comments, issueId, this.botUsernames);
 
     // Normalize Linear event for template rendering
     const normalizedEvent = this.normalizeEvent(payload, webhookId);
@@ -234,7 +246,7 @@ export class LinearProvider extends BaseProvider {
 
       logger.debug(`Creating reactor for issue ${item.data.identifier}`);
 
-      const reactor = new LinearReactor(this.comments, issueId);
+      const reactor = new LinearReactor(this.comments, issueId, this.botUsernames);
 
       // Normalize Linear API response for template rendering
       const normalizedEvent = this.normalizePolledEvent(item);

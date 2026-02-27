@@ -24,6 +24,7 @@ export interface ProviderConfig {
 export interface Reactor {
   getLastComment(): Promise<{ author: string; body: string } | null>;
   postComment(comment: string): Promise<string>;
+  isBotAuthor(author: string): boolean;
 }
 
 /**

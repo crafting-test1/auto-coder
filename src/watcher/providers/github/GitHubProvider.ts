@@ -61,6 +61,7 @@ export class GitHubProvider extends BaseProvider {
   private poller: GitHubPoller | undefined;
   private comments: GitHubComments | undefined;
   private token: string | undefined;
+  private botUsernames: string[] = [];
 
   get metadata(): ProviderMetadata {
     return {
@@ -94,7 +95,18 @@ export class GitHubProvider extends BaseProvider {
       events?: string[];
       initialLookbackHours?: number;
       maxItemsPerPoll?: number;
+      botUsername?: string | string[];
     } | undefined;
+
+    // Read bot username(s) for deduplication
+    if (options?.botUsername) {
+      this.botUsernames = Array.isArray(options.botUsername)
+        ? options.botUsername
+        : [options.botUsername];
+      logger.debug(`GitHub bot usernames configured: ${this.botUsernames.join(', ')}`);
+    } else {
+      logger.warn('GitHub: No botUsername configured - deduplication will not work');
+    }
 
     // Resolve webhook secret if provided
     const webhookSecret = ConfigLoader.resolveSecret(
@@ -205,7 +217,8 @@ export class GitHubProvider extends BaseProvider {
       this.comments,
       payload.repository.full_name,
       resourceType,
-      resourceNumber
+      resourceNumber,
+      this.botUsernames
     );
 
     await eventHandler(normalizedEvent, reactor);
@@ -357,7 +370,8 @@ export class GitHubProvider extends BaseProvider {
         this.comments,
         repository,
         resourceType,
-        resourceNumber
+        resourceNumber,
+        this.botUsernames
       );
 
       logger.debug(`Calling event handler for ${resourceType} #${resourceNumber}`);
