@@ -29,6 +29,16 @@ export class WebhookHandler {
         }
       }
 
+      // Handle Slack URL verification challenge
+      if (body && typeof body === 'object' && 'type' in body && body.type === 'url_verification') {
+        const challenge = (body as any).challenge;
+        if (challenge) {
+          logger.debug('Responding to Slack URL verification challenge');
+          res.status(200).json({ challenge });
+          return;
+        }
+      }
+
       const rawBody = (req as Request & { rawBody?: Buffer }).rawBody;
       const isValid = await this.provider.validateWebhook(
         req.headers,

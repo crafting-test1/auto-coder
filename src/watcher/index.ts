@@ -8,6 +8,7 @@ export { ProviderRegistry } from './providers/ProviderRegistry.js';
 export { GitHubProvider } from './providers/github/GitHubProvider.js';
 export { GitLabProvider } from './providers/gitlab/GitLabProvider.js';
 export { LinearProvider } from './providers/linear/LinearProvider.js';
+export { SlackProvider } from './providers/slack/SlackProvider.js';
 
 export type {
   WatcherConfig,

@@ -4,14 +4,15 @@ An automated coding assistant that watches for events from GitHub, GitLab, Linea
 
 ## What is auto-coder?
 
-auto-coder monitors your repositories for issues, pull requests, and comments, then automatically triggers your AI coding agent or custom scripts to respond. It supports both webhook-based (real-time) and polling-based (periodic) event delivery.
+auto-coder monitors your repositories and communication channels for events, then automatically triggers your AI coding agent or custom scripts to respond. It supports both webhook-based (real-time) and polling-based (periodic) event delivery.
 
 **Key Features:**
-- Multi-provider support (GitHub, GitLab, Linear)
+- Multi-provider support (GitHub, GitLab, Linear, Slack)
 - Webhook and polling modes
 - Command execution with templated prompts
 - Automatic deduplication to prevent duplicate work
 - Secure webhook signature verification
+- Provider-specific prompt templates
 
 ## Quick Start from [Crafting Sandbox](https://www.crafting.dev/)
 
@@ -73,6 +74,7 @@ Configure authentication for your provider:
 
 - **[GitHub Setup](examples/github.md)** - Personal access tokens, webhooks
 - **[Linear Setup](examples/linear.md)** - API keys, webhooks, team monitoring
+- **[Slack Setup](examples/slack.md)** - Bot tokens, mention-triggered responses
 - **GitLab** (coming soon)
 
 ### 5. Run

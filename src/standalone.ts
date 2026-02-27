@@ -3,6 +3,7 @@ import { ConfigLoader } from './watcher/core/ConfigLoader.js';
 import { GitHubProvider } from './watcher/providers/github/GitHubProvider.js';
 import { GitLabProvider } from './watcher/providers/gitlab/GitLabProvider.js';
 import { LinearProvider } from './watcher/providers/linear/LinearProvider.js';
+import { SlackProvider } from './watcher/providers/slack/SlackProvider.js';
 import { logger } from './watcher/utils/logger.js';
 
 async function main(): Promise<void> {
@@ -24,6 +25,10 @@ async function main(): Promise<void> {
 
     if (config.providers.linear?.enabled) {
       watcher.registerProvider('linear', new LinearProvider());
+    }
+
+    if (config.providers.slack?.enabled) {
+      watcher.registerProvider('slack', new SlackProvider());
     }
 
     watcher.on('event', (provider, event) => {

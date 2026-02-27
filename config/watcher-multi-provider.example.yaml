@@ -105,19 +105,19 @@ providers:
       initialLookbackHours: 1
       maxItemsPerPoll: 50
 
-  # Slack: Conversational coordination (future)
-  # slack:
-  #   enabled: false
-  #
-  #   auth:
-  #     type: token
-  #     tokenEnv: SLACK_BOT_TOKEN
-  #
-  #   options:
-  #     # Channels to monitor
-  #     channels:
-  #       - engineering
-  #       - product-requests
-  #
-  #     # Only respond when mentioned
-  #     mentionOnly: true
+  # Slack: Mention-triggered responses
+  # Unlike other providers, Slack only triggers when bot is @mentioned
+  slack:
+    enabled: false
+
+    auth:
+      type: token
+      tokenEnv: SLACK_BOT_TOKEN
+
+    options:
+      # Signing secret for webhook verification
+      signingSecretEnv: SLACK_SIGNING_SECRET
+
+      # Note: Slack provider automatically filters to app_mention events only
+      # No need to configure channels - bot responds in any channel where it's added
+      # and someone @mentions it
