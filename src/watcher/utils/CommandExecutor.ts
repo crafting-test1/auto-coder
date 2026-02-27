@@ -3,6 +3,7 @@ import { readFileSync } from 'fs';
 import Handlebars from 'handlebars';
 import type { Reactor, NormalizedEvent } from '../types/index.js';
 import { logger } from './logger.js';
+import { formatLink, formatResourceLink } from './linkFormatter.js';
 
 export interface CommandExecutorConfig {
   enabled: boolean;
@@ -92,6 +93,28 @@ export class CommandExecutor {
       } else {
         return options.inverse(this);
       }
+    });
+
+    // Register 'link' helper for formatting links
+    Handlebars.registerHelper('link', function (text: string, url: string, provider: string) {
+      return new Handlebars.SafeString(formatLink(text, url, provider));
+    });
+
+    // Register 'resourceLink' helper for formatting resource links
+    Handlebars.registerHelper('resourceLink', function (this: any) {
+      const event = this as NormalizedEvent;
+      return new Handlebars.SafeString(formatResourceLink(event));
+    });
+
+    // Register 'commentLink' helper for formatting comment links
+    Handlebars.registerHelper('commentLink', function (this: any) {
+      const event = this as NormalizedEvent;
+      if (event.resource.comment?.url) {
+        return new Handlebars.SafeString(
+          formatLink('View Comment', event.resource.comment.url, event.provider)
+        );
+      }
+      return '';
     });
   }
 

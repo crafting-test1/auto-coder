@@ -7,6 +7,7 @@ import { Poller } from './transport/Poller.js';
 import { CommandExecutor } from './utils/CommandExecutor.js';
 import { logger } from './utils/logger.js';
 import { WatcherError, ProviderError } from './utils/errors.js';
+import { formatResourceLink } from './utils/linkFormatter.js';
 
 export class Watcher extends WatcherEventEmitter {
   private registry: ProviderRegistry;
@@ -225,9 +226,9 @@ export class Watcher extends WatcherEventEmitter {
   }
 
   private generateDisplayString(event: NormalizedEvent): string {
-    // Generate a user-friendly display string from normalized event
-    // Format: "owner/repo#123"
-    return `${event.resource.repository}#${event.resource.number}`;
+    // Generate a user-friendly clickable link from normalized event
+    // Format depends on provider: markdown [text](url) or Slack <url|text>
+    return formatResourceLink(event);
   }
 
   private async startWebhookServer(): Promise<void> {

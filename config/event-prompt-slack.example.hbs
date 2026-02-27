@@ -18,7 +18,7 @@ You are an AI assistant handling a Slack message in the following context:
 
 {{#if provider}}From: {{provider}}{{/if}}
 {{#if id}}Event ID: {{id}}{{/if}}
-{{#if resource.url}}Message URL: {{resource.url}}{{/if}}
+{{#if resource.url}}Message: {{resourceLink}}{{/if}}
 
 ## Message Context
 
@@ -91,12 +91,13 @@ Author: @{{resource.author}}
    - When creating issues or PRs from Slack discussions:
      * Create the issue/PR in the appropriate repository
      * Include context from the Slack discussion
-     * Link back to the Slack thread in the issue/PR description
-     * Post the issue/PR link in the Slack thread
+     * Link back to this Slack thread in the issue/PR description: {{resourceLink}}
+     * Post the issue/PR link in Slack using the format: <issue_url|Issue #123> or <pr_url|PR #456>
+     * This creates clickable links in Slack messages
 
    - When discussing existing issues/PRs:
      * Provide quick status summaries
-     * Link to the actual issue/PR
+     * Link to the actual issue/PR using Slack's link format: <url|Issue #123>
      * Highlight any important updates or blockers
 
 7. **Response Tone**:

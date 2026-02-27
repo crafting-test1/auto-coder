@@ -19,7 +19,7 @@ Source Repository:
   Name: {{resource.repository}}
 {{/if}}
 {{#if resource.url}}
-  URL: {{resource.url}}
+  URL: {{resourceLink}}
 {{/if}}
 {{#eq type "pull_request"}}
 {{#if resource.branch}}
@@ -49,7 +49,7 @@ Pull Request:
 {{resource.comment.body}}
 
 {{#if resource.comment.url}}
-**Comment URL**: {{resource.comment.url}}
+**Comment URL**: {{commentLink}}
 {{/if}}
 
 **Important**: This event was triggered by a NEW COMMENT. Make sure to:
