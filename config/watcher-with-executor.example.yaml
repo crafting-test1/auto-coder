@@ -7,7 +7,8 @@ server:
 
 deduplication:
   enabled: true
-  botUsername: auto-coder-bot
+  # Prevents duplicate work by skipping events where the bot already commented
+  # Bot username configuration is provider-specific (see each provider's options)
   commentTemplate: "Agent is working on {id}"
 
 logLevel: info
@@ -72,6 +73,9 @@ providers:
       # webhookSecret: "your-secret-here"
       webhookSecretEnv: GITHUB_WEBHOOK_SECRET
       # webhookSecretFile: /path/to/secret/file
+
+      # Bot username(s) for deduplication, activity from this user will be skipped.
+      botUsername: auto-coder-bot
 
       repositories:
         - owner/repo1

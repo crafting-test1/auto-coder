@@ -7,7 +7,8 @@ export class GitLabReactor implements Reactor {
     private readonly comments: GitLabComments,
     private readonly projectId: string,
     private readonly resourceType: string,
-    private readonly resourceNumber: number
+    private readonly resourceNumber: number,
+    private readonly botUsernames: string[]
   ) {}
 
   async getLastComment(): Promise<{ author: string; body: string } | null> {
@@ -55,18 +56,7 @@ export class GitLabReactor implements Reactor {
     }
   }
 
-  async updateComment(commentId: string, comment: string): Promise<void> {
-    try {
-      await this.comments.updateComment(
-        this.projectId,
-        this.resourceType,
-        this.resourceNumber,
-        parseInt(commentId, 10),
-        comment
-      );
-    } catch (error) {
-      logger.error('Failed to update comment on GitLab', error);
-      throw error;
-    }
+  isBotAuthor(author: string): boolean {
+    return this.botUsernames.includes(author);
   }
 }

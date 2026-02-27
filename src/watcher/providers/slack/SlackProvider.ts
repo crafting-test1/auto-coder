@@ -42,7 +42,7 @@ export class SlackProvider extends BaseProvider {
   private comments: SlackComments | undefined;
   private poller: SlackPoller | undefined;
   private token: string | undefined;
-  private botUserId: string | undefined;
+  private botUsernames: string[] = [];
 
   get metadata(): ProviderMetadata {
     return {
@@ -80,8 +80,9 @@ export class SlackProvider extends BaseProvider {
 
     // Get bot user ID for mention detection and deduplication
     try {
-      this.botUserId = await this.comments.getBotUserId();
-      logger.info(`Slack bot user ID: ${this.botUserId}`);
+      const botUserId = await this.comments.getBotUserId();
+      this.botUsernames = [botUserId];
+      logger.info(`Slack bot user ID: ${botUserId}`);
       logger.info('Slack authentication successful');
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
@@ -128,8 +129,15 @@ export class SlackProvider extends BaseProvider {
     // Unlike other providers, Slack polling is opt-in via pollingEnabled flag
     const pollingEnabled = config.options?.pollingEnabled as boolean | undefined;
     if (config.pollingInterval && pollingEnabled) {
+      if (!this.botUsernames[0]) {
+        throw new ProviderError(
+          'Slack bot user ID is required for polling but was not set during initialization',
+          'slack'
+        );
+      }
       const initialLookbackHours = (config.options?.initialLookbackHours as number) || 1;
-      this.poller = new SlackPoller(this.token, this.botUserId, initialLookbackHours);
+      const botUserId = this.botUsernames[0];
+      this.poller = new SlackPoller(this.token, botUserId, initialLookbackHours);
       logger.info('Slack polling enabled (fallback for missed mentions)');
     } else if (config.pollingInterval && !pollingEnabled) {
       logger.info('Slack polling disabled (pollingEnabled=false). Set pollingEnabled=true to enable polling fallback.');
@@ -208,7 +216,8 @@ export class SlackProvider extends BaseProvider {
     const reactor = new SlackReactor(
       this.comments,
       event.channel,
-      threadTs
+      threadTs,
+      this.botUsernames
     );
 
     // Normalize Slack event for template rendering
@@ -292,7 +301,8 @@ export class SlackProvider extends BaseProvider {
         const reactor = new SlackReactor(
           this.comments,
           mention.channel,
-          threadTs
+          threadTs,
+          this.botUsernames
         );
 
         // Normalize polled mention for template rendering
@@ -362,6 +372,6 @@ export class SlackProvider extends BaseProvider {
     this.comments = undefined;
     this.poller = undefined;
     this.token = undefined;
-    this.botUserId = undefined;
+    this.botUsernames = [];
   }
 }

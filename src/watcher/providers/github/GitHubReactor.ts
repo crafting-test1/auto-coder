@@ -7,17 +7,20 @@ export class GitHubReactor implements Reactor {
   private repository: string;
   private resourceType: string;
   private resourceNumber: number;
+  private botUsernames: string[];
 
   constructor(
     comments: GitHubComments,
     repository: string,
     resourceType: string,
-    resourceNumber: number
+    resourceNumber: number,
+    botUsernames: string[]
   ) {
     this.comments = comments;
     this.repository = repository;
     this.resourceType = resourceType;
     this.resourceNumber = resourceNumber;
+    this.botUsernames = botUsernames;
   }
 
   async getLastComment(): Promise<{ author: string; body: string } | null> {
@@ -59,8 +62,7 @@ export class GitHubReactor implements Reactor {
     }
   }
 
-  async updateComment(commentId: string, comment: string): Promise<void> {
-    logger.warn('updateComment not yet implemented for GitHub');
-    // TODO: Implement comment update via GitHub API
+  isBotAuthor(author: string): boolean {
+    return this.botUsernames.includes(author);
   }
 }

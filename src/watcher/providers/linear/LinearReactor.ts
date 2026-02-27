@@ -5,7 +5,8 @@ import { logger } from '../../utils/logger.js';
 export class LinearReactor implements Reactor {
   constructor(
     private readonly comments: LinearComments,
-    private readonly issueId: string
+    private readonly issueId: string,
+    private readonly botUsernames: string[]
   ) {}
 
   async getLastComment(): Promise<{ author: string; body: string } | null> {
@@ -59,12 +60,7 @@ export class LinearReactor implements Reactor {
     }
   }
 
-  async updateComment(commentId: string, comment: string): Promise<void> {
-    try {
-      await this.comments.updateComment(commentId, comment);
-    } catch (error) {
-      logger.error('Failed to update comment on Linear', error);
-      throw error;
-    }
+  isBotAuthor(author: string): boolean {
+    return this.botUsernames.includes(author);
   }
 }

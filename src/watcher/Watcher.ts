@@ -7,10 +7,10 @@ import { Poller } from './transport/Poller.js';
 import { CommandExecutor } from './utils/CommandExecutor.js';
 import { logger } from './utils/logger.js';
 import { WatcherError, ProviderError } from './utils/errors.js';
+import { formatResourceLink } from './utils/linkFormatter.js';
 
 export class Watcher extends WatcherEventEmitter {
   private registry: ProviderRegistry;
-  private botUsernames: string[];  // Support multiple identifiers for deduplication
   private commentTemplate: string;
   private commandExecutor: CommandExecutor | undefined;
   private server: WebhookServer | undefined;
@@ -29,16 +29,6 @@ export class Watcher extends WatcherEventEmitter {
     if (!config.deduplication) {
       throw new WatcherError('Deduplication configuration is required');
     }
-
-    if (!config.deduplication.botUsername) {
-      throw new WatcherError('botUsername is required for comment-based deduplication');
-    }
-
-    // Normalize botUsername to array for flexible matching
-    const botUsername = config.deduplication.botUsername;
-    this.botUsernames = Array.isArray(botUsername) ? botUsername : [botUsername];
-
-    logger.debug(`Deduplication configured with identifiers: ${this.botUsernames.join(', ')}`);
 
     this.commentTemplate =
       config.deduplication.commentTemplate ||
@@ -189,19 +179,18 @@ export class Watcher extends WatcherEventEmitter {
         return false;
       }
 
-      // Check if last comment author matches any of the configured bot identifiers
-      const isDuplicate = this.botUsernames.includes(lastComment.author);
+      // Check if last comment author is a bot using provider-specific logic
+      const isDuplicate = reactor.isBotAuthor(lastComment.author);
 
       logger.debug('Checking for duplicate:', {
         lastCommentAuthor: lastComment.author,
-        configuredBotIdentifiers: this.botUsernames,
         isDuplicate,
       });
 
       if (isDuplicate) {
-        logger.info(`Duplicate detected - last comment by bot (matched: ${lastComment.author})`);
+        logger.info(`Duplicate detected - last comment by bot (${lastComment.author})`);
       } else {
-        logger.debug(`Not a duplicate - last comment by ${lastComment.author}, looking for one of: ${this.botUsernames.join(', ')}`);
+        logger.debug(`Not a duplicate - last comment by ${lastComment.author}`);
       }
 
       return isDuplicate;
@@ -225,9 +214,9 @@ export class Watcher extends WatcherEventEmitter {
   }
 
   private generateDisplayString(event: NormalizedEvent): string {
-    // Generate a user-friendly display string from normalized event
-    // Format: "owner/repo#123"
-    return `${event.resource.repository}#${event.resource.number}`;
+    // Generate a user-friendly clickable link from normalized event
+    // Format depends on provider: markdown [text](url) or Slack <url|text>
+    return formatResourceLink(event);
   }
 
   private async startWebhookServer(): Promise<void> {

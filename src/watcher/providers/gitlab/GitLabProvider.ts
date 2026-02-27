@@ -47,6 +47,7 @@ export class GitLabProvider extends BaseProvider {
   private poller: GitLabPoller | undefined;
   private comments: GitLabComments | undefined;
   private token: string | undefined;
+  private botUsernames: string[] = [];
   private baseUrl: string | undefined;
 
   get metadata(): ProviderMetadata {
@@ -87,7 +88,18 @@ export class GitLabProvider extends BaseProvider {
       events?: string[];
       initialLookbackHours?: number;
       maxItemsPerPoll?: number;
+      botUsername?: string | string[];
     } | undefined;
+
+    // Read bot username(s) for deduplication
+    if (options?.botUsername) {
+      this.botUsernames = Array.isArray(options.botUsername)
+        ? options.botUsername
+        : [options.botUsername];
+      logger.debug(`GitLab bot usernames configured: ${this.botUsernames.join(', ')}`);
+    } else {
+      logger.warn('GitLab: No botUsername configured - deduplication will not work');
+    }
 
     // Resolve webhook token if provided
     const webhookToken = ConfigLoader.resolveSecret(
@@ -203,35 +215,22 @@ export class GitLabProvider extends BaseProvider {
 
     const projectId = payload.project.path_with_namespace;
 
-    // Skip newly opened MRs - nothing to do yet
-    if (resourceType === 'merge_request' && payload.object_attributes.action === 'open') {
-      logger.debug(`Skipping newly opened MR !${resourceNumber} - nothing to do`);
-      return;
+    // Normalize event first to apply shared filtering logic
+    const normalizedEvent = this.normalizeEvent(payload);
+
+    // Apply shared filtering logic
+    if (!this.shouldProcessEvent(normalizedEvent)) {
+      return; // Event filtered out (already logged in shouldProcessEvent)
     }
 
-    // Skip MR update events (commits pushed, title/description changed) - automated action, not user interaction
-    // Bot should only respond to comments (note events), approvals, or explicit requests
-    // Note: GitLab uses generic 'update' action for all MR updates including commits
-    if (resourceType === 'merge_request' && payload.object_attributes.action === 'update' && payload.object_kind !== 'note') {
-      logger.debug(`Skipping MR !${resourceNumber} update event - automated action (commits/metadata)`);
-      return;
-    }
-
-    // Skip closed/merged items unless they're being reopened
-    if (this.shouldSkipClosedItem(payload)) {
-      logger.debug(`Skipping closed/merged ${resourceType} !${resourceNumber}`);
-      return;
-    }
-
+    // Create reactor and process event
     const reactor = new GitLabReactor(
       this.comments,
       projectId,
       resourceType,
-      resourceNumber
+      resourceNumber,
+      this.botUsernames
     );
-
-    // Normalize GitLab event for template rendering
-    const normalizedEvent = this.normalizeEvent(payload);
 
     await eventHandler(normalizedEvent, reactor);
   }
@@ -251,13 +250,74 @@ export class GitLabProvider extends BaseProvider {
     return false;
   }
 
-  private shouldSkipClosedPolledItem(item: any): boolean {
-    // Check if item is closed
-    if (item.data.state === 'closed') {
-      return true;
+  /**
+   * Shared filtering logic for both webhook and polling events
+   * Determines if a normalized event should be processed
+   * @param event - The normalized event
+   * @param hasRecentNotes - For polled events, whether there are recent notes/comments
+   * @returns true if event should be processed, false to skip
+   */
+  private shouldProcessEvent(event: NormalizedEvent, hasRecentNotes?: boolean): boolean {
+    const { type, action, resource } = event;
+
+    // 1. Skip newly opened MRs/issues - nothing to do yet
+    if (action === 'open') {
+      logger.debug(`Skipping newly opened ${type} !${resource.number} - nothing to do`);
+      return false;
     }
 
-    return false;
+    // 2. Skip MR update events (commits pushed, metadata changed) - automated action, not user interaction
+    // For polling, this is represented by action='poll' without recent notes
+    if (type === 'merge_request') {
+      if (action === 'update') {
+        logger.debug(`Skipping MR !${resource.number} update event - automated action (commits/metadata)`);
+        return false;
+      }
+
+      // For polled events, skip if no recent human interaction
+      if (action === 'poll' && hasRecentNotes === false) {
+        logger.debug(`Skipping polled MR !${resource.number} - only updated due to commits, no new notes`);
+        return false;
+      }
+    }
+
+    // 3. Skip closed/merged items unless they're being reopened
+    if (resource.state === 'closed' && action !== 'reopen') {
+      logger.debug(`Skipping closed/merged ${type} !${resource.number}`);
+      return false;
+    }
+
+    // Event should be processed
+    return true;
+  }
+
+  /**
+   * Check if an MR has recent human interaction (notes/comments)
+   * This helps filter out MRs that were only updated due to commits
+   */
+  private async hasRecentHumanInteraction(projectId: string, mrNumber: number): Promise<boolean> {
+    if (!this.comments) {
+      return true; // If we can't check, assume there is interaction
+    }
+
+    try {
+      // Check for recent notes (last 5 notes)
+      const notes = await this.comments.listNotes(projectId, mrNumber, 5);
+
+      // If there are any notes, consider it as having interaction
+      // The deduplication system will handle if the bot already commented
+      if (notes.length > 0) {
+        logger.debug(`MR !${mrNumber} has ${notes.length} recent note(s)`);
+        return true;
+      }
+
+      logger.debug(`MR !${mrNumber} has no recent notes`);
+      return false;
+    } catch (error) {
+      logger.warn(`Failed to check notes for MR !${mrNumber}`, error);
+      // On error, assume there is interaction to avoid missing important events
+      return true;
+    }
   }
 
   async poll(eventHandler: EventHandler): Promise<void> {
@@ -281,10 +341,19 @@ export class GitLabProvider extends BaseProvider {
       const resourceType = item.type === 'issue' ? 'issue' : 'merge_request';
       const resourceNumber = item.number;
 
-      // Skip closed/merged items from polling
-      if (this.shouldSkipClosedPolledItem(item)) {
-        logger.debug(`Skipping closed/merged ${resourceType} !${resourceNumber} in ${projectId}`);
-        continue;
+      // For MRs, check if there are recent notes to distinguish
+      // between commit updates (skip) vs human interaction (process)
+      let hasRecentNotes: boolean | undefined;
+      if (resourceType === 'merge_request') {
+        hasRecentNotes = await this.hasRecentHumanInteraction(projectId, resourceNumber);
+      }
+
+      // Normalize event first to apply shared filtering logic
+      const normalizedEvent = this.normalizePolledEvent(item);
+
+      // Apply shared filtering logic (same as webhooks)
+      if (!this.shouldProcessEvent(normalizedEvent, hasRecentNotes)) {
+        continue; // Event filtered out (already logged in shouldProcessEvent)
       }
 
       logger.debug(`Creating reactor for ${resourceType} !${resourceNumber} in ${projectId}`);
@@ -293,11 +362,9 @@ export class GitLabProvider extends BaseProvider {
         this.comments,
         projectId,
         resourceType,
-        resourceNumber
+        resourceNumber,
+        this.botUsernames
       );
-
-      // Normalize GitLab API response for template rendering
-      const normalizedEvent = this.normalizePolledEvent(item);
 
       logger.debug(`Calling event handler for ${resourceType} !${resourceNumber}`);
       await eventHandler(normalizedEvent, reactor);

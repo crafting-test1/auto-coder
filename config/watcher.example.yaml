@@ -9,31 +9,16 @@ server:
   # basePath: /api
 
 # Event deduplication configuration
-# Uses comment-based deduplication: checks last comment on issues/PRs
+# Prevents duplicate work by skipping events where the bot already commented
+# How it works: Checks the last comment on issues/PRs/threads - if it's from
+# the configured bot username, the event is skipped (considered already handled)
+# Bot username configuration is provider-specific (see each provider's options)
 deduplication:
   enabled: true
 
-  # Bot username (required)
-  # Can be a single string or array of identifiers to match against
-  # If any identifier matches the last comment author, it's considered a duplicate
-  #
-  # Single identifier:
-  botUsername: auto-coder-bot
-  #
-  # Multiple identifiers (recommended for cross-provider support):
-  # botUsername:
-  #   - "auto-coder-bot"      # GitHub/GitLab username
-  #   - "Auto Coder Bot"      # Display name
-  #   - "bot@example.com"     # Email address
-  #
-  # Provider-specific notes:
-  # - GitHub: Use GitHub username (e.g., "auto-coder-bot")
-  # - GitLab: Use GitLab username (e.g., "auto-coder-bot")
-  # - Linear: Use Linear username (e.g., "john-doe")
-  #   If unsure, run with logLevel: debug to see which identifier is returned
-
   # Comment template (optional)
   # Use {id} placeholder for event display (e.g., "owner/repo#123")
+  # This comment is posted when the bot starts working on an event
   commentTemplate: "Agent is working on {id}"
 
 # Log level: debug | info | warn | error
@@ -134,6 +119,16 @@ providers:
       webhookSecretEnv: GITHUB_WEBHOOK_SECRET
       # webhookSecretFile: /path/to/secret/file
 
+      # Bot username(s) for deduplication (required)
+      # Activity from these users will be skipped to prevent duplicate work
+      # If the last comment on an issue/PR is by any of these users, the event is skipped
+      # Can be a single string or array of GitHub usernames
+      botUsername: auto-coder-bot
+      # Multiple usernames (if you have multiple bot accounts):
+      # botUsername:
+      #   - "auto-coder-bot"
+      #   - "backup-bot"
+
       # Repositories to monitor (required for polling mode)
       repositories:
         - owner/repo1
@@ -174,6 +169,16 @@ providers:
       webhookTokenEnv: GITLAB_WEBHOOK_TOKEN
       # webhookTokenFile: /path/to/token
 
+      # Bot username(s) for deduplication (required)
+      # Activity from these users will be skipped to prevent duplicate work
+      # If the last comment on an issue/MR is by any of these users, the event is skipped
+      # Can be a single string or array of GitLab usernames
+      botUsername: auto-coder-bot
+      # Multiple usernames:
+      # botUsername:
+      #   - "auto-coder-bot"
+      #   - "backup-bot"
+
       # Projects to monitor (for polling)
       # Format: "group/project" or "username/project"
       projects:
@@ -205,6 +210,18 @@ providers:
       # webhookSecret: "your-webhook-secret"
       webhookSecretEnv: LINEAR_WEBHOOK_SECRET
       # webhookSecretFile: /path/to/secret
+
+      # Bot username(s) for deduplication (required)
+      # Activity from these users will be skipped to prevent duplicate work
+      # If the last comment on an issue is by any of these users, the event is skipped
+      # Linear usernames are typically in the format "john-doe"
+      # Can be a single string or array of Linear usernames
+      botUsername: auto-coder-bot
+      # Multiple usernames:
+      # botUsername:
+      #   - "auto-coder-bot"
+      #   - "backup-bot"
+      # Tip: Run with logLevel: debug to see which username format Linear returns
 
       # Teams to monitor (optional, defaults to all teams)
       # Team keys are short identifiers like "ENG", "DESIGN", etc.
@@ -241,6 +258,10 @@ providers:
 
       # Initial lookback period for first poll (default: 1 hour)
       # initialLookbackHours: 1
+
+      # Note: Bot user ID is automatically detected via Slack API
+      # No botUsername configuration is needed for Slack
+      # The bot's user ID is fetched when the provider initializes
 
       # Note: Slack provider only processes app_mention events
       # Bot must be added to channels and @mentioned to trigger
