@@ -218,17 +218,6 @@ The bot detects Bob's new @mention and starts another investigation!
 
 ---
 
-## Key Differences from GitHub Flow
-
-| Aspect | GitHub | Slack |
-|--------|---------|-------|
-| **Trigger** | Issue/PR created or updated | Bot @mentioned in conversation |
-| **Context** | Single issue description | Full thread conversation history |
-| **Repository** | Explicit in event | Inferred from conversation |
-| **Updates** | Comments on issue/PR | Threaded replies in channel |
-
----
-
 ## Configuration
 
 This flow requires Slack-specific configuration:
