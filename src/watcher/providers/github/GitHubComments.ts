@@ -68,6 +68,58 @@ export class GitHubComments {
     }
   }
 
+  /**
+   * List recent comments on an issue or PR
+   * @param repository - Repository in format "owner/repo"
+   * @param resourceNumber - Issue or PR number
+   * @param limit - Maximum number of comments to fetch
+   * @returns Array of recent comments
+   */
+  async listComments(
+    repository: string,
+    resourceNumber: number,
+    limit: number = 10
+  ): Promise<CommentInfo[]> {
+    const endpoint = `https://api.github.com/repos/${repository}/issues/${resourceNumber}/comments?per_page=${limit}&sort=created&direction=desc`;
+
+    try {
+      return await withExponentialRetry(async () => {
+        const response = await fetch(endpoint, {
+          headers: {
+            Authorization: `Bearer ${this.token}`,
+            Accept: 'application/vnd.github.v3+json',
+            'User-Agent': 'auto-coder-watcher',
+          },
+        });
+
+        if (!response.ok) {
+          if (response.status === 409) {
+            throw response;
+          }
+          logger.warn(
+            `GitHub API error listing comments: ${response.status} ${response.statusText}`
+          );
+          return [];
+        }
+
+        const comments = (await response.json()) as Array<{
+          user: { login: string };
+          body: string;
+          created_at: string;
+        }>;
+
+        return comments.map((c) => ({
+          author: c.user.login,
+          body: c.body,
+          createdAt: new Date(c.created_at),
+        }));
+      });
+    } catch (error) {
+      logger.error('Error listing GitHub comments', error);
+      return [];
+    }
+  }
+
   async postComment(
     repository: string,
     resourceType: string,

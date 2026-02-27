@@ -38,6 +38,42 @@ export class GitLabComments {
     return data as GitLabComment[];
   }
 
+  /**
+   * List recent notes/comments on a merge request
+   * @param projectId - GitLab project ID
+   * @param mrNumber - Merge request number
+   * @param limit - Maximum number of notes to fetch
+   * @returns Array of recent notes
+   */
+  async listNotes(projectId: string, mrNumber: number, limit: number = 10): Promise<GitLabComment[]> {
+    const encodedProjectId = encodeURIComponent(projectId);
+    const endpoint = `/projects/${encodedProjectId}/merge_requests/${mrNumber}/notes`;
+    const url = `${this.baseUrl}${endpoint}?per_page=${limit}&sort=desc&order_by=created_at`;
+
+    try {
+      const response = await withExponentialRetry(async () => {
+        const res = await fetch(url, {
+          headers: {
+            'Authorization': `Bearer ${this.token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!res.ok) {
+          throw new Error(`Failed to fetch notes: ${res.status} ${res.statusText}`);
+        }
+
+        return res;
+      });
+
+      const data = await response.json();
+      return data as GitLabComment[];
+    } catch (error) {
+      // Return empty array on error to allow graceful degradation
+      return [];
+    }
+  }
+
   async postComment(projectId: string, resourceType: string, resourceNumber: number, body: string): Promise<number> {
     const endpoint = this.getCommentsEndpoint(projectId, resourceType, resourceNumber);
     const url = `${this.baseUrl}${endpoint}`;

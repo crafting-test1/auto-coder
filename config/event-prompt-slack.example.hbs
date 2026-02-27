@@ -90,6 +90,10 @@ Author: @{{resource.author}}
 6. **Linking Work**:
    - When creating issues or PRs from Slack discussions:
      * Create the issue/PR in the appropriate repository
+     * If creating a PR:
+       - Check if the message explicitly asks to update an existing PR (e.g., "update PR #456", "fix that pull request")
+       - If YES: Checkout that PR's branch and push changes there
+       - If NO (new work): Use a NEW unique branch name (e.g., "ai/slack-<timestamp>-<description>") - NEVER reuse existing branches
      * Include context from the Slack discussion
      * Link back to this Slack thread in the issue/PR description: {{resourceLink}}
      * Post the issue/PR link in Slack using the format: <issue_url|Issue #123> or <pr_url|PR #456>

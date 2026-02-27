@@ -88,14 +88,18 @@ Pull Request:
     - If the change tackled any code specific comments, resolve them
     - DO NOT self-approve this Pull Request
     {{else}}
-    - Commit and push the change to a remote branch
-    - Create a Pull Request from that branch to the default branch and make sure:
+    - IMPORTANT: Check if this Issue explicitly asks to update an existing PR:
+      * If YES (e.g., "update PR #456", "fix the PR", "modify the pull request"): Checkout that PR's branch and push changes there
+      * If NO (new work, new feature, bug fix): Create a NEW unique branch name (e.g., "ai/issue-{{resource.number}}-<short-description>") - do NOT reuse existing branches
+    - Commit and push the change to the appropriate remote branch
+    - Create a Pull Request (or update existing if specified) and make sure:
       - Double check the default branch and do not assume
-      - The current Issue is linked
+      {{#if resource.number}}{{#ne resource.number 0}}- Link back to the current Issue using the closing syntax (e.g., "Fixes #{{resource.number}}", "Closes #{{resource.number}}")
+      {{/ne}}{{/if}}- Include this link in the PR description: {{resourceLink}}
       - The owner/assignee is yourself
       - Include a summary about the changes and test results
       - Include the sandbox name
-    - Add a comment to the Issue with the same information as above
+    - Add a comment to the {{#eq provider "slack"}}thread{{else}}Issue{{/eq}} with the same information as above
     {{/eq}}
   {{else}}
   - If code change is required
@@ -103,22 +107,31 @@ Pull Request:
     - Try the best effort to test and verify change in the sandbox by using any existing tests and performing additional tests when needed
     - Keep iterating until all tests and verification pass
     {{#eq type "pull_request"}}
-    - Commit and push the change to a new branch
-    - Create a Pull Request from the new branch back to the original branch and make sure:
-      - The current Pull Request is linked
+    - IMPORTANT: This is a comment on an existing PR - check what's being requested:
+      * If requesting changes to THIS PR (e.g., "fix this", "update the code"): Create a NEW unique branch and a new PR back to the original branch
+      * If explicitly asking to update a DIFFERENT PR: Checkout that PR's branch and push changes there
+    - If creating new branch: Use unique name like "ai/pr-{{resource.number}}-fix-<short-description>"
+    - Commit and push the change appropriately
+    - Create a Pull Request (new or update existing as specified) and make sure:
+      {{#if resource.number}}{{#ne resource.number 0}}- Link back to the current Pull Request (e.g., "Related to #{{resource.number}}")
+      {{/ne}}{{/if}}- Include this link in the PR description: {{resourceLink}}
       - The owner/assignee is yourself
       - Include a summary about the changes and test results
       - Include the sandbox name
-    - Add a comment to the original Pull Request with the same information as above
+    - Add a comment to the original {{#eq provider "slack"}}thread{{else}}Pull Request{{/eq}} with the same information as above
     - DO NOT approve
     {{else}}
-    - Commit and push the change to a remote branch
-    - Create a Pull Request from that branch and make sure:
-      - The current Issue is linked
+    - IMPORTANT: Check if this Issue explicitly asks to update an existing PR:
+      * If YES (e.g., "update PR #456", "fix the PR", "modify the pull request"): Checkout that PR's branch and push changes there
+      * If NO (new work, new feature, bug fix): Create a NEW unique branch name (e.g., "ai/issue-{{resource.number}}-<short-description>") - do NOT reuse existing branches
+    - Commit and push the change to the appropriate remote branch
+    - Create a Pull Request (or update existing if specified) and make sure:
+      {{#if resource.number}}{{#ne resource.number 0}}- Link back to the current Issue using the closing syntax (e.g., "Fixes #{{resource.number}}", "Closes #{{resource.number}}")
+      {{/ne}}{{/if}}- Include this link in the PR description: {{resourceLink}}
       - The owner/assignee is yourself
       - Include a summary about the changes and test results
       - Include the sandbox name
-    - Add a comment to the Issue with the same information as above
+    - Add a comment to the {{#eq provider "slack"}}thread{{else}}Issue{{/eq}} with the same information as above
     {{/eq}}
   {{#eq type "pull_request"}}
   - If code review is required
