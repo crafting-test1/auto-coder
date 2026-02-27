@@ -6,6 +6,8 @@ This document shows how auto-coder automatically turns GitHub issues into pull r
 
 **auto-coder** runs as a pinned Crafting Sandbox that monitors your GitHub repositories. When you create a GitHub issue, it detects the event and creates a **Crafting Sandbox Coding Agent** from a matched template (based on repository or context) to implement the feature or fix, then creates a pull request with the changes - all automatically.
 
+The Sandbox can be created from this example [template](../../templates/auto-coder-github-issue-2-github-pr.example.yaml)
+
 ---
 
 ## Example Scenario

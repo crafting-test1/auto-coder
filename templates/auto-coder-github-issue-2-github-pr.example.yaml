@@ -1,0 +1,70 @@
+env:
+  - GITHUB_PERSONAL_ACCESS_TOKEN=${secret:github_pat}
+endpoints:
+  - name: webhook
+    http:
+      routes:
+        - backend:
+            target: dev
+            port: webhook
+          path_prefix: /
+      auth_proxy:
+        disabled: true
+  - name: github-mcp
+    type: INTERNAL
+    http:
+      routes:
+        - backend:
+            target: mcp-proxy
+            port: github
+          path_prefix: /
+      auth_proxy:
+        disabled: true
+      path: /mcp
+workspaces:
+  - name: dev
+    ports:
+      - name: webhook
+        port: 3000
+        protocol: HTTP/TCP
+    checkouts:
+      - path: auto-coder
+        repo:
+          git: git@github.com:crafting-test1/auto-coder.git
+containers:
+  - name: github-mcp
+    image: ghcr.io/github/github-mcp-server
+    args:
+      - http
+    env:
+      - GITHUB_TOOLSETS=repos,issues,pull_requests
+    ports:
+      - name: github
+        port: 8082
+        protocol: HTTP/TCP
+  - name: mcp-proxy
+    image: nginx:alpine
+    args:
+      - /bin/sh
+      - -c
+      - |
+        printf 'events {} 
+        http { 
+          server { 
+            listen 8082; 
+            location /mcp { 
+              proxy_set_header Authorization "Bearer $GITHUB_PERSONAL_ACCESS_TOKEN"; 
+              proxy_set_header Host github-mcp; 
+              proxy_pass http://github-mcp:8082/mcp; 
+              proxy_http_version 1.1; 
+              proxy_buffering off; 
+            } 
+          } 
+        }' > /etc/nginx/nginx.conf && nginx -g 'daemon off;'
+    ports:
+      - name: github
+        port: 8082
+        protocol: HTTP/TCP
+customizations:
+  - mcp_server:
+      endpoint: github-mcp

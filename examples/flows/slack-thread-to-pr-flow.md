@@ -6,6 +6,8 @@ This document shows how auto-coder automatically turns Slack conversations into 
 
 **auto-coder** runs as a pinned Crafting Sandbox that monitors your Slack workspace. When you @mention the bot with a bug report or feature request, it creates a **Crafting Sandbox Coding Agent** from a matched template (based on repository or context) to investigate, implement the fix, and create a pull request - all while keeping your team updated in the Slack thread.
 
+The Sandbox can be created from this example [template](../../templates/auto-coder-slack-2-github-pr.example.yaml)
+
 ---
 
 ## Example Scenario
