@@ -200,10 +200,15 @@ export class SlackProvider extends BaseProvider {
 
     logger.debug(`Processing Slack app_mention in channel ${event.channel}`);
 
+    // For threading:
+    // - If event.thread_ts exists: reply in that existing thread
+    // - If event.thread_ts is undefined: use event.ts to start/continue a thread
+    const threadTs = event.thread_ts || event.ts;
+
     const reactor = new SlackReactor(
       this.comments,
       event.channel,
-      event.thread_ts // If part of a thread, reply in thread
+      threadTs
     );
 
     // Normalize Slack event for template rendering
@@ -279,10 +284,15 @@ export class SlackProvider extends BaseProvider {
       for (const mention of mentions) {
         logger.debug(`Processing polled mention in channel ${mention.channel}`);
 
+        // For threading:
+        // - If mention.threadTs exists: reply in that existing thread
+        // - If mention.threadTs is undefined: use mention.ts to start/continue a thread
+        const threadTs = mention.threadTs || mention.ts;
+
         const reactor = new SlackReactor(
           this.comments,
           mention.channel,
-          mention.threadTs
+          threadTs
         );
 
         // Normalize polled mention for template rendering
