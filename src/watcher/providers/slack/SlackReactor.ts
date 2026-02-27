@@ -41,29 +41,9 @@ export class SlackReactor implements Reactor {
       const ts = await this.comments.postMessage(this.channel, comment, this.threadTs);
 
       // Return composite ID: channel:ts
-      // This allows us to update the message later
       return `${this.channel}:${ts}`;
     } catch (error) {
       logger.error('Failed to post message to Slack', error);
-      throw error;
-    }
-  }
-
-  async updateComment(commentId: string, comment: string): Promise<void> {
-    try {
-      // commentId format: "channel:ts"
-      const [channel, ts] = commentId.split(':');
-
-      if (!channel || !ts) {
-        logger.warn('Invalid Slack comment ID format, expected "channel:ts"');
-        // Fall back to posting a new message
-        await this.postComment(comment);
-        return;
-      }
-
-      await this.comments.updateMessage(channel, ts, comment);
-    } catch (error) {
-      logger.error('Failed to update message on Slack', error);
       throw error;
     }
   }

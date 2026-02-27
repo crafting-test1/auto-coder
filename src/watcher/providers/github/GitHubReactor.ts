@@ -58,9 +58,4 @@ export class GitHubReactor implements Reactor {
       throw error;
     }
   }
-
-  async updateComment(commentId: string, comment: string): Promise<void> {
-    logger.warn('updateComment not yet implemented for GitHub');
-    // TODO: Implement comment update via GitHub API
-  }
 }

@@ -54,19 +54,4 @@ export class GitLabReactor implements Reactor {
       throw error;
     }
   }
-
-  async updateComment(commentId: string, comment: string): Promise<void> {
-    try {
-      await this.comments.updateComment(
-        this.projectId,
-        this.resourceType,
-        this.resourceNumber,
-        parseInt(commentId, 10),
-        comment
-      );
-    } catch (error) {
-      logger.error('Failed to update comment on GitLab', error);
-      throw error;
-    }
-  }
 }

@@ -123,42 +123,6 @@ export class SlackComments {
   /**
    * Update an existing Slack message.
    */
-  async updateMessage(
-    channel: string,
-    ts: string,
-    text: string
-  ): Promise<void> {
-    return withExponentialRetry(async () => {
-      const endpoint = `${this.baseUrl}/chat.update`;
-
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${this.token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          channel,
-          ts,
-          text,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Slack API error: ${response.status} ${response.statusText} - ${errorText}`);
-      }
-
-      const data = await response.json() as { ok: boolean; error?: string };
-
-      if (!data.ok) {
-        throw new Error(`Slack API returned error: ${data.error}`);
-      }
-
-      logger.debug(`Updated message ${ts} in Slack channel ${channel}`);
-    });
-  }
-
   /**
    * Get bot user ID.
    * Useful for checking if the bot was mentioned in a message.

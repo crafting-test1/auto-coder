@@ -105,48 +105,12 @@ export class GitLabComments {
     });
   }
 
-  async updateComment(projectId: string, resourceType: string, resourceNumber: number, commentId: number, body: string): Promise<void> {
-    const endpoint = this.getCommentEndpoint(projectId, resourceType, resourceNumber, commentId);
-    const url = `${this.baseUrl}${endpoint}`;
-
-    const executeUpdate = async () => {
-      const response = await fetch(url, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${this.token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ body }),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Failed to update comment: ${response.status} ${response.statusText} - ${errorText}`);
-      }
-    };
-
-    await withExponentialRetry(executeUpdate, {
-      maxRetries: 5,
-      baseDelayMs: 1000,
-      maxDelayMs: 30000,
-    });
-  }
-
   private getCommentsEndpoint(projectId: string, resourceType: string, resourceNumber: number): string {
     const encodedProjectId = encodeURIComponent(projectId);
     if (resourceType === 'merge_request') {
       return `/projects/${encodedProjectId}/merge_requests/${resourceNumber}/notes`;
     } else {
       return `/projects/${encodedProjectId}/issues/${resourceNumber}/notes`;
-    }
-  }
-
-  private getCommentEndpoint(projectId: string, resourceType: string, resourceNumber: number, commentId: number): string {
-    const encodedProjectId = encodeURIComponent(projectId);
-    if (resourceType === 'merge_request') {
-      return `/projects/${encodedProjectId}/merge_requests/${resourceNumber}/notes/${commentId}`;
-    } else {
-      return `/projects/${encodedProjectId}/issues/${resourceNumber}/notes/${commentId}`;
     }
   }
 }

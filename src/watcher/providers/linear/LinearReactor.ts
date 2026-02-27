@@ -58,13 +58,4 @@ export class LinearReactor implements Reactor {
       throw error;
     }
   }
-
-  async updateComment(commentId: string, comment: string): Promise<void> {
-    try {
-      await this.comments.updateComment(commentId, comment);
-    } catch (error) {
-      logger.error('Failed to update comment on Linear', error);
-      throw error;
-    }
-  }
 }

@@ -197,18 +197,9 @@ export class CommandExecutor {
 
       // Follow-up with output if enabled
       if (this.config.followUp && output) {
-        // For Slack, always post a new comment in the thread to show conversation flow
-        // For other platforms (GitHub/GitLab/Linear), update the original comment to reduce noise
-        if (event.provider === 'slack') {
-          await reactor.postComment(output);
-          logger.debug(`Posted new comment with command output (Slack thread)`);
-        } else if (commentRef) {
-          await reactor.updateComment(commentRef, output);
-          logger.debug(`Updated comment with command output`);
-        } else {
-          await reactor.postComment(output);
-          logger.debug(`Posted new comment with command output`);
-        }
+        // Always post a new comment with command output
+        await reactor.postComment(output);
+        logger.debug(`Posted follow-up comment with command output`);
       }
     } catch (error) {
       logger.error('Command execution failed', error);
