@@ -183,11 +183,19 @@ export class GitLabProvider extends BaseProvider {
       resourceType = 'merge_request';
       resourceNumber = payload.object_attributes.iid;
     } else if (payload.object_kind === 'note') {
-      // Note events can be on issues or merge requests
-      // We need to determine the resource type from the payload
-      // For simplicity, we'll skip note events for now
-      logger.debug(`Skipping note event`);
-      return;
+      // Note events are comments - these should be processed
+      // Determine if it's on an issue or MR
+      const notePayload = payload as any;
+      if (notePayload.merge_request) {
+        resourceType = 'merge_request';
+        resourceNumber = notePayload.merge_request.iid;
+      } else if (notePayload.issue) {
+        resourceType = 'issue';
+        resourceNumber = notePayload.issue.iid;
+      } else {
+        logger.debug(`Skipping note event - unable to determine resource type`);
+        return;
+      }
     } else {
       logger.debug(`Unsupported GitLab event type: ${payload.object_kind}`);
       return;
@@ -198,6 +206,14 @@ export class GitLabProvider extends BaseProvider {
     // Skip newly opened MRs - nothing to do yet
     if (resourceType === 'merge_request' && payload.object_attributes.action === 'open') {
       logger.debug(`Skipping newly opened MR !${resourceNumber} - nothing to do`);
+      return;
+    }
+
+    // Skip MR update events (commits pushed, title/description changed) - automated action, not user interaction
+    // Bot should only respond to comments (note events), approvals, or explicit requests
+    // Note: GitLab uses generic 'update' action for all MR updates including commits
+    if (resourceType === 'merge_request' && payload.object_attributes.action === 'update' && payload.object_kind !== 'note') {
+      logger.debug(`Skipping MR !${resourceNumber} update event - automated action (commits/metadata)`);
       return;
     }
 

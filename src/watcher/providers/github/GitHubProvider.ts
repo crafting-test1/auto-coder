@@ -198,6 +198,27 @@ export class GitHubProvider extends BaseProvider {
       return;
     }
 
+    // Skip PR synchronize events (commits pushed) - automated action, not user interaction
+    // Bot should only respond to comments, reviews, or explicit requests, not code pushes
+    if (event === 'pull_request' && payload.action === 'synchronize') {
+      logger.debug(`Skipping PR #${resourceNumber} synchronize event - commits pushed by author`);
+      return;
+    }
+
+    // Skip other automated PR actions that don't require bot attention
+    if (event === 'pull_request' && [
+      'edited',          // Title/description changed
+      'labeled',         // Labels added/removed
+      'unlabeled',
+      'assigned',        // Assignees changed
+      'unassigned',
+      'locked',          // PR locked/unlocked
+      'unlocked',
+    ].includes(payload.action)) {
+      logger.debug(`Skipping PR #${resourceNumber} ${payload.action} event - automated action`);
+      return;
+    }
+
     // Skip closed/merged items unless they're being reopened
     if (this.shouldSkipClosedItem(payload)) {
       logger.debug(`Skipping closed/merged ${resourceType} #${resourceNumber}`);
