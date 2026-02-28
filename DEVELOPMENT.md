@@ -235,11 +235,11 @@ providers:
 
 ## Development Scripts
 
-- `pnpm run dev` - Run TypeScript directly with tsx
-- `pnpm run dev:watcher` - Run the watcher subsystem in development mode
+- `pnpm run dev` - Run the watcher in development mode with hot reload
 - `pnpm run build` - Compile TypeScript to JavaScript
 - `pnpm start` - Run the compiled JavaScript
 - `pnpm run type-check` - Check types without building
+- `pnpm test` - Run tests
 
 ## Logging
 

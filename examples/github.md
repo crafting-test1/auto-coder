@@ -209,7 +209,7 @@ Then use the tunnel URL in your GitHub webhook configuration.
 ### Development Mode
 
 ```bash
-pnpm run dev:watcher
+pnpm run dev
 ```
 
 ### Production Mode

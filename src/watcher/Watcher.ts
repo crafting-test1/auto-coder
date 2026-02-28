@@ -170,6 +170,32 @@ export class Watcher extends WatcherEventEmitter {
     };
   }
 
+  /**
+   * Determines if an event is a duplicate by checking the last comment/message.
+   *
+   * Deduplication Strategy:
+   * To prevent processing the same event multiple times (e.g., due to webhook
+   * re-delivery, polling overlap, or manual re-triggering), we check if the bot
+   * has already responded to this issue/PR/thread.
+   *
+   * The check works by:
+   * 1. Retrieving the last comment/message on the resource (issue/PR/thread)
+   * 2. Checking if that comment was authored by the bot (using configured bot usernames)
+   * 3. If the bot was the last to comment, assume this event was already processed
+   *
+   * Why this works:
+   * - When the bot processes an event, it posts a "working on it" comment
+   * - If that's still the last comment, no new human interaction has occurred
+   * - If a human has commented since, the bot should process the new interaction
+   *
+   * Edge cases handled:
+   * - No comments yet: Not a duplicate (new issue/PR)
+   * - Error fetching comments: Assume not duplicate (fail safe)
+   * - Multiple bot usernames: Supports checking against multiple bot accounts
+   *
+   * @param reactor - Provider-specific reactor for checking comments/messages
+   * @returns true if this appears to be a duplicate event, false if should be processed
+   */
   private async isDuplicate(reactor: Reactor): Promise<boolean> {
     try {
       const lastComment = await reactor.getLastComment();

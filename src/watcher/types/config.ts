@@ -6,8 +6,20 @@ export interface ServerConfig {
   basePath?: string;
 }
 
+/**
+ * Deduplication configuration.
+ *
+ * NOTE: Bot usernames are configured per-provider, not at the top level.
+ * Each provider should set options.botUsername to enable deduplication.
+ * Example:
+ *   providers:
+ *     github:
+ *       options:
+ *         botUsername: "my-bot-username"
+ */
 export interface DeduplicationConfig {
   enabled: boolean;
+  /** Template for "working on" comment. Supports {id} placeholder for event ID. */
   commentTemplate?: string;
 }
 

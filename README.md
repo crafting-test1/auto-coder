@@ -81,7 +81,7 @@ Configure authentication for your provider:
 
 Development mode:
 ```bash
-pnpm run dev:watcher
+pnpm run dev
 ```
 
 Production mode:
