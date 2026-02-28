@@ -1,19 +1,17 @@
 {
   "name": "auto-coder",
   "version": "1.0.0",
-  "description": "",
+  "description": "Automated coding assistant that monitors GitHub, GitLab, Linear, and Slack events, powered by Crafting Sandbox",
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
     "clean": "rm -rf dist",
     "rebuild": "pnpm run clean && pnpm run build",
     "dev": "tsx src/index.ts",
-    "dev:watcher": "WATCHER_CONFIG=./config/watcher.yaml tsx src/standalone.ts",
     "start": "node dist/index.js",
     "type-check": "tsc --noEmit",
     "test": "npx tsx tests/test-webhook-executor.ts",
-    "test:command": "npx tsx tests/test-command-executor.ts",
-    "test:quick": "echo 'Running command executor test...' && npx tsx tests/test-webhook-executor.ts 2>&1 | grep -A 30 'Command output'"
+    "test:command": "npx tsx tests/test-command-executor.ts"
   },
   "repository": {
     "type": "git",
