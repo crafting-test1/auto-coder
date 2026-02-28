@@ -209,7 +209,7 @@ Deduplication works the same as other providers:
 ### Development Mode
 
 ```bash
-pnpm run dev:watcher
+pnpm run dev
 ```
 
 ### Production Mode
