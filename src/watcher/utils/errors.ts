@@ -23,10 +23,3 @@ export class ConfigError extends WatcherError {
     this.name = 'ConfigError';
   }
 }
-
-export class ValidationError extends WatcherError {
-  constructor(message: string, cause?: unknown) {
-    super(message, cause);
-    this.name = 'ValidationError';
-  }
-}

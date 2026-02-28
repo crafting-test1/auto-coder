@@ -26,7 +26,6 @@ export {
   WatcherError,
   ProviderError,
   ConfigError,
-  ValidationError,
 } from './utils/errors.js';
 
 export { logger } from './utils/logger.js';

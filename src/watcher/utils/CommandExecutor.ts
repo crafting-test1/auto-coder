@@ -1,21 +1,9 @@
 import { spawn } from 'child_process';
 import { readFileSync } from 'fs';
 import Handlebars from 'handlebars';
-import type { Reactor, NormalizedEvent } from '../types/index.js';
+import type { Reactor, NormalizedEvent, CommandExecutorConfig } from '../types/index.js';
 import { logger } from './logger.js';
 import { formatLink, formatResourceLink } from './linkFormatter.js';
-
-export interface CommandExecutorConfig {
-  enabled: boolean;
-  command: string;
-  promptTemplate?: string;
-  promptTemplateFile?: string;
-  /** Provider-specific prompt templates. Maps provider name to template file path. */
-  prompts?: Record<string, string>;
-  useStdin?: boolean;
-  followUp?: boolean;  // Post/update comment with command output
-  dryRun?: boolean;    // Print command instead of executing (for testing)
-}
 
 export class CommandExecutor {
   private promptTemplate: HandlebarsTemplateDelegate | undefined;

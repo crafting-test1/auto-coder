@@ -245,11 +245,30 @@ export class GitHubProvider extends BaseProvider {
   }
 
   /**
-   * Shared filtering logic for both webhook and polling events
-   * Determines if a normalized event should be processed
-   * @param event - The normalized event
-   * @param hasRecentComments - For polled events, whether there are recent comments
-   * @returns true if event should be processed, false to skip
+   * Determines if a GitHub event should trigger bot action.
+   *
+   * Filtering Strategy:
+   * The bot only processes events that indicate human interaction requiring action.
+   * Automated actions (commits pushed, metadata changes) are filtered out to avoid
+   * unnecessary processing and to focus on events where human feedback is present.
+   *
+   * Events that are SKIPPED:
+   * - 'opened' actions: Newly created issues/PRs have no context yet, nothing to do
+   * - 'synchronize' actions: PR updated due to new commits (automated), not user interaction
+   * - Metadata changes: edited, labeled, assigned, locked, etc. (no actionable change)
+   * - Closed/merged items: Already completed (unless being reopened)
+   * - Polled PRs without recent comments: Updated only due to commits, no human interaction
+   *
+   * Events that are PROCESSED:
+   * - Issue/PR comments: Human asking for action or providing feedback
+   * - Review requests: Human requesting review
+   * - Reopened items: Previously closed but now needs attention again
+   * - Polled PRs with recent human comments: Indicates human interaction occurred
+   *
+   * @param event - The normalized event from webhook or polling
+   * @param hasRecentComments - For polled events, indicates if there are recent human comments
+   *                            (helps distinguish commits-only updates from human interaction)
+   * @returns true if event should be processed by the bot, false to skip
    */
   private shouldProcessEvent(event: NormalizedEvent, hasRecentComments?: boolean): boolean {
     const { type, action, resource } = event;
@@ -300,8 +319,24 @@ export class GitHubProvider extends BaseProvider {
   }
 
   /**
-   * Check if a PR has recent human interaction (comments, reviews)
-   * This helps filter out PRs that were only updated due to commits
+   * Checks if a PR has recent human interaction (comments, reviews).
+   *
+   * Purpose:
+   * When polling for PR updates, we need to distinguish between:
+   * 1. PR updated because author pushed new commits → SKIP (automated action)
+   * 2. PR updated because someone commented/reviewed → PROCESS (human interaction)
+   *
+   * This method examines the last 5 comments/reviews to determine if there's
+   * human activity beyond just commit pushes. This prevents the bot from
+   * unnecessarily processing PRs that are only being updated by the author's commits.
+   *
+   * "Recent" is defined as: within the polling window (last poll to now).
+   * The method checks the 5 most recent comments/reviews since that typically
+   * covers activity within a single polling interval.
+   *
+   * @param repository - The repository in "owner/repo" format
+   * @param prNumber - The pull request number
+   * @returns true if recent human comments/reviews found, false if only commits/bot activity
    */
   private async hasRecentHumanInteraction(repository: string, prNumber: number): Promise<boolean> {
     if (!this.comments) {

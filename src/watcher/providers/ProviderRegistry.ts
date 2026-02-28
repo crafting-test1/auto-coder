@@ -40,8 +40,4 @@ export class ProviderRegistry {
   getAll(): Map<string, IProvider> {
     return new Map(this.providers);
   }
-
-  clear(): void {
-    this.providers.clear();
-  }
 }
