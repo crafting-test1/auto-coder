@@ -1,41 +1,44 @@
 # Tests
 
-This directory contains test files for the watcher subsystem.
+This directory contains unit tests for the watcher subsystem.
 
-## Status
+## Running Tests
 
-Test files have been removed during the provider abstraction refactor. New tests will need to be written to work with the new architecture where:
+```bash
+npm test
+```
 
-- Providers handle their own internal event data structures
-- Event handlers receive `(event: unknown, reactor: Reactor)` parameters
-- No centralized WatcherEvent normalization
-- Comment-based deduplication only
+Tests use Node's built-in `node:test` runner with `tsx` for TypeScript transpilation — no additional dependencies required.
 
-## New Architecture
+## Architecture
 
-The refactored watcher uses:
+Tests follow the architecture described below.
 
-1. **Reactor Pattern**: Providers create Reactor instances that encapsulate commenting operations
-2. **Event Handler Callbacks**: Providers call event handlers with raw provider data (unknown type)
-3. **Provider Data Encapsulation**: Each provider keeps its own internal types (no WatcherEvent)
-4. **Simplified Interface**: Providers only need to implement handleWebhook() and poll()
+### Reactor Pattern
 
-## TODO
+Providers create `Reactor` instances that encapsulate commenting operations for a specific resource (issue, PR, thread). Each reactor implements:
 
-- Add unit tests for GitHubProvider
-- Add unit tests for GitHubReactor
-- Add integration tests for webhook flow
-- Add integration tests for polling flow
-- Add tests for comment-based deduplication
-- Add tests for event emission to subscribers
+- `getLastComment()` — fetch the most recent comment for deduplication
+- `postComment(body)` — post a new comment/message
+- `isBotAuthor(author)` — check if a username belongs to the configured bot
+
+### Provider Differences
+
+| Provider | Auth method | Signature format | Comment ID type |
+|---|---|---|---|
+| GitHub | HMAC SHA-256 | `sha256=<hex>` | `""` (not returned) |
+| GitLab | Shared token | Plain string equality | Numeric (stringified) |
+| Linear | HMAC SHA-256 | Raw `<hex>` (no prefix) | String UUID |
+| Slack | HMAC SHA-256 | `v0=<hex>` over `v0:<ts>:<body>` | `<channel>:<ts>` |
+
+### Event Handlers
+
+Event handlers receive `(event: NormalizedEvent, reactor: Reactor)` — providers normalize their raw payloads into the shared `NormalizedEvent` structure before calling the handler.
 
 ## Adding New Tests
 
-When adding new tests:
-
-1. Place test files in this directory
-2. Name them `test-*.ts` for consistency
-3. Use relative imports: `import { Watcher } from '../src/watcher/index.js'`
-4. Remember that events are now `(provider: string, event: unknown)` tuples
-5. Use Reactor for commenting operations in tests
-6. Document the test purpose in this README
+1. Place test files in this directory named `test-*.ts`
+2. Use relative imports with `.js` extensions: `import { Foo } from '../src/watcher/...Foo.js'`
+3. Use `node:test` and `node:assert/strict` — no external test framework needed
+4. Mock external dependencies (HTTP clients, API classes) inline using `Partial<InstanceType<typeof SomeClass>>`
+5. Run with `npm test`
