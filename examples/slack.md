@@ -154,16 +154,31 @@ options:
 
 ## How It Works
 
-### Mention-Only Triggering
+### Event Filtering
 
-The Slack provider **only processes `app_mention` events**, which occur when:
+By default the Slack provider **only processes `app_mention` events**, which occur when:
 - Someone types `@YourBot` in a message
 - The bot user is mentioned in any channel where it's added
 
-**Not triggered by:**
+**Not triggered by default:**
 - Regular messages without mentions
 - Messages in channels where the bot isn't added
-- Direct messages (unless bot is mentioned with @)
+
+Use `eventFilter` to change which event types are processed:
+
+```yaml
+options:
+  # Default: only app_mention
+  eventFilter:
+    app_mention: {}
+
+  # Also handle direct messages
+  eventFilter:
+    app_mention: {}
+    message: {}
+```
+
+If `eventFilter` is omitted, only `app_mention` is processed (the default).
 
 ### Dual Mode: Webhooks + Polling
 
@@ -229,7 +244,7 @@ pnpm start
 - Verify webhook URL is accessible from Slack
   - Must be publicly accessible (use ngrok/cloudflared for local testing)
 - Check Event Subscriptions in Slack app settings:
-  - Is `app_mention` subscribed?
+  - Are the events you configured in `eventFilter` subscribed? (default: `app_mention`)
   - Is the Request URL verified (green checkmark)?
 - Check auto-coder logs for webhook validation errors
 - Verify `SLACK_SIGNING_SECRET` matches the Slack app
@@ -302,10 +317,7 @@ cloudflared tunnel --url http://localhost:3000
 
 1. Add the bot to a test channel: `/invite @YourBot`
 2. Mention the bot: `@YourBot hello`
-3. Check auto-coder logs for:
-   ```
-   Processing Slack app_mention in channel C01ABC123
-   ```
+3. Check auto-coder logs for incoming webhook events
 4. Bot should respond in the channel/thread
 
 ## Advanced Configuration

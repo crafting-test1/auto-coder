@@ -46,12 +46,21 @@ interface LinearWebhookPayload {
   };
 }
 
+type LinearEventConfig = { states: string[]; skipStates: string[] };
+
 export class LinearProvider extends BaseProvider {
   private webhook: LinearWebhook | undefined;
   private poller: LinearPoller | undefined;
   private comments: LinearComments | undefined;
   private apiKey: string | undefined;
   private botUsernames: string[] = [];
+
+  private static readonly DEFAULT_WEBHOOK_EVENTS: Record<string, LinearEventConfig> = {
+    Issue: { states: ['all'], skipStates: ['done', 'cancelled', 'canceled'] },
+  };
+
+  private eventFilter: Record<string, LinearEventConfig> =
+    { ...LinearProvider.DEFAULT_WEBHOOK_EVENTS };
 
   get metadata(): ProviderMetadata {
     return {
@@ -85,6 +94,7 @@ export class LinearProvider extends BaseProvider {
       initialLookbackHours?: number;
       maxItemsPerPoll?: number;
       botUsername?: string | string[];
+      eventFilter?: Record<string, { states?: string[]; skipStates?: string[] }>;
     } | undefined;
 
     // Read bot username(s) for deduplication
@@ -135,6 +145,19 @@ export class LinearProvider extends BaseProvider {
       modes.push('polling');
     }
 
+    if (options?.eventFilter) {
+      const configured: Record<string, LinearEventConfig> = {};
+      for (const [eventType, eventConfig] of Object.entries(options.eventFilter)) {
+        const defaults = LinearProvider.DEFAULT_WEBHOOK_EVENTS[eventType];
+        configured[eventType] = {
+          states:     eventConfig?.states     ?? defaults?.states     ?? ['all'],
+          skipStates: eventConfig?.skipStates ?? defaults?.skipStates ?? [],
+        };
+      }
+      this.eventFilter = configured;
+    }
+    logger.info(`Linear event filter: ${Object.keys(this.eventFilter).join(', ')}`);
+
     logger.info(`Linear provider initialized with modes: ${modes.join(', ')}`);
   }
 
@@ -172,16 +195,15 @@ export class LinearProvider extends BaseProvider {
 
     logger.debug(`Processing Linear ${payload.type} event (${payload.action})`);
 
-    // Only handle issue events for now
-    if (payload.type !== 'Issue') {
-      logger.debug(`Skipping non-issue event: ${payload.type}`);
+    const eventConfig = this.eventFilter[payload.type];
+    if (!eventConfig) {
+      logger.debug(`Skipping Linear ${payload.type} event - not in configured eventFilter`);
       return;
     }
 
     const issueId = payload.data.id;
 
-    // Skip completed/cancelled items unless they're being reopened
-    if (this.shouldSkipClosedItem(payload)) {
+    if (this.shouldSkipClosedItem(payload, eventConfig.states, eventConfig.skipStates)) {
       logger.debug(`Skipping completed/cancelled issue ${payload.data.identifier}`);
       return;
     }
@@ -194,29 +216,25 @@ export class LinearProvider extends BaseProvider {
     await eventHandler(normalizedEvent, reactor);
   }
 
-  private shouldSkipClosedItem(payload: LinearWebhookPayload): boolean {
-    // Linear doesn't have a simple "closed" state
-    // States can be: "Backlog", "Todo", "In Progress", "Done", "Cancelled", etc.
-    // We skip "Done" and "Cancelled" states
-    const stateName = payload.data.state.name.toLowerCase();
-
-    // Skip if state is done or cancelled
-    if (stateName === 'done' || stateName === 'cancelled' || stateName === 'canceled') {
+  private shouldSkipByState(stateName: string, states: string[], skipStates: string[]): boolean {
+    const lower = stateName.toLowerCase();
+    // Allowlist check: skip if state not in allowlist (unless 'all' is present)
+    if (!states.includes('all') && !states.includes(lower)) {
       return true;
     }
-
+    // Denylist check
+    if (skipStates.includes(lower)) {
+      return true;
+    }
     return false;
   }
 
-  private shouldSkipClosedPolledItem(item: any): boolean {
-    // Check if item state is done or cancelled
-    const stateName = item.data.state.name.toLowerCase();
+  private shouldSkipClosedItem(payload: LinearWebhookPayload, states: string[], skipStates: string[]): boolean {
+    return this.shouldSkipByState(payload.data.state.name, states, skipStates);
+  }
 
-    if (stateName === 'done' || stateName === 'cancelled' || stateName === 'canceled') {
-      return true;
-    }
-
-    return false;
+  private shouldSkipClosedPolledItem(item: any, states: string[], skipStates: string[]): boolean {
+    return this.shouldSkipByState(item.data.state.name, states, skipStates);
   }
 
   async poll(eventHandler: EventHandler): Promise<void> {
@@ -238,8 +256,13 @@ export class LinearProvider extends BaseProvider {
     for (const item of items) {
       const issueId = item.data.id;
 
-      // Skip completed/cancelled items from polling
-      if (this.shouldSkipClosedPolledItem(item)) {
+      const pollEventConfig = this.eventFilter['Issue'];
+      if (!pollEventConfig) {
+        logger.debug(`Skipping polled issue - not in configured eventFilter`);
+        continue;
+      }
+
+      if (this.shouldSkipClosedPolledItem(item, pollEventConfig.states, pollEventConfig.skipStates)) {
         logger.debug(`Skipping completed/cancelled issue ${item.data.identifier}`);
         continue;
       }

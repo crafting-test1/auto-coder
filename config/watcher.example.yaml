@@ -136,12 +136,6 @@ providers:
         - owner/repo1
         - owner/repo2
 
-      # Event types to monitor (optional, defaults to all)
-      events:
-        - issues
-        - pull_request
-        - issue_comment
-
       # Initial lookback period for first poll (optional, default: 1 hour)
       # When first polling a repository, only fetch items from the last N hours
       # This prevents overwhelming the system with hundreds of old issues
@@ -152,6 +146,22 @@ providers:
       # Limits the total number of issues/PRs processed across all repositories
       # Useful to prevent rate limiting and reduce processing load
       maxItemsPerPoll: 50
+
+      # Event filtering (optional)
+      # Controls which event types and actions trigger the bot.
+      # If omitted, built-in defaults apply:
+      #   issues:        all actions processed
+      #   pull_request:  skips opened, synchronize, edited, labeled, unlabeled, assigned, unassigned, locked, unlocked
+      #   issue_comment: all actions processed
+      # If present, ONLY listed event types are processed.
+      # Per event type:
+      #   actions     - allowlist; use ['all'] to accept every action (default)
+      #   skipActions - denylist applied after the allowlist
+      # eventFilter:
+      #   issues: {}
+      #   pull_request:
+      #     actions: ['closed', 'reopened', 'review_requested']
+      #   issue_comment: {}
 
   # GitLab Provider (similar to GitHub)
   gitlab:
@@ -187,16 +197,22 @@ providers:
         - group/project1
         - username/project2
 
-      # Event types to monitor
-      events:
-        - issues
-        - merge_requests
-
       # Initial lookback period for first poll (default: 1 hour)
       initialLookbackHours: 1
 
       # Maximum items to process per poll (default: unlimited)
       maxItemsPerPoll: 50
+
+      # Event filtering (optional)
+      # If omitted, built-in defaults apply:
+      #   issue:         skips 'open' action
+      #   merge_request: skips 'open' and 'update' actions
+      #   note:          all actions processed
+      # eventFilter:
+      #   issue: {}
+      #   merge_request:
+      #     actions: ['close', 'reopen', 'merge']
+      #   note: {}
 
   # Linear Provider (uses GraphQL API)
   linear:
@@ -237,6 +253,16 @@ providers:
       # Maximum items to process per poll (default: unlimited)
       maxItemsPerPoll: 50
 
+      # Event filtering (optional)
+      # If omitted, built-in default applies: Issue events only, skipping done/cancelled/canceled states
+      # states     - allowlist of state names (lowercase); use ['all'] to accept every state (default)
+      # skipStates - denylist applied after the allowlist
+      # eventFilter:
+      #   Issue:
+      #     states: ['all']
+      #     skipStates: ['done', 'cancelled', 'canceled']
+      #   Comment: {}
+
   # Slack Provider (mention-triggered only)
   slack:
     enabled: false
@@ -265,7 +291,9 @@ providers:
       # No botUsername configuration is needed for Slack
       # The bot's user ID is fetched when the provider initializes
 
-      # Note: Slack provider only processes app_mention events
-      # Bot must be added to channels and @mentioned to trigger
-      # Webhook is the primary mechanism (real-time)
-      # Polling is optional fallback (requires pollingEnabled=true)
+      # Event filtering (optional)
+      # Default: only app_mention events are processed
+      # Use eventFilter to change which Slack event types trigger the bot
+      # eventFilter:
+      #   app_mention: {}   # bot is @mentioned (default)
+      #   message: {}       # also handle direct messages

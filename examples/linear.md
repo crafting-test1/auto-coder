@@ -170,17 +170,48 @@ To find your team keys:
 
 #### Event Filtering
 
-Linear webhook events are automatically filtered to focus on actionable changes:
+Linear webhook events are automatically filtered to focus on actionable changes.
 
-**Processed Events:**
-- Issue created
-- Issue updated (state changes, assignments, etc.)
-- Issues not in "Done" or "Cancelled" states
+**Default filtering:**
+- ✅ `Issue` events are processed
+- ❌ Issues whose state is `done`, `cancelled`, or `canceled` are skipped
+- ❌ Non-Issue events (e.g. `Comment`) are ignored unless explicitly configured
 
-**Skipped Events:**
-- Issues in "Done" state
-- Issues in "Cancelled" or "Canceled" state (both spellings)
-- Non-issue events (comments are not yet supported)
+Use `eventFilter` to control which Linear event types are processed (for both webhooks and polling) and which states within them are allowed or skipped.
+
+- **`states`** — allowlist of state names (lowercase) to process. Use `['all']` (the default) to accept every state.
+- **`skipStates`** — denylist applied after the allowlist. States listed here are always skipped.
+- If `eventFilter` is **omitted**, the built-in defaults above apply.
+- If `eventFilter` is **present**, only the listed event types are processed. For each type, omitting `states`/`skipStates` falls back to the built-in default for that type.
+
+```yaml
+options:
+  eventFilter:
+    # Process all Issue states except 'done' and 'cancelled'
+    Issue:
+      states: ['all']
+      skipStates: ['done', 'cancelled', 'canceled']
+
+    # Also handle Comment events (no state filtering)
+    Comment: {}
+```
+
+**Common recipes:**
+
+```yaml
+# Also process 'done' issues (e.g. to trigger a completion workflow)
+Issue:
+  states: ['all']
+  skipStates: []
+
+# Only process issues in specific states
+Issue:
+  states: ['in progress', 'in review']
+
+# Ignore Issue events entirely, only handle Comments
+eventFilter:
+  Comment: {}
+```
 
 ## Webhook Setup Details
 
@@ -308,9 +339,15 @@ pnpm start
 
 **Solutions**:
 - This is expected for reopened issues
-- Check Linear state configuration - custom state names might not match "Done"
-- Review logs to see which state is being reported
-- The provider skips states: "Done", "Cancelled", "Canceled"
+- Check Linear state configuration — custom state names might not match the defaults
+- Review logs to see which state name Linear is reporting
+- Add the custom state name to `skipStates` in `eventFilter`:
+  ```yaml
+  options:
+    eventFilter:
+      Issue:
+        skipStates: ['done', 'cancelled', 'canceled', 'your-custom-state']
+  ```
 
 ## Advanced Configuration
 
@@ -346,7 +383,15 @@ providers:
 
 ### Custom State Filtering
 
-The Linear provider automatically skips issues in "Done", "Cancelled", and "Canceled" states. If your organization uses custom state names, you may need to modify the provider logic.
+Use `eventFilter` to override which states are processed without touching provider code:
+
+```yaml
+options:
+  eventFilter:
+    Issue:
+      states: ['all']
+      skipStates: ['done', 'cancelled', 'canceled', 'archived']  # add custom states here
+```
 
 
 ## Example Workflows

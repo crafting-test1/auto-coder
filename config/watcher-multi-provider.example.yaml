@@ -54,11 +54,6 @@ providers:
         - owner/backend-api
         - owner/frontend-app
 
-      events:
-        - issues
-        - pull_request
-        - issue_comment
-
       initialLookbackHours: 1
       maxItemsPerPoll: 50
 
@@ -80,10 +75,6 @@ providers:
       projects:
         - group/infrastructure
         - group/tooling
-
-      events:
-        - issues
-        - merge_requests
 
       initialLookbackHours: 1
       maxItemsPerPoll: 50
@@ -128,6 +119,8 @@ providers:
       # Note: Bot user ID is automatically detected via Slack API
       # No botUsername configuration is needed for Slack
 
-      # Note: Slack provider automatically filters to app_mention events only
-      # No need to configure channels - bot responds in any channel where it's added
-      # and someone @mentions it
+      # Event filtering (optional)
+      # Default: only app_mention events processed
+      # eventFilter:
+      #   app_mention: {}
+      #   message: {}     # also handle direct messages
