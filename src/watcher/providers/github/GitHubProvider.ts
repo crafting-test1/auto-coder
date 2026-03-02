@@ -56,12 +56,23 @@ interface GitHubWebhookPayload {
   };
 }
 
+type GitHubEventConfig = { actions: string[]; skipActions: string[] };
+
 export class GitHubProvider extends BaseProvider {
   private webhook: GitHubWebhook | undefined;
   private poller: GitHubPoller | undefined;
   private comments: GitHubComments | undefined;
   private token: string | undefined;
   private botUsernames: string[] = [];
+
+  private static readonly DEFAULT_WEBHOOK_EVENTS: Record<string, GitHubEventConfig> = {
+    issues:        { actions: ['all'], skipActions: [] },
+    pull_request:  { actions: ['all'], skipActions: ['opened', 'synchronize', 'edited', 'labeled', 'unlabeled', 'assigned', 'unassigned', 'locked', 'unlocked'] },
+    issue_comment: { actions: ['all'], skipActions: [] },
+  };
+
+  private eventFilter: Record<string, GitHubEventConfig> =
+    { ...GitHubProvider.DEFAULT_WEBHOOK_EVENTS };
 
   get metadata(): ProviderMetadata {
     return {
@@ -92,10 +103,10 @@ export class GitHubProvider extends BaseProvider {
       webhookSecretEnv?: string;
       webhookSecretFile?: string;
       repositories?: string[];
-      events?: string[];
       initialLookbackHours?: number;
       maxItemsPerPoll?: number;
       botUsername?: string | string[];
+      eventFilter?: Record<string, { actions?: string[]; skipActions?: string[] }>;
     } | undefined;
 
     // Read bot username(s) for deduplication
@@ -118,6 +129,19 @@ export class GitHubProvider extends BaseProvider {
     this.webhook = new GitHubWebhook(webhookSecret);
     modes.push('webhook');
 
+    if (options?.eventFilter) {
+      const configured: Record<string, GitHubEventConfig> = {};
+      for (const [eventType, eventConfig] of Object.entries(options.eventFilter)) {
+        const defaults = GitHubProvider.DEFAULT_WEBHOOK_EVENTS[eventType];
+        configured[eventType] = {
+          actions:     eventConfig?.actions     ?? defaults?.actions     ?? ['all'],
+          skipActions: eventConfig?.skipActions ?? defaults?.skipActions ?? [],
+        };
+      }
+      this.eventFilter = configured;
+    }
+    logger.info(`GitHub event filter: ${Object.keys(this.eventFilter).join(', ')}`);
+
     const hasPollingConfig =
       this.token && options?.repositories && options.repositories.length > 0;
 
@@ -125,17 +149,14 @@ export class GitHubProvider extends BaseProvider {
       const pollerConfig: {
         token: string;
         repositories: string[];
-        events?: string[];
+        events: string[];
         initialLookbackHours?: number;
         maxItemsPerPoll?: number;
       } = {
         token: this.token!,
         repositories: options!.repositories!,
+        events: Object.keys(this.eventFilter),
       };
-
-      if (options!.events) {
-        pollerConfig.events = options.events;
-      }
 
       if (options!.initialLookbackHours !== undefined) {
         pollerConfig.initialLookbackHours = options.initialLookbackHours;
@@ -186,6 +207,12 @@ export class GitHubProvider extends BaseProvider {
 
     logger.debug(`Processing GitHub ${event} event (delivery: ${deliveryId})`);
 
+    const eventConfig = this.eventFilter[event];
+    if (!eventConfig) {
+      logger.debug(`Skipping GitHub ${event} event - not in configured eventFilter`);
+      return;
+    }
+
     // Early filtering: Check if this is a supported event type
     let resourceType: string;
     let resourceNumber: number;
@@ -208,7 +235,7 @@ export class GitHubProvider extends BaseProvider {
     const normalizedEvent = this.normalizeEvent(payload, deliveryId);
 
     // Apply shared filtering logic
-    if (!this.shouldProcessEvent(normalizedEvent)) {
+    if (!this.shouldProcessEvent(normalizedEvent, undefined, eventConfig.actions, eventConfig.skipActions)) {
       return; // Event filtered out (already logged in shouldProcessEvent)
     }
 
@@ -224,97 +251,38 @@ export class GitHubProvider extends BaseProvider {
     await eventHandler(normalizedEvent, reactor);
   }
 
-  private shouldSkipClosedItem(payload: GitHubWebhookPayload): boolean {
-    // Allow reopened events through
-    if (payload.action === 'reopened') {
-      return false;
-    }
-
-    // Check if issue/PR is closed or merged
-    const state = payload.issue?.state || payload.pull_request?.state;
-    if (state === 'closed') {
-      return true;
-    }
-
-    // For PRs, also check merged state
-    if (payload.pull_request?.merged) {
-      return true;
-    }
-
-    return false;
-  }
-
-  /**
-   * Determines if a GitHub event should trigger bot action.
-   *
-   * Filtering Strategy:
-   * The bot only processes events that indicate human interaction requiring action.
-   * Automated actions (commits pushed, metadata changes) are filtered out to avoid
-   * unnecessary processing and to focus on events where human feedback is present.
-   *
-   * Events that are SKIPPED:
-   * - 'opened' actions: Newly created issues/PRs have no context yet, nothing to do
-   * - 'synchronize' actions: PR updated due to new commits (automated), not user interaction
-   * - Metadata changes: edited, labeled, assigned, locked, etc. (no actionable change)
-   * - Closed/merged items: Already completed (unless being reopened)
-   * - Polled PRs without recent comments: Updated only due to commits, no human interaction
-   *
-   * Events that are PROCESSED:
-   * - Issue/PR comments: Human asking for action or providing feedback
-   * - Review requests: Human requesting review
-   * - Reopened items: Previously closed but now needs attention again
-   * - Polled PRs with recent human comments: Indicates human interaction occurred
-   *
-   * @param event - The normalized event from webhook or polling
-   * @param hasRecentComments - For polled events, indicates if there are recent human comments
-   *                            (helps distinguish commits-only updates from human interaction)
-   * @returns true if event should be processed by the bot, false to skip
-   */
-  private shouldProcessEvent(event: NormalizedEvent, hasRecentComments?: boolean): boolean {
+  private shouldProcessEvent(
+    event: NormalizedEvent,
+    hasRecentComments?: boolean,
+    actions: string[] = ['all'],
+    skipActions: string[] = []
+  ): boolean {
     const { type, action, resource } = event;
 
-    // 1. Skip newly opened PRs/issues - nothing to do yet
-    if (action === 'opened') {
-      logger.debug(`Skipping newly opened ${type} #${resource.number} - nothing to do`);
+    // Allowlist check: skip if action not in allowlist (unless 'all' is present)
+    if (!actions.includes('all') && !actions.includes(action)) {
+      logger.debug(`Skipping ${type} #${resource.number} ${action} event - not in actions allowlist`);
       return false;
     }
 
-    // 2. Skip PR synchronize events (commits pushed) - automated action, not user interaction
-    // For polling, this is represented by action='poll' without recent comments
-    if (type === 'pull_request') {
-      if (action === 'synchronize') {
-        logger.debug(`Skipping PR #${resource.number} synchronize event - commits pushed by author`);
-        return false;
-      }
-
-      // For polled events, skip if no recent human interaction
-      if (action === 'poll' && hasRecentComments === false) {
-        logger.debug(`Skipping polled PR #${resource.number} - only updated due to commits, no new comments`);
-        return false;
-      }
-    }
-
-    // 3. Skip other automated actions that don't require bot attention
-    if (type === 'pull_request' && [
-      'edited',          // Title/description changed
-      'labeled',         // Labels added/removed
-      'unlabeled',
-      'assigned',        // Assignees changed
-      'unassigned',
-      'locked',          // PR locked/unlocked
-      'unlocked',
-    ].includes(action)) {
-      logger.debug(`Skipping PR #${resource.number} ${action} event - automated action`);
+    // Denylist check
+    if (skipActions.includes(action)) {
+      logger.debug(`Skipping ${type} #${resource.number} ${action} event`);
       return false;
     }
 
-    // 4. Skip closed/merged items unless they're being reopened
+    // For polled events, skip if no recent human interaction
+    if (type === 'pull_request' && action === 'poll' && hasRecentComments === false) {
+      logger.debug(`Skipping polled PR #${resource.number} - only updated due to commits, no new comments`);
+      return false;
+    }
+
+    // Skip closed/merged items unless they're being reopened
     if (resource.state === 'closed' && action !== 'reopened') {
       logger.debug(`Skipping closed/merged ${type} #${resource.number}`);
       return false;
     }
 
-    // Event should be processed
     return true;
   }
 
@@ -384,6 +352,13 @@ export class GitHubProvider extends BaseProvider {
       const resourceType = item.type === 'issue' ? 'issue' : 'pull_request';
       const resourceNumber = item.number;
 
+      const webhookKey = item.type === 'issue' ? 'issues' : 'pull_request';
+      const pollEventConfig = this.eventFilter[webhookKey];
+      if (!pollEventConfig) {
+        logger.debug(`Skipping polled ${item.type} - not in configured eventFilter`);
+        continue;
+      }
+
       // For PRs, check if there are recent comments to distinguish
       // between commit updates (skip) vs human interaction (process)
       let hasRecentComments: boolean | undefined;
@@ -395,7 +370,7 @@ export class GitHubProvider extends BaseProvider {
       const normalizedEvent = this.normalizePolledEvent(item);
 
       // Apply shared filtering logic (same as webhooks)
-      if (!this.shouldProcessEvent(normalizedEvent, hasRecentComments)) {
+      if (!this.shouldProcessEvent(normalizedEvent, hasRecentComments, pollEventConfig.actions, pollEventConfig.skipActions)) {
         continue; // Event filtered out (already logged in shouldProcessEvent)
       }
 

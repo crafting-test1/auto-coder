@@ -43,6 +43,7 @@ export class SlackProvider extends BaseProvider {
   private poller: SlackPoller | undefined;
   private token: string | undefined;
   private botUsernames: string[] = [];
+  private eventFilter: Set<string> = new Set(['app_mention']);
 
   get metadata(): ProviderMetadata {
     return {
@@ -143,6 +144,11 @@ export class SlackProvider extends BaseProvider {
       logger.info('Slack polling disabled (pollingEnabled=false). Set pollingEnabled=true to enable polling fallback.');
     }
 
+    const eventFilterConfig = config.options?.eventFilter as Record<string, unknown> | undefined;
+    if (eventFilterConfig) {
+      this.eventFilter = new Set(Object.keys(eventFilterConfig));
+    }
+
     logger.info('Slack provider initialized');
   }
 
@@ -200,9 +206,8 @@ export class SlackProvider extends BaseProvider {
 
     const event = payload.event;
 
-    // Only process app_mention events (when bot is @mentioned)
-    if (event.type !== 'app_mention') {
-      logger.debug(`Ignoring Slack event: ${event.type} (only app_mention is processed)`);
+    if (!this.eventFilter.has(event.type)) {
+      logger.debug(`Ignoring Slack event: ${event.type} - not in configured eventFilter`);
       return;
     }
 

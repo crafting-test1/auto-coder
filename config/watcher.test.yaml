@@ -28,9 +28,5 @@ providers:
       repositories:
         - owner/test-repo
 
-      events:
-        - issues
-        - pull_request
-
       initialLookbackHours: 1
       maxItemsPerPoll: 10

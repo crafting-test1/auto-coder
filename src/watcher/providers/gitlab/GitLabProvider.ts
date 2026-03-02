@@ -42,6 +42,8 @@ interface GitLabWebhookPayload {
   labels?: any[];
 }
 
+type GitLabEventConfig = { actions: string[]; skipActions: string[] };
+
 export class GitLabProvider extends BaseProvider {
   private webhook: GitLabWebhook | undefined;
   private poller: GitLabPoller | undefined;
@@ -49,6 +51,15 @@ export class GitLabProvider extends BaseProvider {
   private token: string | undefined;
   private botUsernames: string[] = [];
   private baseUrl: string | undefined;
+
+  private static readonly DEFAULT_WEBHOOK_EVENTS: Record<string, GitLabEventConfig> = {
+    issue:         { actions: ['all'], skipActions: ['open'] },
+    merge_request: { actions: ['all'], skipActions: ['open', 'update'] },
+    note:          { actions: ['all'], skipActions: [] },
+  };
+
+  private eventFilter: Record<string, GitLabEventConfig> =
+    { ...GitLabProvider.DEFAULT_WEBHOOK_EVENTS };
 
   get metadata(): ProviderMetadata {
     return {
@@ -85,10 +96,10 @@ export class GitLabProvider extends BaseProvider {
       webhookTokenFile?: string;
       baseUrl?: string;
       projects?: string[];
-      events?: string[];
       initialLookbackHours?: number;
       maxItemsPerPoll?: number;
       botUsername?: string | string[];
+      eventFilter?: Record<string, { actions?: string[]; skipActions?: string[] }>;
     } | undefined;
 
     // Read bot username(s) for deduplication
@@ -111,6 +122,19 @@ export class GitLabProvider extends BaseProvider {
     this.webhook = new GitLabWebhook(webhookToken);
     modes.push('webhook');
 
+    if (options?.eventFilter) {
+      const configured: Record<string, GitLabEventConfig> = {};
+      for (const [eventType, eventConfig] of Object.entries(options.eventFilter)) {
+        const defaults = GitLabProvider.DEFAULT_WEBHOOK_EVENTS[eventType];
+        configured[eventType] = {
+          actions:     eventConfig?.actions     ?? defaults?.actions     ?? ['all'],
+          skipActions: eventConfig?.skipActions ?? defaults?.skipActions ?? [],
+        };
+      }
+      this.eventFilter = configured;
+    }
+    logger.info(`GitLab event filter: ${Object.keys(this.eventFilter).join(', ')}`);
+
     const hasPollingConfig =
       this.token && options?.projects && options.projects.length > 0;
 
@@ -118,18 +142,15 @@ export class GitLabProvider extends BaseProvider {
       const pollerConfig: {
         token: string;
         projects: string[];
-        events?: string[];
+        events: string[];
         initialLookbackHours?: number;
         maxItemsPerPoll?: number;
         baseUrl?: string;
       } = {
         token: this.token!,
         projects: options!.projects!,
+        events: Object.keys(this.eventFilter),
       };
-
-      if (options!.events) {
-        pollerConfig.events = options.events;
-      }
 
       if (options!.initialLookbackHours !== undefined) {
         pollerConfig.initialLookbackHours = options.initialLookbackHours;
@@ -184,6 +205,12 @@ export class GitLabProvider extends BaseProvider {
 
     logger.debug(`Processing GitLab ${event} event`);
 
+    const eventConfig = this.eventFilter[payload.object_kind];
+    if (!eventConfig) {
+      logger.debug(`Skipping GitLab ${payload.object_kind} event - not in configured eventFilter`);
+      return;
+    }
+
     // Determine resource type and number for reactor
     let resourceType: string;
     let resourceNumber: number;
@@ -219,7 +246,7 @@ export class GitLabProvider extends BaseProvider {
     const normalizedEvent = this.normalizeEvent(payload);
 
     // Apply shared filtering logic
-    if (!this.shouldProcessEvent(normalizedEvent)) {
+    if (!this.shouldProcessEvent(normalizedEvent, undefined, eventConfig.actions, eventConfig.skipActions)) {
       return; // Event filtered out (already logged in shouldProcessEvent)
     }
 
@@ -235,59 +262,38 @@ export class GitLabProvider extends BaseProvider {
     await eventHandler(normalizedEvent, reactor);
   }
 
-  private shouldSkipClosedItem(payload: GitLabWebhookPayload): boolean {
-    // Allow reopen events through
-    if (payload.object_attributes.action === 'reopen') {
-      return false;
-    }
-
-    // Check if issue/MR is closed or merged
-    const state = payload.object_attributes.state;
-    if (state === 'closed') {
-      return true;
-    }
-
-    return false;
-  }
-
-  /**
-   * Shared filtering logic for both webhook and polling events
-   * Determines if a normalized event should be processed
-   * @param event - The normalized event
-   * @param hasRecentNotes - For polled events, whether there are recent notes/comments
-   * @returns true if event should be processed, false to skip
-   */
-  private shouldProcessEvent(event: NormalizedEvent, hasRecentNotes?: boolean): boolean {
+  private shouldProcessEvent(
+    event: NormalizedEvent,
+    hasRecentNotes?: boolean,
+    actions: string[] = ['all'],
+    skipActions: string[] = []
+  ): boolean {
     const { type, action, resource } = event;
 
-    // 1. Skip newly opened MRs/issues - nothing to do yet
-    if (action === 'open') {
-      logger.debug(`Skipping newly opened ${type} !${resource.number} - nothing to do`);
+    // Allowlist check
+    if (!actions.includes('all') && !actions.includes(action)) {
+      logger.debug(`Skipping ${type} !${resource.number} ${action} event - not in actions allowlist`);
       return false;
     }
 
-    // 2. Skip MR update events (commits pushed, metadata changed) - automated action, not user interaction
-    // For polling, this is represented by action='poll' without recent notes
-    if (type === 'merge_request') {
-      if (action === 'update') {
-        logger.debug(`Skipping MR !${resource.number} update event - automated action (commits/metadata)`);
-        return false;
-      }
-
-      // For polled events, skip if no recent human interaction
-      if (action === 'poll' && hasRecentNotes === false) {
-        logger.debug(`Skipping polled MR !${resource.number} - only updated due to commits, no new notes`);
-        return false;
-      }
+    // Denylist check
+    if (skipActions.includes(action)) {
+      logger.debug(`Skipping ${type} !${resource.number} ${action} event`);
+      return false;
     }
 
-    // 3. Skip closed/merged items unless they're being reopened
+    // For polled events, skip if no recent human interaction
+    if (type === 'merge_request' && action === 'poll' && hasRecentNotes === false) {
+      logger.debug(`Skipping polled MR !${resource.number} - only updated due to commits, no new notes`);
+      return false;
+    }
+
+    // Skip closed/merged items unless they're being reopened
     if (resource.state === 'closed' && action !== 'reopen') {
       logger.debug(`Skipping closed/merged ${type} !${resource.number}`);
       return false;
     }
 
-    // Event should be processed
     return true;
   }
 
@@ -341,6 +347,12 @@ export class GitLabProvider extends BaseProvider {
       const resourceType = item.type === 'issue' ? 'issue' : 'merge_request';
       const resourceNumber = item.number;
 
+      const pollEventConfig = this.eventFilter[item.type];
+      if (!pollEventConfig) {
+        logger.debug(`Skipping polled ${item.type} - not in configured eventFilter`);
+        continue;
+      }
+
       // For MRs, check if there are recent notes to distinguish
       // between commit updates (skip) vs human interaction (process)
       let hasRecentNotes: boolean | undefined;
@@ -352,7 +364,7 @@ export class GitLabProvider extends BaseProvider {
       const normalizedEvent = this.normalizePolledEvent(item);
 
       // Apply shared filtering logic (same as webhooks)
-      if (!this.shouldProcessEvent(normalizedEvent, hasRecentNotes)) {
+      if (!this.shouldProcessEvent(normalizedEvent, hasRecentNotes, pollEventConfig.actions, pollEventConfig.skipActions)) {
         continue; // Event filtered out (already logged in shouldProcessEvent)
       }
 

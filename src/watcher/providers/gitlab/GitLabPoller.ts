@@ -52,8 +52,8 @@ export class GitLabPoller {
       logger.info(`First poll for ${project}, looking back ${lookbackHours} hour(s)`);
     }
 
-    const shouldPollIssues = !this.config.events || this.config.events.includes('issues');
-    const shouldPollMRs = !this.config.events || this.config.events.includes('merge_requests');
+    const shouldPollIssues = !this.config.events || this.config.events.includes('issue');
+    const shouldPollMRs = !this.config.events || this.config.events.includes('merge_request');
 
     try {
       if (shouldPollIssues) {

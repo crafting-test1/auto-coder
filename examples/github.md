@@ -100,12 +100,6 @@ providers:
         - owner/repo1
         - owner/repo2
 
-      # Event types to monitor
-      events:
-        - issues
-        - pull_request
-        - issue_comment
-
       # Initial lookback period (default: 1 hour)
       initialLookbackHours: 1
 
@@ -149,21 +143,49 @@ options:
   # webhookSecretFile: /path/to/secret/file
 ```
 
-#### Event Types
+#### Event Filtering
 
-Supported event types:
-- `issues` - Issue opened, closed, reopened, edited, assigned, etc.
-- `pull_request` - PR closed, merged, edited, review requested, etc.
-  - **Note**: Newly opened PRs (`action: opened`) are automatically skipped since they represent work already being done, not new tasks to handle
-- `issue_comment` - Comments on issues and pull requests
+**Default filtering:**
+- ✅ `issues` — all actions processed
+- ❌ `pull_request` — skips `opened`, `synchronize`, `edited`, `labeled`, `unlabeled`, `assigned`, `unassigned`, `locked`, `unlocked`
+- ✅ `issue_comment` — all actions processed
+- ❌ Any closed/merged item (unless action is `reopened`)
 
-**Event Filtering Logic:**
+Use `eventFilter` to control which event types are processed (for both webhooks and polling) and which actions within them are allowed or skipped.
 
-The GitHub provider automatically filters events:
-- ✅ **Issues (all actions)** - These are tasks that need work
-- ✅ **PR updates** - Review requests, edits, synchronize, etc.
-- ❌ **Newly opened PRs** - Already work in progress, not new tasks
-- ❌ **Closed/merged items** - Already completed (unless reopened)
+- **`actions`** — allowlist of actions to process. Use `['all']` (the default) to accept every action.
+- **`skipActions`** — denylist applied after the allowlist. Actions listed here are always skipped.
+- If `eventFilter` is **omitted**, the built-in defaults above apply.
+- If `eventFilter` is **present**, only the listed event types are processed. For each type, omitting `actions`/`skipActions` falls back to the built-in default for that type.
+
+```yaml
+options:
+  eventFilter:
+    # Accept all issue actions, but skip 'labeled'
+    issues:
+      actions: ['all']
+      skipActions: ['labeled']
+
+    # Only process explicitly closed or reopened PRs
+    pull_request:
+      actions: ['closed', 'reopened']
+
+    # Accept all issue_comment actions (no filtering)
+    issue_comment: {}
+```
+
+**Common recipes:**
+
+```yaml
+# Only trigger when a PR is merged
+pull_request:
+  actions: ['closed']      # 'merged' PRs arrive with action='closed'
+
+# Watch PRs and issue_comment only (ignore issues entirely)
+eventFilter:
+  pull_request: {}
+  issue_comment: {}
+```
 
 #### Polling Options
 
@@ -316,6 +338,21 @@ providers:
       events:
         - issues
         - pull_request
+```
+
+### Custom Event Filtering
+
+Override which events and actions trigger the bot:
+
+```yaml
+options:
+  eventFilter:
+    issues:
+      actions: ['all']
+      skipActions: ['opened', 'labeled']
+    pull_request:
+      actions: ['closed', 'reopened', 'review_requested']
+    issue_comment: {}
 ```
 
 ### Polling-Only Mode

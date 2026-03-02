@@ -81,9 +81,5 @@ providers:
         - owner/repo1
         - owner/repo2
 
-      events:
-        - issues
-        - pull_request
-
       initialLookbackHours: 1
       maxItemsPerPoll: 50
