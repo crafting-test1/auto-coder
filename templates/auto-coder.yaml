@@ -45,7 +45,7 @@ endpoints:
           path_prefix: /
       auth_proxy:
         disabled: true
-      path: /mcp
+      path: /sse
 workspaces:
   - name: dev
     ports:
@@ -110,7 +110,7 @@ containers:
       - mcp-server
     args:
       - --transport
-      - http
+      - sse
     env:
       - SLACK_MCP_PORT=8081
       - SLACK_MCP_HOST=0.0.0.0
