@@ -122,6 +122,7 @@ customizations:
   - mcp_server:
       endpoint: github-mcp
   - mcp_server:
+      protocol: SSE
       endpoint: slack-mcp
   - mcp_server:
       endpoint: linear-mcp
