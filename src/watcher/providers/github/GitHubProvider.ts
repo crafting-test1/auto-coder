@@ -67,7 +67,7 @@ export class GitHubProvider extends BaseProvider {
 
   private static readonly DEFAULT_WEBHOOK_EVENTS: Record<string, GitHubEventConfig> = {
     issues:        { actions: ['all'], skipActions: [] },
-    pull_request:  { actions: ['all'], skipActions: ['opened', 'synchronize', 'edited', 'labeled', 'unlabeled', 'assigned', 'unassigned', 'locked', 'unlocked'] },
+    pull_request:  { actions: ['all'], skipActions: ['opened', 'synchronize', 'edited', 'labeled', 'unlabeled', 'assigned', 'unassigned', 'locked', 'unlocked', 'review_requested'] },
     issue_comment: { actions: ['all'], skipActions: [] },
   };
 

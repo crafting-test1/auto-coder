@@ -18,7 +18,7 @@ commandExecutor:
   enabled: true
 
   # Command to execute - receives rendered prompt via stdin or $PROMPT
-  command: "cs llm session run --approval=auto --name=$EVENT_SHORT_ID"
+  command: "cs llm session run --approval=auto --name=$EVENT_SHORT_ID --task"
 
   # Single template works for all current providers (GitHub, GitLab, Linear)
   # All three are code platforms with similar PR-based workflows
