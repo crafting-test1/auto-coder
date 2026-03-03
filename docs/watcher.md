@@ -73,6 +73,32 @@ Template selection order:
 
 Built-in Handlebars helpers: `eq`, `ne`, `and`, `or`, `link`, `resourceLink`, `commentLink`.
 
+### NormalizedEvent — Field Reference
+
+The full variable reference (with per-provider notes) is documented at the top of each example template:
+
+- `config/event-prompt.example.hbs` — GitHub, GitLab, Linear
+- `config/event-prompt-slack.example.hbs` — Slack
+
+The normalization itself happens in each provider's `normalizeEvent` / `normalizePolledEvent` private methods:
+
+| Provider | File |
+|---|---|
+| GitHub | `src/watcher/providers/github/GitHubProvider.ts` |
+| GitLab | `src/watcher/providers/gitlab/GitLabProvider.ts` |
+| Linear | `src/watcher/providers/linear/LinearProvider.ts` |
+| Slack | `src/watcher/providers/slack/SlackProvider.ts` |
+
+A few provider-specific quirks worth knowing when writing templates:
+
+- **`resource.repository`** — GitHub/GitLab: `"owner/repo"` · Linear: team key (e.g. `"ENG"`) · Slack: channel ID (e.g. `"C01ABC123"`)
+- **`resource.author`** — GitHub/GitLab: login username · Linear: display name · Slack: user ID
+- **`resource.branch` / `resource.mergeTo`** — only set for GitHub/GitLab PRs and MRs; absent for Linear and Slack
+- **`resource.comment`** — present when triggered by a comment (GitHub/GitLab/Linear) or always present for Slack (contains the message itself)
+- **`resource.url`** — empty for Slack webhook events; populated for Slack polled mentions
+- **`metadata.deliveryId`** — GitHub webhooks only
+- **`metadata.channel` / `metadata.threadTs`** — Slack only
+
 ---
 
 ## Command Execution
