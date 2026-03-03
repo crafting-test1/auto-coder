@@ -38,7 +38,7 @@ Webhook secrets provide security by verifying that webhook requests come from Li
 3. Set **Webhook URL**: `http://your-server:3000/webhook/linear`
 4. Select resource types:
    - **Issue** (check this)
-   - **Comment** (optional - for future support)
+   - **Comment** (check this to trigger on new comments)
 5. Select events:
    - **create** - When new issues are created
    - **update** - When issues are updated
@@ -66,7 +66,6 @@ server:
 
 deduplication:
   enabled: true
-  botUsername: your-linear-username  # Your Linear account username or display name
   commentTemplate: "Agent is working on {id}"
 
 commandExecutor:
@@ -88,6 +87,9 @@ providers:
     options:
       # Webhook secret for signature verification (optional but recommended)
       webhookSecretEnv: LINEAR_WEBHOOK_SECRET
+
+      # Bot username for deduplication (run with logLevel: debug to see which format Linear returns)
+      botUsername: your-linear-username
 
       # Teams to monitor (for polling)
       # Team keys are short identifiers like "ENG", "DESIGN", "PRODUCT"

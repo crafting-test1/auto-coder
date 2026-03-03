@@ -72,7 +72,6 @@ server:
 
 deduplication:
   enabled: true
-  botUsername: your-github-username  # Your GitHub account username
   commentTemplate: "Agent is working on {id}"
 
 commandExecutor:
@@ -94,6 +93,9 @@ providers:
     options:
       # Webhook secret for signature verification
       webhookSecretEnv: GITHUB_WEBHOOK_SECRET
+
+      # Bot username for deduplication
+      botUsername: your-github-username
 
       # Repositories to monitor (for polling)
       repositories:
@@ -335,9 +337,6 @@ providers:
       tokenEnv: GITHUB_TOKEN
     options:
       webhookSecretEnv: GITHUB_WEBHOOK_SECRET
-      events:
-        - issues
-        - pull_request
 ```
 
 ### Custom Event Filtering
@@ -412,8 +411,8 @@ commandExecutor:
 providers:
   github:
     options:
-      events:
-        - issues
+      eventFilter:
+        issues: {}
 ```
 
 ### Monitor PRs for Review
@@ -427,8 +426,8 @@ commandExecutor:
 providers:
   github:
     options:
-      events:
-        - pull_request
+      eventFilter:
+        pull_request: {}
 ```
 
 ### Handle Comments
@@ -437,6 +436,6 @@ providers:
 providers:
   github:
     options:
-      events:
-        - issue_comment
+      eventFilter:
+        issue_comment: {}
 ```

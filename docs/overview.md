@@ -4,7 +4,7 @@ auto-coder is the central piece of the automated coding flow. It acts as an even
 
 ## What It Does
 
-auto-coder listens for events from developer platforms (GitHub, GitLab, Linear, Slack), filters and preprocesses them, constructs a task prompt, and starts a Crafting Sandbox LLM session — which then drives the coding agent to complete the task.
+auto-coder listens for events from developer platforms (GitHub, GitLab, Linear, Slack), filters and preprocesses them, constructs a task prompt, and starts a Crafting Sandbox LLM session via `cs llm` — which then drives the coding agent to complete the task. Refer to `cs llm --help` for more on the LLM session feature.
 
 When a follow-up event arrives (e.g. a comment update or task revision), the same flow is triggered again with updated context, allowing the agent to iterate on its previous work.
 
@@ -13,20 +13,22 @@ The entire flow is configurable — event sources, filtering rules, and prompt t
 ## The Three Parts
 
 ```
-┌─────────────────┐     ┌──────────────────────────┐     ┌───────────────────────────┐
-│   auto-coder    │────▶│  Crafting Sandbox         │────▶│  Crafting Sandbox         │
-│  (event listener│     │  Coding Agent             │     │  Runtime                  │
-│   & orchestrator)│    │  (LLM session)            │     │  (execution environment)  │
-└─────────────────┘     └──────────────────────────┘     └───────────────────────────┘
+┌────────────────────────┐     ┌────────────────────────┐     ┌────────────────────────┐
+│        Watcher         │────▶│   Crafting Sandbox     │────▶│   Crafting Sandbox     │
+│   (event listener &    │     │     Coding Agent       │     │       Runtime          │
+│     orchestrator)      │     │  (built-in `cs llm`)   │     │ (execution environment)│
+└────────────────────────┘     └────────────────────────┘     └────────────────────────┘
 
-  Listens, filters,        Understands the task,           Runs the generated code,
-  builds prompt,           writes and iterates              provides tools & environment
-  starts session           on code changes
+  Listens, filters,               Understands the task,          Runs the generated code,
+  builds prompt,                  writes and iterates            provides tools & environment
+  starts session via `cs llm`     on code changes
 ```
 
-**auto-coder** handles:
+**[Watcher](./watcher.md)** handles:
 - Receiving events via webhooks or polling
 - Deduplication (skips if the bot already responded)
 - Prompt construction from configurable Handlebars templates
 - Launching the Crafting Sandbox LLM session
 - Posting status updates and follow-up comments back to the source platform
+
+**Crafting Sandbox Coding Agent** (`cs llm`) is a built-in feature of the Crafting Sandbox system. Watcher invokes it with the rendered prompt to start an LLM session, which drives the coding agent to understand the task, plan, and iteratively implement changes. Refer to `cs llm --help` for available options.

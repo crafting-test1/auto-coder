@@ -82,11 +82,8 @@ server:
 
 deduplication:
   enabled: true
-  # Slack bot user ID (e.g., "U01ABC123DEF")
-  # Find this at: Slack App → Basic Information → App ID
-  # Or it will be logged when the watcher starts
-  botUsername: U01ABC123DEF
   commentTemplate: "Agent is working on {id}"
+  # Note: No botUsername needed for Slack — the bot's user ID is auto-detected on startup
 
 commandExecutor:
   enabled: true
