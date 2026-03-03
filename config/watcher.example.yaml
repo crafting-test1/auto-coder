@@ -53,7 +53,7 @@ commandExecutor:
   # which is rendered from the promptTemplateFile template.
   #
   # Use EVENT_SHORT_ID for command/session names (guaranteed unique per event)
-  command: "cs llm session run --approval=auto --name=$EVENT_SHORT_ID"
+  command: "cs llm session run --approval=auto --name=$EVENT_SHORT_ID --task"
 
   # Prompt template configuration (optional)
   # There are three ways to configure prompt templates:
