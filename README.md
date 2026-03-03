@@ -44,7 +44,6 @@ server:
 
 deduplication:
   enabled: true
-  botUsername: your-bot-username
 
 commandExecutor:
   enabled: true
@@ -61,11 +60,9 @@ providers:
       type: token
       tokenEnv: GITHUB_TOKEN
     options:
+      botUsername: your-bot-username
       repositories:
         - owner/repo
-      events:
-        - issues
-        - pull_request
 ```
 
 ### 4. Set Up Provider
@@ -75,7 +72,7 @@ Configure authentication for your provider:
 - **[GitHub Setup](examples/github.md)** - Personal access tokens, webhooks
 - **[Linear Setup](examples/linear.md)** - API keys, webhooks, team monitoring
 - **[Slack Setup](examples/slack.md)** - Bot tokens, mention-triggered responses
-- **GitLab** (coming soon)
+- **[GitLab Setup](examples/github.md)** - Similar to GitHub setup
 
 ### 5. Run
 
@@ -125,9 +122,10 @@ server:
 ```yaml
 deduplication:
   enabled: true
-  botUsername: your-bot-username
   commentTemplate: "Agent is working on {id}"
 ```
+
+Note: `botUsername` is configured per-provider under `providers.<name>.options.botUsername`.
 
 **Command Executor:**
 ```yaml

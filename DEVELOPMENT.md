@@ -37,7 +37,8 @@ auto-coder/
 │   ├── watcher.example.yaml
 │   ├── watcher-with-executor.example.yaml
 │   └── event-prompt.example.hbs
-└── spec/                     # Specifications
+└── docs/                     # Documentation
+    ├── overview.md
     └── watcher.md
 ```
 
@@ -45,17 +46,17 @@ auto-coder/
 
 ### Reactor Pattern
 
-Instead of normalizing provider events to a unified format, each provider keeps its own event structure and provides a **Reactor** interface for performing actions:
+Each provider normalizes its platform-specific payload into a common `NormalizedEvent` shape and provides a **Reactor** interface for performing commenting operations back on the source platform:
 
 ```typescript
 interface Reactor {
   getLastComment(): Promise<{ author: string; body: string } | null>;
   postComment(comment: string): Promise<string>;
-  updateComment(commentId: string, comment: string): Promise<void>;
+  isBotAuthor(author: string): boolean;
 }
 ```
 
-This allows providers to maintain their native data structures while providing a consistent interface for commenting operations.
+This provides a consistent interface for deduplication and comment posting, regardless of provider.
 
 ### Event Flow
 
@@ -63,7 +64,7 @@ This allows providers to maintain their native data structures while providing a
 2. **Provider Validates** (signature verification for webhooks)
 3. **Deduplication Check** (via reactor.getLastComment())
 4. **If not duplicate**:
-   - Provider normalizes event internally (for template rendering)
+   - Provider normalizes event to `NormalizedEvent` format
    - CommandExecutor renders prompt template
    - Posts initial comment: "Agent is working on owner/repo#123"
    - Executes configured command
@@ -119,6 +120,7 @@ const watcher = new Watcher({
       auth: { type: 'token', tokenEnv: 'GITHUB_TOKEN' },
       options: {
         webhookSecretEnv: 'GITHUB_WEBHOOK_SECRET',
+        botUsername: 'auto-coder-bot',
         repositories: ['owner/repo'],
         initialLookbackHours: 1
       }
@@ -126,7 +128,6 @@ const watcher = new Watcher({
   },
   deduplication: {
     enabled: true,
-    botUsername: 'auto-coder-bot'
   },
   commandExecutor: {
     enabled: true,
@@ -192,7 +193,7 @@ export class CustomProvider extends BaseProvider {
     const reactor: Reactor = {
       async getLastComment() { /* ... */ },
       async postComment(comment: string) { /* ... */ },
-      async updateComment(id: string, comment: string) { /* ... */ }
+      isBotAuthor(author: string) { /* ... */ return false; }
     };
 
     // Normalize event internally (for templates)
