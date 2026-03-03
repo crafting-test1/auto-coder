@@ -5,6 +5,55 @@
   where the workflow involves creating/updating code via branches, PRs, and commits.
 
   For conversational platforms (Slack), use event-prompt-slack.example.hbs instead.
+
+  ─── Available Template Variables ───────────────────────────────────────────────
+
+  Top-level:
+    {{id}}                  Full event identifier (e.g. "github:owner/repo:opened:123:uuid")
+    {{provider}}            Provider name: "github" | "gitlab" | "linear"
+    {{type}}                Event type: "issue" | "pull_request" (GitHub) | "issue" | "merge_request" (GitLab) | "issue" (Linear)
+    {{action}}              Action that triggered the event (e.g. "opened", "closed", "edited", "poll")
+
+  resource.*:
+    {{resource.number}}     Issue or PR/MR number (e.g. 123)
+    {{resource.title}}      Title / summary
+    {{resource.description}} Body / description
+    {{resource.url}}        URL to the issue or PR/MR
+    {{resource.state}}      Current state (e.g. "open", "closed")
+    {{resource.repository}} GitHub/GitLab: repository full name (e.g. "owner/repo")
+                            Linear: team key (e.g. "ENG")
+    {{resource.author}}     GitHub/GitLab: login username of the author
+                            Linear: display name of the creator (e.g. "Jane Doe")
+    {{resource.assignees}}  Array of assignees (truthy if any assignees exist)
+    {{resource.labels}}     Array of label/tag name strings (optional)
+    {{resource.branch}}     Head branch name — GitHub/GitLab PRs/MRs only (optional)
+    {{resource.mergeTo}}    Target branch — GitHub/GitLab PRs/MRs only (optional)
+
+  resource.comment.* (only present when event is triggered by a comment):
+    {{resource.comment.body}}   Comment text
+    {{resource.comment.author}} Comment author username
+    {{resource.comment.url}}    Direct URL to the comment (optional; not always provided)
+
+  actor.*:
+    {{actor.username}}      Username (or display name for Linear) of whoever triggered the event
+    {{actor.id}}            Provider-specific actor ID
+
+  metadata.*:
+    {{metadata.timestamp}}  ISO 8601 timestamp of the event
+    {{metadata.deliveryId}} Webhook delivery ID — GitHub webhooks only
+    {{metadata.polled}}     true if received via polling; absent for webhooks
+
+  ─── Built-in Helpers ────────────────────────────────────────────────────────────
+
+    {{resourceLink}}        Formatted link to the issue/PR (uses resource.url + resource.number)
+    {{commentLink}}         Formatted link to the comment (uses resource.comment.url)
+    {{#eq a b}}...{{/eq}}  Renders block if a === b
+    {{#ne a b}}...{{/ne}}  Renders block if a !== b
+    {{#and a b}}...{{/and}} Renders block if both a and b are truthy
+    {{#or a b}}...{{/or}}  Renders block if either a or b is truthy
+    {{link text url provider}} Renders a formatted hyperlink
+
+  ─────────────────────────────────────────────────────────────────────────────────
 --}}
 {{#eq type "pull_request"}}You are an AI developer handling Pull Request related to the following:{{else}}You are an AI developer handling Issue related to the following:{{/eq}}
 

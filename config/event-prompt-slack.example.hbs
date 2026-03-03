@@ -1,16 +1,56 @@
 {{!--
-  Event Prompt Template for Slack (EXAMPLE FOR FUTURE USE)
-
-  NOTE: This template is provided as an example for when/if a Slack provider is added.
-  There is currently no Slack provider implementation in auto-coder.
+  Event Prompt Template for Slack
 
   This template is designed for conversational platforms like Slack, where the workflow
   involves responding to messages, coordinating work, and linking to code repositories.
 
-  This template learned its structure from event-prompt.example.hbs but adapted the
-  workflow for conversational contexts instead of direct code changes.
-
   For code repository platforms (GitHub, GitLab, Linear), use event-prompt.example.hbs.
+
+  ─── Available Template Variables ───────────────────────────────────────────────
+
+  Top-level:
+    {{id}}                  Full event identifier (e.g. "slack:C01ABC:1234567890.123456:polled")
+    {{provider}}            Provider name: "slack"
+    {{type}}                Always "message"
+    {{action}}              Always "created"
+
+  resource.*:
+    {{resource.number}}     Always 0 — Slack has no issue numbers
+    {{resource.title}}      Auto-generated: "Message in #<channelId>" (not the message text)
+    {{resource.description}} The full message text (use this for message content)
+    {{resource.url}}        Permalink to the message — populated for polled mentions only;
+                            empty string for webhook events
+    {{resource.state}}      Always "open"
+    {{resource.repository}} Slack channel ID (e.g. "C01ABC123")
+    {{resource.author}}     Slack user ID of the sender (e.g. "U01ABC123") — not a username
+    {{resource.labels}}     Not populated for Slack
+
+  resource.comment.* (always present for Slack events — contains the message itself):
+    {{resource.comment.body}}   The message text (same as resource.description)
+    {{resource.comment.author}} Slack user ID of the sender (e.g. "U01ABC123")
+    {{resource.comment.url}}    Permalink — populated for polled mentions only; absent for webhooks
+
+  actor.*:
+    {{actor.username}}      Slack user ID of whoever sent the message (e.g. "U01ABC123")
+    {{actor.id}}            Same as actor.username for Slack
+
+  metadata.*:
+    {{metadata.timestamp}}  Slack message timestamp (e.g. "1234567890.123456")
+    {{metadata.channel}}    Slack channel ID (same as resource.repository)
+    {{metadata.threadTs}}   Parent thread timestamp if this message is a reply; absent if top-level
+    {{metadata.polled}}     true if received via polling; absent for webhooks
+
+  ─── Built-in Helpers ────────────────────────────────────────────────────────────
+
+    {{resourceLink}}        Formatted Slack-style link to the message
+    {{commentLink}}         Formatted Slack-style link to the reply
+    {{#eq a b}}...{{/eq}}  Renders block if a === b
+    {{#ne a b}}...{{/ne}}  Renders block if a !== b
+    {{#and a b}}...{{/and}} Renders block if both a and b are truthy
+    {{#or a b}}...{{/or}}  Renders block if either a or b is truthy
+    {{link text url provider}} Renders a formatted hyperlink
+
+  ─────────────────────────────────────────────────────────────────────────────────
 --}}
 You are an AI assistant handling a Slack message in the following context:
 
