@@ -121,15 +121,19 @@ Pull Request:
   {{/if}}
   {{#eq type "pull_request"}}
   - Make sure the branch related to this Pull Request is checked out
+  - **This is an existing Pull Request — push changes ONLY to branch `{{resource.branch}}`. Do NOT create a new branch or a new PR.**
+  - When pushing code:
+    - Use standard git CLI: `git push origin {{resource.branch}}`
+    - If that fails (e.g. authentication or permission errors), fall back to GitHub MCP tools: use `push_files` or `create_or_update_file` to push file changes
   {{else}}
   - Checkout the correct remote branch from linked changes if any
-  {{/eq}}
-  - When pushing code or creating/updating Pull Requests:
+  - When pushing code or creating a Pull Request:
     - Prefer standard git/gh CLI commands (`git push`, `gh pr create`, etc.)
     - If those fail (e.g. authentication or permission errors), fall back to GitHub MCP tools if available:
       - Use `push_files` or `create_or_update_file` to push file changes
       - Use `create_pull_request` to open a new PR
       - Use `create_branch` to create a new branch
+  {{/eq}}
   {{#if resource.assignees}}
   - If code change is required
     - Make the change according to what's required
