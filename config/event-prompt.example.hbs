@@ -111,7 +111,7 @@ Pull Request:
 ## Instructions
 
 - Find the best Template according to Source Repository
-- Create a sandbox using that Template with a unique name like "ai-{{#if id}}{{id}}{{/if}}-<UNIQUE>"
+- Create a sandbox using that Template with a name in the format "ai-<UUID>" — generate a random UUID (not human-readable, not derived from the issue/repo name), truncated to 16 characters max (sandbox name max length is 20)
 - Target that sandbox and start working in the related workspace
   {{#if resource.comment}}
   - **This event was triggered by a comment** - Focus on addressing what was requested in the comment above
@@ -140,7 +140,7 @@ Pull Request:
     - Commit and push the change to {{resource.branch}} - DO NOT create a new branch or a new PR
     - Add a comment to the Pull Request including:
       - A summary about the changes and test results
-      - The sandbox name
+      - The sandbox name and template name (use "" if no template was used)
     - If the change tackled any code specific comments, resolve them
     - DO NOT self-approve this Pull Request
     {{else}}
@@ -154,7 +154,7 @@ Pull Request:
       {{/ne}}{{/if}}- Include this link in the PR description: {{resourceLink}}
       - The owner/assignee is yourself
       - Include a summary about the changes and test results
-      - Include the sandbox name
+      - Include the sandbox name and template name (use "" if no template was used)
     - Add a comment to the {{#eq provider "slack"}}thread{{else}}Issue{{/eq}} with the same information as above
     {{/eq}}
   {{else}}
@@ -169,7 +169,7 @@ Pull Request:
       - Commit and push to {{resource.branch}} to update this PR - DO NOT create a new branch or a new PR
       - Add a comment to the Pull Request with:
         - A summary about the changes and test results
-        - The sandbox name
+        - The sandbox name and template name (use "" if no template was used)
       - If the change tackled any code specific comments, resolve them
       - DO NOT approve
     {{else}}
@@ -182,7 +182,7 @@ Pull Request:
       {{/ne}}{{/if}}- Include this link in the PR description: {{resourceLink}}
       - The owner/assignee is yourself
       - Include a summary about the changes and test results
-      - Include the sandbox name
+      - Include the sandbox name and template name (use "" if no template was used)
     - Add a comment to the {{#eq provider "slack"}}thread{{else}}Issue{{/eq}} with the same information as above
     {{/eq}}
   {{#eq type "pull_request"}}
