@@ -120,6 +120,48 @@ export class GitHubComments {
     }
   }
 
+  async getPullRequest(
+    repository: string,
+    prNumber: number
+  ): Promise<{ branch: string; mergeTo: string } | null> {
+    const endpoint = `https://api.github.com/repos/${repository}/pulls/${prNumber}`;
+
+    try {
+      return await withExponentialRetry(async () => {
+        const response = await fetch(endpoint, {
+          headers: {
+            Authorization: `Bearer ${this.token}`,
+            Accept: 'application/vnd.github.v3+json',
+            'User-Agent': 'auto-coder-watcher',
+          },
+        });
+
+        if (!response.ok) {
+          if (response.status === 409) {
+            throw response;
+          }
+          logger.warn(
+            `GitHub API error getting PR details: ${response.status} ${response.statusText}`
+          );
+          return null;
+        }
+
+        const pr = (await response.json()) as {
+          head: { ref: string };
+          base: { ref: string };
+        };
+
+        return {
+          branch: pr.head.ref,
+          mergeTo: pr.base.ref,
+        };
+      });
+    } catch (error) {
+      logger.error('Error fetching GitHub PR details', error);
+      return null;
+    }
+  }
+
   async postComment(
     repository: string,
     resourceType: string,
