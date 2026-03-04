@@ -63,6 +63,7 @@ workspaces:
         - name: watcher
           run:
             cmd: pnpm run dev
+            dir: /home/owner/auto-coder
 containers:
   - name: github-mcp
     image: ghcr.io/github/github-mcp-server
