@@ -15,46 +15,64 @@ export class GitHubComments {
     resourceType: string,
     resourceNumber: number
   ): Promise<CommentInfo | null> {
-    const endpoint = this.getCommentsEndpoint(repository, resourceType, resourceNumber);
-    if (!endpoint) {
+    const base = this.getCommentsEndpoint(repository, resourceType, resourceNumber);
+    if (!base) {
       return null;
     }
 
+    const fetchPage = async (url: string) => {
+      const response = await fetch(url, {
+        headers: {
+          Authorization: `Bearer ${this.token}`,
+          Accept: 'application/vnd.github.v3+json',
+          'User-Agent': 'auto-coder-watcher',
+        },
+      });
+
+      if (!response.ok) {
+        if (response.status === 409) {
+          throw response;
+        }
+        logger.warn(
+          `GitHub API error getting comments: ${response.status} ${response.statusText}`
+        );
+        return null;
+      }
+
+      return response;
+    };
+
     try {
       return await withExponentialRetry(async () => {
-        const response = await fetch(endpoint, {
-          headers: {
-            Authorization: `Bearer ${this.token}`,
-            Accept: 'application/vnd.github.v3+json',
-            'User-Agent': 'auto-coder-watcher',
-          },
-        });
+        // The comments endpoint returns results in ascending order only (no sort/direction support).
+        // Use the Link header to jump directly to the last page.
+        const firstResponse = await fetchPage(`${base}?per_page=100`);
+        if (!firstResponse) return null;
 
-        if (!response.ok) {
-          if (response.status === 409) {
-            throw response;
-          }
-          logger.warn(
-            `GitHub API error getting comments: ${response.status} ${response.statusText}`
-          );
-          return null;
-        }
+        const linkHeader = firstResponse.headers.get('Link');
+        const lastPageUrl = linkHeader
+          ? linkHeader.match(/<([^>]+)>;\s*rel="last"/)?.at(1)
+          : null;
 
-        const comments = (await response.json()) as Array<{
+        const finalResponse = lastPageUrl
+          ? await fetchPage(lastPageUrl)
+          : firstResponse;
+
+        if (!finalResponse) return null;
+
+        const comments = (await finalResponse.json()) as Array<{
           user: { login: string };
           body: string;
           created_at: string;
         }>;
 
+        logger.debug(`getLastComment: fetched ${comments.length} comment(s) for ${resourceType} #${resourceNumber} in ${repository}`, comments);
+
         if (comments.length === 0) {
           return null;
         }
 
-        const lastComment = comments[comments.length - 1];
-
-        if (!lastComment) {
-          return null;
-        }
+        const lastComment = comments[comments.length - 1]!;
 
         return {
           author: lastComment.user.login,
