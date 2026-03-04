@@ -2,6 +2,8 @@ env:
   - GITHUB_PERSONAL_ACCESS_TOKEN=${secret:github_pat}
   - LINEAR_API_TOKEN=${secret:linear_api_key}
   - LINEAR_WEBHOOK_SECRET=${secret:linear_webhook_secret}
+  - SLACK_BOT_TOKEN=${secret:slack-bot-token}
+  - SLACK_SIGNING_SECRET=${secret:slack-signing-secret}
   - SLACK_MCP_XOXB_TOKEN=${secret:slack_token}
 endpoints:
   - name: webhook
@@ -56,6 +58,11 @@ workspaces:
       - path: auto-coder
         repo:
           git: git@github.com:crafting-test1/auto-coder.git
+    system:
+      daemons:
+        - name: watcher
+          run:
+            cmd: pnpm run dev
 containers:
   - name: github-mcp
     image: ghcr.io/github/github-mcp-server
