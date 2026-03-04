@@ -239,6 +239,20 @@ export class GitHubProvider extends BaseProvider {
       return; // Event filtered out (already logged in shouldProcessEvent)
     }
 
+    // Enrich PR events with branch info when missing (issue_comment events on PRs
+    // only include the issue payload, which lacks head.ref / base.ref)
+    if (normalizedEvent.type === 'pull_request' && !normalizedEvent.resource.branch) {
+      const prDetails = await this.comments.getPullRequest(
+        payload.repository.full_name,
+        resourceNumber
+      );
+      if (prDetails) {
+        normalizedEvent.resource.branch = prDetails.branch;
+        normalizedEvent.resource.mergeTo = prDetails.mergeTo;
+        logger.debug(`Enriched PR #${resourceNumber} with branch: ${prDetails.branch}`);
+      }
+    }
+
     // Create reactor and process event
     const reactor = new GitHubReactor(
       this.comments,
