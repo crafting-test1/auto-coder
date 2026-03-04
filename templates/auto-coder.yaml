@@ -1,10 +1,10 @@
 env:
-  - GITHUB_PERSONAL_ACCESS_TOKEN=${secret:github_pat}
-  - LINEAR_API_TOKEN=${secret:linear_api_key}
-  - LINEAR_WEBHOOK_SECRET=${secret:linear_webhook_secret}
+  - GITHUB_PERSONAL_ACCESS_TOKEN=${secret:github-pat}
+  - LINEAR_API_TOKEN=${secret:linear-pat}
+  - LINEAR_WEBHOOK_SECRET=${secret:linear-webhook-secret}
   - SLACK_BOT_TOKEN=${secret:slack-bot-token}
   - SLACK_SIGNING_SECRET=${secret:slack-signing-secret}
-  - SLACK_MCP_XOXB_TOKEN=${secret:slack_token}
+  - SLACK_MCP_XOXB_TOKEN=${secret:slack-bot-token}
 endpoints:
   - name: webhook
     http:
