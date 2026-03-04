@@ -64,21 +64,43 @@ Errors fetching comments are treated as "not a duplicate" to avoid silently drop
 
 ## Prompt Construction
 
-Prompts are rendered using [Handlebars](https://handlebarsjs.com/) templates. The full `NormalizedEvent` object is passed as context, so templates have access to all event fields.
+Prompts are rendered using [Handlebars](https://handlebarsjs.com/) templates (`.hbs` files). The full `NormalizedEvent` object is passed as context, so templates have access to all event fields.
 
 Template selection order:
 1. Provider-specific template (if configured under `prompts.{provider}`)
 2. Default `promptTemplateFile`
 3. Inline `promptTemplate` string
 
-Built-in Handlebars helpers: `eq`, `ne`, `and`, `or`, `link`, `resourceLink`, `commentLink`.
+### Template Format
+
+Templates are standard [Handlebars](https://handlebarsjs.com/) files. Key syntax:
+
+| Syntax | Description |
+|---|---|
+| `{{variable}}` | Interpolate a value (e.g. `{{provider}}`, `{{resource.title}}`) |
+| `{{#if variable}}...{{/if}}` | Conditional block — renders when `variable` is truthy |
+| `{{#if variable}}...{{else}}...{{/if}}` | If/else block |
+| `{{#each array}}{{this}}{{/each}}` | Iterate over an array |
+| `{{!-- comment --}}` | Template comment (not included in output) |
+
+**Built-in custom helpers:**
+
+| Helper | Description |
+|---|---|
+| `{{#eq a b}}...{{/eq}}` | Renders block if `a === b` |
+| `{{#ne a b}}...{{/ne}}` | Renders block if `a !== b` |
+| `{{#and a b}}...{{/and}}` | Renders block if both `a` and `b` are truthy |
+| `{{#or a b}}...{{/or}}` | Renders block if either `a` or `b` is truthy |
+| `{{resourceLink}}` | Formatted link to the issue/PR (`resource.url` + `resource.number`) |
+| `{{commentLink}}` | Formatted link to the comment (`resource.comment.url`) |
+| `{{link text url provider}}` | Renders a formatted hyperlink for the given provider |
 
 ### NormalizedEvent — Field Reference
 
 The full variable reference (with per-provider notes) is documented at the top of each example template:
 
-- `config/event-prompt.example.hbs` — GitHub, GitLab, Linear
-- `config/event-prompt-slack.example.hbs` — Slack
+- [`config/event-prompt.example.hbs`](../config/event-prompt.example.hbs) — GitHub, GitLab, Linear
+- [`config/event-prompt-slack.example.hbs`](../config/event-prompt-slack.example.hbs) — Slack
 
 The normalization itself happens in each provider's `normalizeEvent` / `normalizePolledEvent` private methods:
 
