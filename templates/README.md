@@ -20,7 +20,6 @@ The secret name must exactly match what is referenced in the template (e.g., `gi
 ### `github-pat` / `github_pat`
 
 **Used as:** `GITHUB_PERSONAL_ACCESS_TOKEN`
-**Required by:** All templates
 
 A GitHub Personal Access Token (classic) used to authenticate the GitHub MCP server and webhook handler.
 
@@ -33,14 +32,13 @@ A GitHub Personal Access Token (classic) used to authenticate the GitHub MCP ser
 4. Click **Generate token** and copy the value immediately
 5. Add it to Crafting Sandbox as secret name `github-pat`
 
-> Note: The example templates use `github_pat` (underscore) while `auto-coder.yaml` uses `github-pat` (hyphen). Make sure the secret name in Crafting Sandbox matches the template you are using.
+> Note: Some templates use `github_pat` (underscore). Make sure the secret name in Crafting Sandbox matches what is referenced in the template you are using.
 
 ---
 
 ### `linear-pat`
 
 **Used as:** `LINEAR_API_TOKEN`
-**Required by:** `auto-coder.yaml`
 
 A Linear Personal API Key used to authenticate the Linear MCP server.
 
@@ -55,14 +53,13 @@ A Linear Personal API Key used to authenticate the Linear MCP server.
 ### `linear-webhook-secret`
 
 **Used as:** `LINEAR_WEBHOOK_SECRET`
-**Required by:** `auto-coder.yaml`
 
 A shared secret used to verify that incoming webhook payloads are genuinely from Linear.
 
 **How to create:**
 1. Go to [linear.app → Settings → API → Webhooks](https://linear.app/settings/api)
 2. Click **Create webhook**
-3. Set the **URL** to your sandbox's webhook endpoint (the `webhook` endpoint exposed by the sandbox, e.g. `https://<sandbox-id>.sandbox.crafting.app/`)
+3. Set the **URL** to your sandbox's webhook endpoint (e.g. `https://<sandbox-id>.sandbox.crafting.app/`)
 4. Under **Secret**, generate or enter a random secret string (e.g. use `openssl rand -hex 32`)
 5. Select the events you want (e.g. `Issue` created/updated)
 6. Save and copy the secret value
@@ -73,7 +70,6 @@ A shared secret used to verify that incoming webhook payloads are genuinely from
 ### `slack-bot-token` / `slack_token`
 
 **Used as:** `SLACK_BOT_TOKEN`, `SLACK_MCP_XOXB_TOKEN`
-**Required by:** `auto-coder.yaml`, `auto-coder-slack-2-github-pr.example.yaml`
 
 A Slack Bot User OAuth Token (`xoxb-...`) used by both the webhook handler and the Slack MCP server.
 
@@ -94,14 +90,13 @@ A Slack Bot User OAuth Token (`xoxb-...`) used by both the webhook handler and t
 5. Copy the **Bot User OAuth Token** (starts with `xoxb-`)
 6. Add it to Crafting Sandbox as secret name `slack-bot-token`
 
-> Note: `auto-coder-slack-2-github-pr.example.yaml` uses the name `slack_token` (underscore). Adjust the secret name to match the template you are using.
+> Note: Some templates use `slack_token` (underscore). Adjust the secret name to match the template you are using.
 
 ---
 
 ### `slack-signing-secret`
 
 **Used as:** `SLACK_SIGNING_SECRET`
-**Required by:** `auto-coder.yaml`
 
 Used by the webhook handler to verify that incoming requests are from Slack.
 
@@ -110,13 +105,3 @@ Used by the webhook handler to verify that incoming requests are from Slack.
 2. Go to **Basic Information → App Credentials**
 3. Copy the **Signing Secret**
 4. Add it to Crafting Sandbox as secret name `slack-signing-secret`
-
----
-
-## Template Summary
-
-| Template | Secrets required |
-|---|---|
-| `auto-coder.yaml` | `github-pat`, `linear-pat`, `linear-webhook-secret`, `slack-bot-token`, `slack-signing-secret` |
-| `auto-coder-github-issue-2-github-pr.example.yaml` | `github_pat` |
-| `auto-coder-slack-2-github-pr.example.yaml` | `github_pat`, `slack_token` |
