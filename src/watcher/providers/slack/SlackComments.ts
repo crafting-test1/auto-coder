@@ -204,7 +204,7 @@ export class SlackComments {
     }
 
     return messages
-      .map((m) => `<@${m.user}>: ${m.text}`)
+      .map((m) => `[${m.ts}] <@${m.user}>: ${m.text}`)
       .join('\n\n');
   }
 }
