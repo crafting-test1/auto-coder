@@ -12,7 +12,7 @@ Two modes run concurrently and feed the same pipeline:
 
 **Webhooks** — an Express HTTP server receives real-time push events from platforms. Each provider registers its own endpoint at `/webhook/{provider}`. Every incoming request is signature-verified before processing.
 
-**Polling** — a per-provider poller calls the platform API on a configurable interval (e.g. every 60s) to catch events that may have been missed. Polling is optional and only activates when `pollingInterval` and auth credentials are configured.
+**Polling** — a per-provider poller calls the platform API on a configurable interval (e.g. every 60s) to catch events that may have been missed. Polling is optional and only activates when `pollingInterval` and auth credentials are configured. For Slack, polling also requires `pollingEnabled: true` in the provider options.
 
 The poller skips a cycle if the previous poll is still running, and stops itself after 5 consecutive failures (with exponential backoff between retries, capped at 60s).
 
@@ -34,9 +34,10 @@ Each platform (GitHub, GitLab, Linear, Slack) is implemented as a provider. All 
 NormalizedEvent {
   id, provider, type, action,
   resource: { number, title, description, url, state, repository,
-               author, labels, branch, mergeTo, comment? },
+               author?, assignees?, labels?, branch?, mergeTo?, comment? },
   actor: { username, id },
-  metadata: { timestamp, deliveryId?, polled? }
+  metadata: { timestamp, deliveryId?, polled? },
+  raw
 }
 ```
 
@@ -53,7 +54,7 @@ Each provider has built-in default filters (e.g. GitHub skips most PR lifecycle 
 To prevent triggering the agent twice on the same issue or PR, Watcher uses a **last-comment strategy**:
 
 1. After receiving an event, fetch the last comment on that issue/PR/thread
-2. If the last comment was posted by the configured bot username — skip
+2. If the last comment was posted by the configured bot username (case-insensitive) — skip
 3. Otherwise — proceed
 
 This works because Watcher always posts a comment when it starts processing. If that comment is still the last one, no new human activity has occurred since the last run. If a human has commented since, it means there's new work to do.
@@ -120,6 +121,7 @@ A few provider-specific quirks worth knowing when writing templates:
 - **`resource.url`** — empty for Slack webhook events; populated for Slack polled mentions
 - **`metadata.deliveryId`** — GitHub webhooks only
 - **`metadata.channel` / `metadata.threadTs`** — Slack only
+- **`metadata.channelType`** — Slack webhooks only (absent for polled events)
 
 ---
 
@@ -127,7 +129,7 @@ A few provider-specific quirks worth knowing when writing templates:
 
 Once a prompt is rendered, Watcher:
 
-1. Posts `"Agent is working on {id}"` as a comment (serves as dedup marker)
+1. Posts an `"Agent is working on ..."` comment containing a formatted link to the resource (serves as dedup marker)
 2. Spawns the configured shell command via `/bin/bash -c`
 
 The command receives:
@@ -153,7 +155,11 @@ All behavior is controlled by a single YAML file. Key sections:
 
 ```yaml
 server:
+  host: 0.0.0.0        # optional, defaults to 0.0.0.0
   port: 3000
+  basePath: /          # optional URL prefix for all webhook endpoints
+
+logLevel: info         # optional: debug | info | warn | error
 
 deduplication:
   enabled: true
