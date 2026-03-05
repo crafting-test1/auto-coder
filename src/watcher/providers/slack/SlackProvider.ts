@@ -218,6 +218,14 @@ export class SlackProvider extends BaseProvider {
     // - If event.thread_ts is undefined: use event.ts to start/continue a thread
     const threadTs = event.thread_ts || event.ts;
 
+    // Fetch thread history for context
+    let history = '';
+    try {
+      history = await this.comments.getConversationHistory(event.channel, threadTs);
+    } catch (error) {
+      logger.warn('Failed to fetch Slack thread history', error);
+    }
+
     const reactor = new SlackReactor(
       this.comments,
       event.channel,
@@ -226,12 +234,12 @@ export class SlackProvider extends BaseProvider {
     );
 
     // Normalize Slack event for template rendering
-    const normalizedEvent = this.normalizeEvent(payload);
+    const normalizedEvent = this.normalizeEvent(payload, history);
 
     await eventHandler(normalizedEvent, reactor);
   }
 
-  private normalizeEvent(payload: SlackEventPayload): NormalizedEvent {
+  private normalizeEvent(payload: SlackEventPayload, history?: string): NormalizedEvent {
     const event = payload.event!;
 
     // Event ID for deduplication
@@ -245,7 +253,7 @@ export class SlackProvider extends BaseProvider {
     const resource: NormalizedEvent['resource'] = {
       number: 0, // Slack doesn't have issue numbers, use timestamp as unique ID
       title: `Message in #${channelId}`,
-      description: event.text || '',
+      description: history || event.text || '',
       url: '', // Slack message URLs require workspace context
       state: 'open', // Messages are always "open" until resolved
       repository: channelId,
@@ -303,6 +311,14 @@ export class SlackProvider extends BaseProvider {
         // - If mention.threadTs is undefined: use mention.ts to start/continue a thread
         const threadTs = mention.threadTs || mention.ts;
 
+        // Fetch thread history for context
+        let history = '';
+        try {
+          history = await this.comments.getConversationHistory(mention.channel, threadTs);
+        } catch (error) {
+          logger.warn('Failed to fetch Slack thread history', error);
+        }
+
         const reactor = new SlackReactor(
           this.comments,
           mention.channel,
@@ -311,7 +327,7 @@ export class SlackProvider extends BaseProvider {
         );
 
         // Normalize polled mention for template rendering
-        const normalizedEvent = this.normalizePolledMention(mention);
+        const normalizedEvent = this.normalizePolledMention(mention, history);
 
         await eventHandler(normalizedEvent, reactor);
       }
@@ -328,7 +344,7 @@ export class SlackProvider extends BaseProvider {
     text: string;
     user: string;
     permalink?: string;
-  }): NormalizedEvent {
+  }, history?: string): NormalizedEvent {
     // Event ID for deduplication
     const eventId = `slack:${mention.channel}:${mention.ts}:polled`;
 
@@ -344,7 +360,7 @@ export class SlackProvider extends BaseProvider {
     const resource: NormalizedEvent['resource'] = {
       number: 0,
       title: `Message in #${mention.channel}`,
-      description: mention.text || '',
+      description: history || mention.text || '',
       url: mention.permalink || '',
       state: 'open',
       repository: mention.channel,

@@ -17,19 +17,14 @@ export class SlackComments {
   constructor(private readonly token: string) {}
 
   /**
-   * Get the last message in a channel or thread.
-   * Used for deduplication to check if bot already responded.
+   * Helper to fetch replies from a thread.
    */
-  async getLastMessage(
-    channel: string,
-    threadTs?: string
-  ): Promise<{ user: string; text: string } | null> {
+  private async getReplies(channel: string, ts: string): Promise<SlackMessage[]> {
     return withExponentialRetry(async () => {
       const endpoint = `${this.baseUrl}/conversations.replies`;
       const params = new URLSearchParams({
         channel,
-        ts: threadTs || '', // If threadTs provided, get thread replies
-        limit: '1',
+        ts,
         inclusive: 'true',
       });
 
@@ -41,31 +36,44 @@ export class SlackComments {
       });
 
       if (!response.ok) {
-        logger.warn(`Slack API error getting messages: ${response.status} ${response.statusText}`);
-        return null;
+        logger.warn(`Slack API error getting replies: ${response.status} ${response.statusText}`);
+        return [];
       }
 
       const data = await response.json() as { ok: boolean; messages?: SlackMessage[]; error?: string };
 
       if (!data.ok) {
         logger.warn(`Slack API returned error: ${data.error}`);
-        return null;
+        return [];
       }
 
-      if (!data.messages || data.messages.length === 0) {
-        return null;
-      }
-
-      const lastMessage = data.messages[data.messages.length - 1];
-      if (!lastMessage) {
-        return null;
-      }
-
-      return {
-        user: lastMessage.user,
-        text: lastMessage.text,
-      };
+      return data.messages || [];
     });
+  }
+
+  /**
+   * Get the last message in a channel or thread.
+   * Used for deduplication to check if bot already responded.
+   */
+  async getLastMessage(
+    channel: string,
+    threadTs?: string
+  ): Promise<{ user: string; text: string } | null> {
+    const messages = await this.getReplies(channel, threadTs || '');
+
+    if (messages.length === 0) {
+      return null;
+    }
+
+    const lastMessage = messages[messages.length - 1];
+    if (!lastMessage) {
+      return null;
+    }
+
+    return {
+      user: lastMessage.user,
+      text: lastMessage.text,
+    };
   }
 
   /**
@@ -179,5 +187,24 @@ export class SlackComments {
 
       return data.user_id;
     });
+  }
+
+  /**
+   * Get the full conversation history of a thread.
+   * Returns formatted string: "@user: message"
+   */
+  async getConversationHistory(
+    channel: string,
+    threadTs: string
+  ): Promise<string> {
+    const messages = await this.getReplies(channel, threadTs);
+
+    if (messages.length === 0) {
+      return '';
+    }
+
+    return messages
+      .map((m) => `[${m.ts}] <@${m.user}>: ${m.text}`)
+      .join('\n\n');
   }
 }
