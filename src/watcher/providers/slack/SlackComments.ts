@@ -29,7 +29,6 @@ export class SlackComments {
       const params = new URLSearchParams({
         channel,
         ts: threadTs || '', // If threadTs provided, get thread replies
-        limit: '1',
         inclusive: 'true',
       });
 
@@ -178,6 +177,46 @@ export class SlackComments {
       }
 
       return data.user_id;
+    });
+  }
+
+  /**
+   * Get the full conversation history of a thread.
+   * Returns formatted string: "@user: message"
+   */
+  async getConversationHistory(
+    channel: string,
+    threadTs: string
+  ): Promise<string> {
+    return withExponentialRetry(async () => {
+      const endpoint = `${this.baseUrl}/conversations.replies`;
+      const params = new URLSearchParams({
+        channel,
+        ts: threadTs,
+        inclusive: 'true',
+      });
+
+      const response = await fetch(`${endpoint}?${params}`, {
+        headers: {
+          'Authorization': `Bearer ${this.token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        logger.warn(`Slack API error getting history: ${response.status} ${response.statusText}`);
+        return '';
+      }
+
+      const data = await response.json() as { ok: boolean; messages?: SlackMessage[]; error?: string };
+
+      if (!data.ok || !data.messages) {
+        return '';
+      }
+
+      return data.messages
+        .map((m) => `<@${m.user}>: ${m.text}`)
+        .join('\n\n');
     });
   }
 }
