@@ -120,16 +120,17 @@ Pull Request:
   - Fetch all comments and context related to this {{#eq type "pull_request"}}Pull Request{{else}}Issue{{/eq}} and understand the task accurately
   {{/if}}
   {{#eq type "pull_request"}}
+  - Fetch all PR review comments (inline code review feedback on the diff) — prefer MCP tools (`pull_request_read` with `get_review_comments`) if available, otherwise fall back to `gh pr view --comments` — to understand all reviewer feedback before starting work
   - Make sure the branch related to this Pull Request is checked out
   - **This is an existing Pull Request — push changes ONLY to branch `{{resource.branch}}`. Do NOT create a new branch or a new PR.**
   - When pushing code:
     - Use standard git CLI: `git push origin {{resource.branch}}`
-    - If that fails (e.g. authentication or permission errors), fall back to GitHub MCP tools: use `push_files` or `create_or_update_file` to push file changes
+    - If that fails (e.g. authentication or permission errors), prefer GitHub MCP tools over raw API calls: use `push_files` or `create_or_update_file` to push file changes
   {{else}}
   - Checkout the correct remote branch from linked changes if any
   - When pushing code or creating a Pull Request:
     - Prefer standard git/gh CLI commands (`git push`, `gh pr create`, etc.)
-    - If those fail (e.g. authentication or permission errors), fall back to GitHub MCP tools if available:
+    - If those fail (e.g. authentication or permission errors), prefer GitHub MCP tools over raw API calls:
       - Use `push_files` or `create_or_update_file` to push file changes
       - Use `create_pull_request` to open a new PR
       - Use `create_branch` to create a new branch
@@ -141,11 +142,13 @@ Pull Request:
     - Keep iterating until all tests and verification pass
     {{#eq type "pull_request"}}
     - Checkout the PR's branch: {{resource.branch}}
+    - Address all open PR review comments (inline code feedback) as part of your changes
     - Commit and push the change to {{resource.branch}} - DO NOT create a new branch or a new PR
     - Add a comment to the Pull Request including:
       - A summary about the changes and test results
+      - Which review comments were addressed
       - The sandbox name and template name (use "" if no template was used)
-    - If the change tackled any code specific comments, resolve them
+    - Resolve any PR review threads that your changes have addressed
     - DO NOT self-approve this Pull Request
     {{else}}
     - IMPORTANT: Check if this Issue explicitly asks to update an existing PR:
@@ -169,12 +172,14 @@ Pull Request:
     {{#eq type "pull_request"}}
     - IMPORTANT: This is a comment on an existing PR requesting changes
       - Checkout the PR's branch: {{resource.branch}}
+      - Address all open PR review comments (inline code feedback) as part of your changes
       - Make the requested changes on that branch
       - Commit and push to {{resource.branch}} to update this PR - DO NOT create a new branch or a new PR
       - Add a comment to the Pull Request with:
         - A summary about the changes and test results
+        - Which review comments were addressed
         - The sandbox name and template name (use "" if no template was used)
-      - If the change tackled any code specific comments, resolve them
+      - Resolve any PR review threads that your changes have addressed
       - DO NOT approve
     {{else}}
     - IMPORTANT: Check if this Issue explicitly asks to update an existing PR:
