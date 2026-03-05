@@ -52,9 +52,10 @@ test('GitLabReactor.isBotAuthor - returns true for any bot in a multi-bot list',
   assert.equal(reactor.isBotAuthor('bot-b'), true);
 });
 
-test('GitLabReactor.isBotAuthor - comparison is case-sensitive', () => {
+test('GitLabReactor.isBotAuthor - comparison is case-insensitive', () => {
   const reactor = makeReactor({ botUsernames: ['GitlabBot'] });
-  assert.equal(reactor.isBotAuthor('gitlabbot'), false);
+  assert.equal(reactor.isBotAuthor('gitlabbot'), true);
+  assert.equal(reactor.isBotAuthor('GITLABBOT'), true);
   assert.equal(reactor.isBotAuthor('GitlabBot'), true);
 });
 

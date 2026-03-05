@@ -50,9 +50,10 @@ test('LinearReactor.isBotAuthor - returns true for any bot in a multi-bot list',
   assert.equal(reactor.isBotAuthor('bot-b'), true);
 });
 
-test('LinearReactor.isBotAuthor - comparison is case-sensitive', () => {
+test('LinearReactor.isBotAuthor - comparison is case-insensitive', () => {
   const reactor = makeReactor({ botUsernames: ['LinearBot'] });
-  assert.equal(reactor.isBotAuthor('linearbot'), false);
+  assert.equal(reactor.isBotAuthor('linearbot'), true);
+  assert.equal(reactor.isBotAuthor('LINEARBOT'), true);
   assert.equal(reactor.isBotAuthor('LinearBot'), true);
 });
 
