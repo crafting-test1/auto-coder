@@ -1,0 +1,39 @@
+# auto-coder
+
+Automated coding assistant that monitors GitHub, GitLab, Linear, and Slack for events, then dispatches AI coding agents via Crafting Sandbox to handle them.
+
+## Quick Start
+
+**First time?** Run `/setup` for a guided wizard that walks you through the entire setup process — provider credentials, sandbox creation, and watcher configuration.
+
+## Project Layout
+
+- `src/` — TypeScript source (watcher, providers, transport, utils)
+- `config/` — Runtime configuration (`watcher.yaml`) and prompt templates (`.hbs`)
+- `templates/` — Crafting Sandbox YAML templates for different provider combinations
+- `examples/` — Provider-specific setup guides and example flows
+- `docs/` — Architecture overview and component docs
+- `tests/` — Test files
+
+## Key Files
+
+- `config/watcher.yaml` — Main runtime config (providers, auth, repos, polling, executor)
+- `config/watcher.example.yaml` — Full reference config with all options documented
+- `templates/auto-coder.yaml` — Full sandbox template (GitHub + Linear + Slack)
+- `templates/auto-coder-github-issue-2-github-pr.example.yaml` — GitHub-only template
+- `templates/auto-coder-slack-2-github-pr.example.yaml` — Slack + GitHub template
+- `config/event-prompt.example.hbs` — Handlebars prompt template for code platform events
+
+## Development
+
+```bash
+pnpm run dev       # Run with hot reload (tsx)
+pnpm run build     # Compile TypeScript
+pnpm start         # Run compiled output
+pnpm test          # Run tests
+pnpm run type-check  # Type check without emitting
+```
+
+## Architecture
+
+Events flow: Provider (webhook/poll) → Normalize → Deduplicate → Render prompt → Execute command (`cs llm session run`) → Post follow-up comment. See `docs/overview.md` for details.

@@ -14,7 +14,28 @@ auto-coder monitors your repositories and communication channels for events, the
 - Secure webhook signature verification
 - Provider-specific prompt templates
 
-## Quick Start from [Crafting Sandbox](https://www.crafting.dev/)
+## Guided Setup with Claude Code
+
+The easiest way to get auto-coder running is a single command. It clones the repo and launches an interactive setup wizard that walks you through everything.
+
+**Prerequisites:** [Crafting Sandbox CLI (`cs`)](https://www.crafting.dev/) and [Claude Code](https://docs.anthropic.com/en/docs/claude-code) installed.
+
+```bash
+git clone https://github.com/crafting-test1/auto-coder.git && cd auto-coder && claude /setup
+```
+
+That's it. The wizard will:
+- Ask which providers you want (GitHub, GitLab, Linear, Slack)
+- Give you step-by-step instructions for creating API tokens
+- Store your credentials securely as sandbox secrets
+- Generate the sandbox template and create your sandbox
+- Configure `watcher.yaml` with your repositories, teams, and settings
+
+---
+
+## Manual Quick Start from [Crafting Sandbox](https://www.crafting.dev/)
+
+If you prefer to set things up manually, follow the steps below.
 
 ### 1. Create a template
 

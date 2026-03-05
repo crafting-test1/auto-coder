@@ -36,6 +36,9 @@ pnpm-debug.log*
 config/watcher.yaml
 config/*.local.yaml
 
+# Wizard-generated template (user-specific)
+templates/setup-generated.yaml
+
 # Editor/IDE
 # .idea/
 # .vscode/
