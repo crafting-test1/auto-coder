@@ -29,9 +29,9 @@ Navigate to **OAuth & Permissions** and add these Bot Token Scopes:
 **Required scopes:**
 - `app_mentions:read` - To receive mentions (webhook)
 - `chat:write` - To post messages
-- `channels:history` - To read channel messages (for deduplication)
-- `groups:history` - To read private channel messages
-- `im:history` - To read direct messages
+- `channels:history` - To read public channel thread history (deduplication + context)
+- `groups:history` - To read private channel thread history
+- `im:history` - To read direct message thread history
 - `search:read` - To search for missed mentions (polling mode)
 
 ### 3. Enable Event Subscriptions
@@ -115,6 +115,9 @@ providers:
     options:
       # Signing secret for webhook verification
       signingSecretEnv: SLACK_SIGNING_SECRET
+
+      # Must be set to true to activate polling (Slack-specific opt-in)
+      pollingEnabled: true
 
       # Initial lookback period for first poll (default: 1 hour)
       # When first polling, only fetch mentions from the last N hours
@@ -204,13 +207,15 @@ slack:
   pollingInterval: 300  # Check every 5 minutes for missed mentions
   options:
     signingSecretEnv: SLACK_SIGNING_SECRET  # Enable webhooks
+    pollingEnabled: true                    # Opt-in to polling (Slack-specific)
 ```
 
 ### Thread Handling
 
 When the bot is mentioned in a thread:
 - The bot automatically replies **in the same thread**
-- Context from the thread is preserved
+- The full thread conversation history is fetched via `conversations.replies` and placed in `resource.description`, formatted as `[timestamp] <@userId>: text` per message — giving the agent complete context for the entire conversation
+- `resource.comment.body` contains only the triggering mention text; use `resource.description` in templates when you need the full thread
 - The bot won't spam the main channel
 
 ### Deduplication

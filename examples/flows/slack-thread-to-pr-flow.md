@@ -234,18 +234,19 @@ providers:
 commandExecutor:
   enabled: true
   command: "cs llm session run --approval=auto --name=$EVENT_SHORT_ID"
-  promptTemplateFile: ./config/event-prompt.example.hbs
+  prompts:
+    slack: ./config/event-prompt-slack.example.hbs  # Slack-specific template with thread history
+  useStdin: true              # Pipe rendered prompt to command's stdin
   followUp: true              # Post results back to Slack thread
 ```
 
 **Required Slack App Scopes:**
 - `app_mentions:read` - Detect @mentions
 - `chat:write` - Post messages
-- `im:write`
-- `channels:history` - Read thread context
-- `users:read` - Resolve user names
-- `groups.history`
-- `im:read`
+- `channels:history` - Read public channel thread history (for context + deduplication)
+- `groups:history` - Read private channel thread history
+- `im:history` - Read direct message thread history
+- `search:read` - Search for missed mentions (polling mode)
 
 
 **Event Subscription:**
