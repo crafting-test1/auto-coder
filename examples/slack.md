@@ -69,6 +69,10 @@ cs secret create slack_bot_token <your-bot-token>
 cs secret create slack_signing_secret <your-signing-secret>
 ```
 
+### 7. Set ENV for Slack MCP Server
+
+Posting messages in [Slack MCP Server](https://github.com/korotovsky/slack-mcp-server) is disabled by default for safety. To enable, set the `SLACK_MCP_ADD_MESSAGE_TOOL=Cxxxxxxxxxx` environment variable. If set to a comma-separated list of channel IDs, posting is enabled only for those specific channels. 
+
 ## Configuration
 
 ### Basic Configuration
