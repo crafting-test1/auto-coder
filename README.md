@@ -110,11 +110,18 @@ pnpm start
 
 ## Features
 
-### Provider-Specific Prompt Templates
+### Prompt Templates
 
-All current providers (GitHub, GitLab, Linear) are code platforms with similar PR-based workflows, so they work well with a single shared template.
+Prompts are [Handlebars](https://handlebarsjs.com/) (`.hbs`) templates. The rendered `NormalizedEvent` is passed as template context, giving access to all event fields (`{{provider}}`, `{{resource.title}}`, `{{resource.comment.body}}`, etc.) along with built-in helpers like `{{#eq}}`, `{{#if}}`, and `{{resourceLink}}`.
 
-auto-coder supports provider-specific prompt templates for future extensibility when adding providers with fundamentally different workflows (like conversational platforms).
+See the example templates for the full variable reference and inline documentation:
+
+- [`config/event-prompt.example.hbs`](config/event-prompt.example.hbs) — GitHub, GitLab, Linear
+- [`config/event-prompt-slack.example.hbs`](config/event-prompt-slack.example.hbs) — Slack
+
+For the complete format reference, see [Prompt Construction in the Watcher docs](docs/watcher.md#prompt-construction).
+
+All current providers (GitHub, GitLab, Linear) are code platforms with similar PR-based workflows, so they work well with a single shared template. auto-coder supports provider-specific templates for future extensibility when adding providers with fundamentally different workflows (like conversational platforms).
 
 Configure in `commandExecutor`:
 ```yaml
@@ -208,8 +215,11 @@ For detailed troubleshooting, see provider guides in `examples/`.
 
 - [GitHub Setup Guide](examples/github.md)
 - [Linear Setup Guide](examples/linear.md)
+- [Watcher Guide](docs/watcher.md) - Event ingestion, prompt construction, command execution
 - [Development Guide](DEVELOPMENT.md) - Architecture, API, contributing
 - [Configuration Examples](config/)
+- [Prompt Template (code platforms)](config/event-prompt.example.hbs)
+- [Prompt Template (Slack)](config/event-prompt-slack.example.hbs)
 
 ## License
 

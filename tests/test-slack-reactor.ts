@@ -46,9 +46,10 @@ test('SlackReactor.isBotAuthor - returns true for any bot in a multi-bot list', 
   assert.equal(reactor.isBotAuthor('bot-b'), true);
 });
 
-test('SlackReactor.isBotAuthor - comparison is case-sensitive', () => {
+test('SlackReactor.isBotAuthor - comparison is case-insensitive', () => {
   const reactor = makeReactor({ botUsernames: ['SlackBot'] });
-  assert.equal(reactor.isBotAuthor('slackbot'), false);
+  assert.equal(reactor.isBotAuthor('slackbot'), true);
+  assert.equal(reactor.isBotAuthor('SLACKBOT'), true);
   assert.equal(reactor.isBotAuthor('SlackBot'), true);
 });
 

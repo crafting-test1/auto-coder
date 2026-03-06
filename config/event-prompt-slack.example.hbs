@@ -17,7 +17,10 @@
   resource.*:
     {{resource.number}}     Always 0 — Slack has no issue numbers
     {{resource.title}}      Auto-generated: "Message in #<channelId>" (not the message text)
-    {{resource.description}} The full message text (use this for message content)
+    {{resource.description}} Full thread conversation history — all messages in the thread
+                            formatted as "[timestamp] <@userId>: text", one per line.
+                            Falls back to the triggering message text if history fetch fails.
+                            Use this to give the agent full conversational context.
     {{resource.url}}        Permalink to the message — populated for polled mentions only;
                             empty string for webhook events
     {{resource.state}}      Always "open"
@@ -25,8 +28,9 @@
     {{resource.author}}     Slack user ID of the sender (e.g. "U01ABC123") — not a username
     {{resource.labels}}     Not populated for Slack
 
-  resource.comment.* (always present for Slack events — contains the message itself):
-    {{resource.comment.body}}   The message text (same as resource.description)
+  resource.comment.* (always present for Slack events — contains the triggering message):
+    {{resource.comment.body}}   The triggering mention text only (not the full thread history).
+                                Use {{resource.description}} when you need the full conversation.
     {{resource.comment.author}} Slack user ID of the sender (e.g. "U01ABC123")
     {{resource.comment.url}}    Permalink — populated for polled mentions only; absent for webhooks
 

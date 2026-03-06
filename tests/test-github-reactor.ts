@@ -44,9 +44,10 @@ test('GitHubReactor.isBotAuthor - returns false for a non-bot username', () => {
   assert.equal(reactor.isBotAuthor(''), false);
 });
 
-test('GitHubReactor.isBotAuthor - comparison is case-sensitive', () => {
+test('GitHubReactor.isBotAuthor - comparison is case-insensitive', () => {
   const reactor = makeReactor({ botUsernames: ['MyBot'] });
-  assert.equal(reactor.isBotAuthor('mybot'), false);
+  assert.equal(reactor.isBotAuthor('mybot'), true);
+  assert.equal(reactor.isBotAuthor('MYBOT'), true);
   assert.equal(reactor.isBotAuthor('MyBot'), true);
 });
 

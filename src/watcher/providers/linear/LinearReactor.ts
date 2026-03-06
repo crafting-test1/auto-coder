@@ -61,6 +61,6 @@ export class LinearReactor implements Reactor {
   }
 
   isBotAuthor(author: string): boolean {
-    return this.botUsernames.includes(author);
+    return this.botUsernames.some(name => name.toLowerCase() === author.toLowerCase());
   }
 }
