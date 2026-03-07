@@ -12,6 +12,10 @@ This guide provides detailed instructions for setting up auto-coder with the Sla
 
 **Unlike GitHub/GitLab/Linear**, the Slack provider only triggers when the bot is **@mentioned**. This design prevents the bot from responding to every message in high-traffic channels.
 
+## Slack MCP Server Setup
+
+Posting messages in [Slack MCP Server](https://github.com/korotovsky/slack-mcp-server) is disabled by default for safety. To enable, set the `SLACK_MCP_ADD_MESSAGE_TOOL=Cxxxxxxxxxx` environment variable. If set to a comma-separated list of channel IDs, posting is enabled only for those specific channels. 
+
 ## Slack App Setup
 
 ### 1. Create a Slack App
@@ -68,10 +72,6 @@ Navigate to **Event Subscriptions**:
 cs secret create slack_bot_token <your-bot-token>
 cs secret create slack_signing_secret <your-signing-secret>
 ```
-
-### 7. Set ENV for Slack MCP Server
-
-Posting messages in [Slack MCP Server](https://github.com/korotovsky/slack-mcp-server) is disabled by default for safety. To enable, set the `SLACK_MCP_ADD_MESSAGE_TOOL=Cxxxxxxxxxx` environment variable. If set to a comma-separated list of channel IDs, posting is enabled only for those specific channels. 
 
 ## Configuration
 
