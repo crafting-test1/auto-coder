@@ -39,6 +39,9 @@ config/*.local.yaml
 # Wizard-generated template (user-specific)
 templates/setup-generated.yaml
 
+# Local customizations (user-specific, not tracked)
+_local/
+
 # Editor/IDE
 # .idea/
 # .vscode/

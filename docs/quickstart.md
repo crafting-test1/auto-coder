@@ -28,44 +28,50 @@ Note the token value — you will use it in the next step.
 
 ---
 
-## 3. Store secrets in Crafting
+## 3. Create secrets in Crafting
 
 ```bash
 # Generate a webhook secret
-WEBHOOK_SECRET=$(openssl rand -hex 32)
-
-# Store both secrets
-cs secret create github-pat <token-from-step-2>
-cs secret create github-webhook-secret $WEBHOOK_SECRET
-
-echo "Webhook secret (save this for Step 6): $WEBHOOK_SECRET"
+GITHUB_WEBHOOK_SECRET=$(openssl rand -hex 32)
 ```
 
-After creating each secret, open the Web Console → **Secrets → Edit** and mark both as **Admin Only** and **Not Mountable**.
+Create (secrets)[https://docs.sandboxes.cloud/concepts/secret.html] for Github related information.
 
----
+- `github-pat`
+- `github-webhook-secret`
 
-## 4. Configure the template
-
-Clone the repo and edit two lines in `templates/auto-coder-quick-start.yaml`:
+These secrets can be created using:
 
 ```bash
-git clone https://github.com/crafting-test1/auto-coder.git && cd auto-coder
+cs secret create NAME ...
 ```
 
-In `templates/auto-coder-quick-start.yaml`, find the `env:` block and fill in:
+or using Web Console.
+
+After creating each secret, make sure both secrets are marked as **Admin Only** and **Not Mountable**.
+---
+
+## 4. Configure template and start a Sandbox
+
+Download the template into a local folder (gitignored, safe for customizations):
+
+```bash
+mkdir -p _local
+curl -o _local/auto-coder-quick-start.yaml \
+  https://raw.githubusercontent.com/crafting-test1/auto-coder/refs/heads/main/templates/auto-coder-quick-start.yaml
+```
+
+Open `_local/auto-coder-quick-start.yaml` and fill in the two required values in the `env:` block:
 
 ```yaml
 - GITHUB_BOT_USERNAME=your-bot-github-username   # from Step 1
 - GITHUB_REPOSITORIES=owner/repo                 # comma-separated for multiple repos
 ```
 
----
-
-## 5. Create and pin the sandbox
+Create the template and sandbox from the local file:
 
 ```bash
-cs template create auto-coder ./templates/auto-coder-quick-start.yaml
+cs template create auto-coder ./_local/auto-coder-quick-start.yaml
 cs sandbox create auto-coder -t auto-coder
 cs sandbox pin auto-coder   # keeps it running 24/7 to receive webhook events
 ```
