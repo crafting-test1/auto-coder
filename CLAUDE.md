@@ -19,7 +19,8 @@ Automated coding assistant that monitors GitHub, GitLab, Linear, and Slack for e
 
 - `config/watcher.yaml` — Main runtime config (providers, auth, repos, polling, executor)
 - `config/watcher.example.yaml` — Full reference config with all options documented
-- `templates/auto-coder.yaml` — Full sandbox template (GitHub + Linear + Slack)
+- `templates/auto-coder-quick-start.yaml` — GitHub-only sandbox template (start here)
+- `templates/auto-coder-full.example.yaml` — Full sandbox template (GitHub + Linear + Slack)
 - `templates/auto-coder-github-issue-2-github-pr.example.yaml` — GitHub-only template
 - `templates/auto-coder-slack-2-github-pr.example.yaml` — Slack + GitHub template
 - `config/event-prompt.example.hbs` — Handlebars prompt template for code platform events

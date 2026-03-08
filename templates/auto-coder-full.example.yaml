@@ -1,0 +1,309 @@
+# =============================================================================
+# auto-coder — Full template: GitHub + Linear + Slack → Crafting Coding Agent
+#
+# Use this template if you need more than one provider. For GitHub-only, use
+# templates/auto-coder-quick-start.yaml instead — it is simpler and better
+# documented as a starting point.
+#
+# SETUP STEPS before creating this template:
+#   1. Create secrets for each provider you want:  see docs/setup.md § Secrets
+#   2. Fill in required env vars below (BOT_USERNAME, REPOSITORIES, TEAMS)
+#   3. Delete the env vars, endpoints, containers, and customizations for any
+#      providers you are NOT using — see DELETE comments throughout this file
+#   4. Create template:  cs template create auto-coder ./templates/auto-coder-full.example.yaml
+#   5. Create sandbox:   cs sandbox create auto-coder -t auto-coder
+#
+# After sandbox is created:
+#   6. Pin the sandbox:  cs sandbox pin auto-coder
+#   7. Authorize MCP:    Web Console → Connect → LLM → Discovery → Authorize
+#   8. Configure webhooks for each provider you enabled
+# =============================================================================
+
+env:
+  # ---------------------------------------------------------------------------
+  # GitHub secrets and configuration
+  # DELETE this block if you are not using GitHub.
+  #
+  # Required secrets (create with cs secret create):
+  #   cs secret create github-pat <fine-grained-token>
+  #   cs secret create github-webhook-secret <openssl rand -hex 32>
+  #
+  # MUST mark both secrets as Admin Only + Not Mountable in the Web Console.
+  # ---------------------------------------------------------------------------
+  - GITHUB_PERSONAL_ACCESS_TOKEN=${secret:github-pat}
+
+  # Bot account GitHub username — used to detect and skip the agent's own comments.
+  # MUST be a dedicated bot account, not your personal account.
+  - GITHUB_BOT_USERNAME=your-bot-github-username
+
+  # Repositories to monitor, comma-separated: owner/repo1,owner/repo2
+  - GITHUB_REPOSITORIES=owner/repo
+
+  # ---------------------------------------------------------------------------
+  # Linear secrets and configuration
+  # DELETE this block if you are not using Linear.
+  #
+  # Required secrets:
+  #   cs secret create linear-pat <api-key-from-linear-settings>
+  #   cs secret create linear-webhook-secret <openssl rand -hex 32>
+  # ---------------------------------------------------------------------------
+  - LINEAR_API_TOKEN=${secret:linear-pat}
+  - LINEAR_WEBHOOK_SECRET=${secret:linear-webhook-secret}
+
+  # Linear bot username for deduplication — the display name of the bot user in Linear.
+  - LINEAR_BOT_USERNAME=your-linear-bot-display-name
+
+  # Linear team keys to monitor, comma-separated: ENG,DESIGN
+  # Leave unset to monitor all teams.
+  # - LINEAR_TEAMS=ENG
+
+  # ---------------------------------------------------------------------------
+  # Slack secrets and configuration
+  # DELETE this block if you are not using Slack.
+  #
+  # Required secrets:
+  #   cs secret create slack-bot-token <xoxb-token-from-slack-app>
+  #   cs secret create slack-signing-secret <signing-secret-from-slack-app>
+  #
+  # See examples/slack.md for Slack app creation and required OAuth scopes.
+  # ---------------------------------------------------------------------------
+  - SLACK_BOT_TOKEN=${secret:slack-bot-token}
+  - SLACK_SIGNING_SECRET=${secret:slack-signing-secret}
+
+  # SLACK_MCP_XOXB_TOKEN is required by the Slack MCP server (separate from SLACK_BOT_TOKEN).
+  # It uses the same underlying secret — both point to the xoxb- Bot User OAuth Token.
+  - SLACK_MCP_XOXB_TOKEN=${secret:slack-bot-token}
+
+  # To allow the agent to POST messages via Slack MCP, set this to a comma-separated
+  # list of channel IDs where posting is permitted (e.g. C01234567,C09876543).
+  # Omit or leave unset to disable posting entirely (read-only Slack access).
+  # - SLACK_MCP_ADD_MESSAGE_TOOL=C01234567
+
+endpoints:
+  # ---------------------------------------------------------------------------
+  # Public webhook endpoint — receives events pushed from all providers.
+  # Use this base URL when configuring webhooks:
+  #   https://<sandbox-name>.<org>.sandboxes.cloud/webhook/<provider>
+  #
+  # Provider-specific paths (appended to the base URL above):
+  #   GitHub:  /webhook/github
+  #   Linear:  /webhook/linear
+  #   Slack:   /webhook/slack
+  #
+  # auth_proxy MUST be disabled — providers send unauthenticated POST requests.
+  # ---------------------------------------------------------------------------
+  - name: webhook
+    http:
+      routes:
+        - backend:
+            target: dev
+            port: webhook
+          path_prefix: /
+      auth_proxy:
+        disabled: true
+
+  # ---------------------------------------------------------------------------
+  # GitHub MCP internal endpoint
+  # DELETE if not using GitHub.
+  # type: INTERNAL — not publicly accessible, only reachable within the sandbox.
+  # Routed through mcp-proxy which injects the Authorization header.
+  # ---------------------------------------------------------------------------
+  - name: github-mcp
+    type: INTERNAL
+    http:
+      routes:
+        - backend:
+            target: mcp-proxy
+            port: github
+          path_prefix: /
+      auth_proxy:
+        disabled: true
+      path: /mcp
+
+  # ---------------------------------------------------------------------------
+  # Linear MCP internal endpoint
+  # DELETE if not using Linear.
+  # Also routed through mcp-proxy which injects the Linear API token as a header.
+  # ---------------------------------------------------------------------------
+  - name: linear-mcp
+    type: INTERNAL
+    http:
+      routes:
+        - backend:
+            target: mcp-proxy
+            port: linear
+          path_prefix: /
+      auth_proxy:
+        disabled: true
+      path: /mcp
+
+  # ---------------------------------------------------------------------------
+  # Slack MCP internal endpoint
+  # DELETE if not using Slack.
+  # Uses SSE transport (path: /sse) instead of the default HTTP transport.
+  # ---------------------------------------------------------------------------
+  - name: slack-mcp
+    type: INTERNAL
+    http:
+      routes:
+        - backend:
+            target: slack-mcp
+            port: slack
+          path_prefix: /
+      auth_proxy:
+        disabled: true
+      path: /sse
+
+workspaces:
+  - name: dev
+    ports:
+      # The watcher listens on port 3000 for incoming webhook events from all providers.
+      - name: webhook
+        port: 3000
+        protocol: HTTP/TCP
+
+    checkouts:
+      # The auto-coder repo is checked out here on sandbox creation.
+      - path: auto-coder
+        repo:
+          git: git@github.com:crafting-test1/auto-coder.git
+
+    system:
+      daemons:
+        # The watcher process — starts automatically and restarts on failure.
+        # Receives events from all enabled providers and dispatches Coding Agent sessions.
+        - name: watcher
+          run:
+            cmd: pnpm run dev
+            dir: /home/owner/auto-coder
+
+containers:
+  # ---------------------------------------------------------------------------
+  # GitHub MCP server container
+  # DELETE if not using GitHub.
+  #
+  # Runs the official GitHub MCP server in HTTP mode.
+  # The token is NOT set here — it is injected as an Authorization header by
+  # the mcp-proxy container below, so this container never holds the secret.
+  #
+  # GITHUB_TOOLSETS controls which GitHub tool groups are exposed to the agent.
+  # Available sets: repos, issues, pull_requests, code_security, orgs, users, ...
+  # Remove sets you don't need to reduce the agent's tool surface area.
+  # ---------------------------------------------------------------------------
+  - name: github-mcp
+    image: ghcr.io/github/github-mcp-server
+    args:
+      - http
+    env:
+      - GITHUB_TOOLSETS=repos,issues,pull_requests
+    ports:
+      - name: github
+        port: 8082
+        protocol: HTTP/TCP
+
+  # ---------------------------------------------------------------------------
+  # nginx reverse proxy — injects auth tokens for GitHub and Linear MCP servers.
+  # DELETE if not using GitHub AND not using Linear.
+  # DELETE the GitHub server block (listen 8082) if not using GitHub.
+  # DELETE the Linear server block (listen 8080) if not using Linear.
+  #
+  # Why this container exists: MCP servers expect an Authorization: Bearer <token>
+  # header on every request. Rather than embedding the token in each MCP server
+  # container directly, it is injected here at the proxy layer so the MCP servers
+  # themselves never hold credentials.
+  #
+  # The nginx config is written inline using printf and shell variable expansion.
+  # $GITHUB_PERSONAL_ACCESS_TOKEN and $LINEAR_API_TOKEN are substituted at
+  # container startup from this container's env (set above in the env: block).
+  # ---------------------------------------------------------------------------
+  - name: mcp-proxy
+    image: nginx:alpine
+    args:
+      - /bin/sh
+      - -c
+      - |
+        printf 'events {}
+        http {
+          server {
+            listen 8082;
+            location /mcp {
+              proxy_set_header Authorization "Bearer $GITHUB_PERSONAL_ACCESS_TOKEN";
+              proxy_set_header Host github-mcp;
+              proxy_pass http://github-mcp:8082/mcp;
+              proxy_http_version 1.1;
+              proxy_buffering off;
+            }
+          }
+          server {
+            listen 8080;
+            location /mcp {
+              proxy_set_header Authorization "Bearer $LINEAR_API_TOKEN";
+              proxy_set_header Host mcp.linear.app;
+              proxy_pass https://mcp.linear.app/mcp;
+              proxy_http_version 1.1;
+              proxy_buffering off;
+              proxy_ssl_server_name on;
+            }
+          }
+        }' > /etc/nginx/nginx.conf && nginx -g 'daemon off;'
+    ports:
+      # DELETE the github port if not using GitHub.
+      - name: github
+        port: 8082
+        protocol: HTTP/TCP
+      # DELETE the linear port if not using Linear.
+      - name: linear
+        port: 8080
+        protocol: HTTP/TCP
+
+  # ---------------------------------------------------------------------------
+  # Slack MCP server container
+  # DELETE if not using Slack.
+  #
+  # Runs the Slack MCP server in SSE transport mode.
+  # SLACK_MCP_XOXB_TOKEN is read from the env block above (same value as SLACK_BOT_TOKEN).
+  #
+  # To allow the agent to post messages to Slack, set SLACK_MCP_ADD_MESSAGE_TOOL
+  # in the top-level env block to a comma-separated list of permitted channel IDs.
+  # Without it, the agent has read-only access to Slack.
+  # ---------------------------------------------------------------------------
+  - name: slack-mcp
+    image: ghcr.io/korotovsky/slack-mcp-server:latest
+    entrypoint:
+      - mcp-server
+    args:
+      - --transport
+      - sse
+    env:
+      - SLACK_MCP_PORT=8081
+      - SLACK_MCP_HOST=0.0.0.0
+    ports:
+      - name: slack
+        port: 8081
+        protocol: HTTP/TCP
+
+# =============================================================================
+# MCP server registrations — exposes provider tools to Crafting Coding Agent
+# sessions running inside this sandbox.
+#
+# DELETE each entry for providers you are not using.
+#
+# REQUIRED MANUAL STEP after creating the sandbox:
+#   Web Console → Connect → LLM → Discovery tab → click "Authorize"
+#
+# Without authorization, Coding Agent sessions cannot use any MCP tools.
+# =============================================================================
+customizations:
+  # DELETE if not using GitHub.
+  - mcp_server:
+      endpoint: github-mcp
+
+  # DELETE if not using Slack.
+  # protocol: SSE is required for the Slack MCP server (uses SSE transport).
+  - mcp_server:
+      protocol: SSE
+      endpoint: slack-mcp
+
+  # DELETE if not using Linear.
+  - mcp_server:
+      endpoint: linear-mcp
