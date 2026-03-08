@@ -79,9 +79,16 @@ commandExecutor:
   useStdin: false
 
   # Post command output as follow-up comment (default: false)
-  # If true, updates the initial "Agent is working" comment with command output
+  # If true, posts a new comment with the command output after execution
   # If false, only posts the initial comment
   followUp: false
+
+  # Template for the follow-up comment (optional, only used when followUp: true)
+  # Use {output} placeholder for the command's stdout.
+  # Useful for surfacing a link to the newly created session or resource.
+  # If not set, the raw command output is posted as-is.
+  # Example: "Agent session started. View progress: {output}"
+  # followUpTemplate: "Session started: {output}"
 
 # Provider configurations
 providers:
