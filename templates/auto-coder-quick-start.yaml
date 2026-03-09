@@ -108,9 +108,12 @@ workspaces:
           git: git@github.com:crafting-test1/auto-coder.git
         manifest:
           overlays:
-            - content: |
+            - inline:
+                hooks:
+                  post-checkout:
+                    cmd: pnpm install
                 daemons:
-                  watcher: # Name of the process, please name after your service
+                  watcher:
                     run:
                       cmd: pnpm run dev
       # -----------------------------------------------------------------------
@@ -124,8 +127,7 @@ workspaces:
       # -----------------------------------------------------------------------
     system: 
       files:
-        - path: /home/owner/auto-coder/config/watcher.yaml
-          owner: 1000:1000
+        - path: ~/auto-coder/config/watcher.yaml
           mode: "0644"
           overwrite: true
           content: |
@@ -144,7 +146,8 @@ workspaces:
             providers:
               github:
                 enabled: true
-
+    restriction:
+      life_time: ALWAYS
 containers:
   # ---------------------------------------------------------------------------
   # GitHub MCP server — exposes GitHub tools (issues, PRs, repos) to Sandbox Coding Agent.
