@@ -6,13 +6,13 @@ Listens for events on GitHub, GitLab, Linear, and Slack, then dispatches a [Craf
 
 **[→ GitHub Quick Start](docs/quickstart.md)** — get up and running in ~10 minutes.
 
-For multi-provider setups, security hardening, and advanced configuration, see the **[full setup guide](docs/setup/index.md)**.
+For multi-provider setups, security hardening, and advanced configuration, see the **[full setup guide](docs/setup/README.md)**.
 
 ## Reference
 
 | | |
 |---|---|
-| [docs/setup/index.md](docs/setup/index.md) | Full setup guide — all providers, security, troubleshooting |
+| [docs/setup/README.md](docs/setup/README.md) | Full setup guide — all providers, security, troubleshooting |
 | [config/watcher.example.yaml](config/watcher.example.yaml) | All configuration options documented |
 | [docs/watcher.md](docs/watcher.md) | Architecture: event flow, deduplication, prompt construction |
 

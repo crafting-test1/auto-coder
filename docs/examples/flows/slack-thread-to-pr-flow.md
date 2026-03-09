@@ -307,5 +307,5 @@ Bot: ✅ Updated PR #200 with docs
 ## Next Steps
 
 - See [GitHub Issue to PR Flow](./github-issue-to-pr-flow.md) for direct GitHub integration
-- Review [Slack Provider Setup](../slack.md) for detailed configuration
+- Review [Slack Provider Setup](../../setup/providers/slack.md) for detailed configuration
 - Learn about [Slack App Setup](https://api.slack.com/start/building) for creating your bot

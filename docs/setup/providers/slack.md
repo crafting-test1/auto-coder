@@ -81,7 +81,7 @@ How it works:
 - Message posting is **disabled by default** for safety. To enable posting in specific channels, set `SLACK_MCP_ADD_MESSAGE_TOOL=<channel_id>` (comma-separated for multiple channels) in the sandbox template's `env:` block
 - The sandbox template handles the container setup automatically
 
-**One-time authorization required:** After creating the sandbox, an org admin must authorize the MCP server. See [Part 2 of the setup guide](index.md#4-authorize-mcp-servers).
+**One-time authorization required:** After creating the sandbox, an org admin must authorize the MCP server. See [Part 2 of the setup guide](../README.md#4-authorize-mcp-servers).
 
 ---
 
@@ -156,6 +156,7 @@ The env vars are not reaching the watcher. Check:
 
 **Webhooks not received — bot doesn't respond to mentions**
 
+- Verify the sandbox is pinned (`cs sandbox pin auto-coder`) — a suspended sandbox cannot receive webhooks
 - Verify the Request URL is correct in Slack app settings → Event Subscriptions (should show a green checkmark)
 - Verify the `app_mention` event is subscribed in Event Subscriptions
 - Check sandbox logs for webhook validation errors
@@ -186,4 +187,4 @@ The bot responds multiple times to the same mention. Check sandbox logs on start
 
 **MCP tools not working**
 
-MCP servers are not authorized. Repeat the authorization step (Web Console → Connect → LLM → Discovery → Authorize). Also confirm the sandbox is pinned (`cs sandbox pin auto-coder`).
+MCP servers are not authorized. Repeat the authorization step (Web Console → **Connect → LLM** → **Sandboxes Authorized to Expose MCP Servers** → **Add**). Also confirm the sandbox is pinned (`cs sandbox pin auto-coder`).

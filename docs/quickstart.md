@@ -6,7 +6,7 @@ Get auto-coder running with GitHub in ~10 minutes.
 
 - [Node.js](https://nodejs.org/) v20+ (LTS recommended)
 - [pnpm](https://pnpm.io/installation) — install via `npm install -g pnpm` or the [standalone installer](https://pnpm.io/installation)
-- [Crafting CLI (`cs`)](https://docs.sandboxes.cloud/docs/cli) installed and authenticated as an org admin
+- Crafting CLI (`cs`) installed and authenticated as an org admin
 
 ---
 
@@ -44,7 +44,7 @@ Create [secrets](https://docs.sandboxes.cloud/concepts/secret.html) for GitHub r
 - `github-pat`
 - `github-webhook-secret`
 
-Create them (run in a separate terminal — never paste tokens here):
+Create them using the below commands:
 
 ```bash
 echo "YOUR_PAT" | cs secret create github-pat -f -
@@ -78,8 +78,10 @@ Create the template and sandbox from the local file:
 ```bash
 cs template create auto-coder ./_local/auto-coder-quick-start.yaml
 cs sandbox create auto-coder -t auto-coder
-cs sandbox pin auto-coder   # keeps it running 24/7 to receive webhook events
+cs sandbox pin auto-coder
 ```
+
+> **MUST pin the sandbox.** Without pinning, the sandbox suspends after inactivity and misses webhook events. Events received while suspended are lost.
 
 ---
 
@@ -100,7 +102,7 @@ In each monitored repository go to **Settings → Webhooks → Add webhook**:
 
 ## 6. Authorize MCP servers
 
-Web Console → **Connect → LLM → Discovery** → click **Authorize** next to the auto-coder sandbox.
+Web Console → **Connect → LLM** → under **Sandboxes Authorized to Expose MCP Servers**, click **Add** and select the `auto-coder` sandbox.
 
 Without this step the agent cannot read issues or create PRs.
 
@@ -119,4 +121,4 @@ Create a test issue in one of your monitored repos. Within ~30 seconds the bot s
 
 ---
 
-For security hardening, token rotation, event filtering, and multi-provider setup, see **[docs/setup/index.md](setup/index.md)**.
+For security hardening, token rotation, event filtering, and multi-provider setup, see **[docs/setup/README.md](setup/README.md)**.

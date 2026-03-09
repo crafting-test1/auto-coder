@@ -83,7 +83,7 @@ Grant each token only the permissions it actually needs.
 
 **Linear** — API keys have full workspace access. Use a dedicated service account and treat the key as a high-value credential.
 
-**Slack** — Only add the bot scopes listed in [slack.md](slack.md). Do not add `admin.*` or other elevated scopes. Only invite the bot to channels it actually monitors.
+**Slack** — Only add the bot scopes listed in [slack.md](providers/slack.md). Do not add `admin.*` or other elevated scopes. Only invite the bot to channels it actually monitors.
 
 ---
 

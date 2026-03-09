@@ -22,7 +22,7 @@ After creating the account:
 
 Create a fine-grained token for the bot account. Sign in as the bot account to do this.
 
-**External docs:** [GitHub — Creating a fine-grained token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-fine-grained-personal-access-token)
+**External docs:** [GitHub — Managing personal access tokens](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens)
 
 Steps:
 1. Go to **Settings → Developer settings → Personal access tokens → Fine-grained tokens**
@@ -64,7 +64,7 @@ How it works:
 - An nginx `mcp-proxy` container sits in front of it and injects `GITHUB_PERSONAL_ACCESS_TOKEN` as a Bearer token on every request
 - The MCP endpoint is registered so all Crafting Coding Agent sessions inside the sandbox can use GitHub tools
 
-**One-time authorization required:** After creating the sandbox, an org admin must authorize the MCP server. See [Part 2 of the setup guide](index.md#4-authorize-mcp-servers).
+**One-time authorization required:** After creating the sandbox, an org admin must authorize the MCP server. See [Part 2 of the setup guide](../README.md#4-authorize-mcp-servers).
 
 ---
 
@@ -145,6 +145,8 @@ eventFilter:
 
 ## Step 4 — Configure the GitHub Webhook
 
+**External docs:** [GitHub — Creating webhooks](https://docs.github.com/en/webhooks/using-webhooks/creating-webhooks)
+
 Find the webhook URL for your sandbox:
 
 ```
@@ -181,6 +183,7 @@ The env vars are not reaching the watcher. Check:
 
 **Webhook events not received**
 
+- Verify the sandbox is pinned (`cs sandbox pin auto-coder`) — a suspended sandbox cannot receive webhooks
 - Verify the webhook URL is correct (Web Console → Endpoints → webhook)
 - Check GitHub webhook delivery log: repository → Settings → Webhooks → Recent Deliveries
 - Verify content type is `application/json`
@@ -202,7 +205,7 @@ cs sandbox restart auto-coder
 
 **Claude sessions fail to use GitHub tools**
 
-MCP servers are not authorized. Repeat the MCP authorization step (Web Console → Connect → LLM → Discovery → Authorize). Also confirm the sandbox is pinned (`cs sandbox pin auto-coder`) — the MCP server is unavailable when the sandbox is suspended.
+MCP servers are not authorized. Repeat the authorization step (Web Console → **Connect → LLM** → **Sandboxes Authorized to Expose MCP Servers** → **Add**). Also confirm the sandbox is pinned (`cs sandbox pin auto-coder`) — the MCP server is unavailable when the sandbox is suspended.
 
 **Agent triggers on the wrong events**
 

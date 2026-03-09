@@ -165,7 +165,7 @@ commandExecutor:
 | Override the agent command | `WATCHER_COMMAND` env var |
 | Filter specific event types or actions | `watcher.yaml` — `providers.<name>.options.eventFilter` |
 | Tune polling intervals or lookback windows | `watcher.yaml` — `pollingInterval`, `initialLookbackHours` |
-| Per-provider prompt templates | `watcher.yaml` — `commandExecutor.prompts` |
+| Per-provider prompt templates | `watcher.yaml` — `commandExecutor.prompts` — see [prompt-templates.md](prompt-templates.md) |
 | Dry-run / debug mode | `watcher.yaml` — `commandExecutor.dryRun: true` |
 
 ---

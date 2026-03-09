@@ -260,5 +260,5 @@ commandExecutor:
 ## Next Steps
 
 - See [Slack Thread to PR Flow](./slack-thread-to-pr-flow.md) for Slack integration
-- Review [GitHub Provider Setup](../github.md) for configuration details
+- Review [GitHub Provider Setup](../../setup/providers/github.md) for configuration details
 - Explore [Event Prompt Templates](../../config/event-prompt.example.hbs) for customization
