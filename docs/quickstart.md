@@ -102,7 +102,7 @@ In each monitored repository go to **Settings → Webhooks → Add webhook**:
 
 ## 6. Authorize MCP servers
 
-Web Console → **Connect → LLM** → under **Sandboxes Authorized to Expose MCP Servers**, click **Add** and select the `auto-coder` sandbox.
+Web Console → **Connect → LLM** → under **Sandboxes Authorized to Expose MCP Servers**, click **Add**, input the sandbox name `auto-coder`, and confirm.
 
 Without this step the agent cannot read issues or create PRs.
 

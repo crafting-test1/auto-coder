@@ -92,7 +92,7 @@ This one-time step is required for providers with MCP support (GitHub, Linear, S
 1. Open the **Crafting Web Console**
 2. Navigate to **Connect → LLM**
 3. Under **Sandboxes Authorized to Expose MCP Servers**, click **Add**
-4. Select the `auto-coder` sandbox and confirm
+4. Input the sandbox name `auto-coder` and confirm
 
 **MUST:** Without this step, Coding Agent sessions cannot use MCP tools (GitHub, Linear, Slack actions) and will fail to read issues or create PRs.
 

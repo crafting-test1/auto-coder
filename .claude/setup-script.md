@@ -332,8 +332,7 @@ One more required step — authorizing the MCP servers so Crafting Coding Agent 
 1. Open the **Crafting Web Console**
 2. Navigate to **Connect → LLM**
 3. Click the **Discovery** tab
-4. Find your sandbox in the list
-5. Click **Authorize**
+4. Input your sandbox name and click **Authorize**
 
 Without this step, the agent cannot read issues or create PRs.
 
