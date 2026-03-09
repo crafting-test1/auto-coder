@@ -141,11 +141,20 @@ For webhook secrets, also update the secret value in the provider's webhook sett
 
 ### Cost control
 
-Each triggered event starts a Crafting Coding Agent session. A busy repository with many issues/comments will start many sessions. To control costs:
+The pinned sandbox runs 24/7, so the primary cost driver is the node pool it runs on. To control costs:
 
-- Use `eventFilter` in `watcher.yaml` (see `config/watcher.example.yaml`) to restrict which event types and actions trigger sessions.
-- Increase polling intervals and rely on webhooks as the primary trigger.
-- Monitor session usage in the Crafting Web Console.
+- **Use a small node pool** — create a dedicated small node pool (or use an existing one) and assign the sandbox to it. Since the watcher process is lightweight, it does not need a large or general-purpose node.
+- **Assign the sandbox to the node pool** — add a `schedule_spec` to the workspace in the sandbox template so the pinned sandbox always runs on the low-cost nodes:
+
+```yaml
+workspaces:
+  - name: dev
+    schedule_spec:
+      selector:
+        name: <your-node-pool-name>
+```
+
+See [Crafting docs — Schedule Spec](https://docs.sandboxes.cloud/features/schedule-spec.html) for details. Ensure the `selector.name` matches a configured node pool exactly, or the workload will fail to schedule.
 
 ### Restriction Mode
 
