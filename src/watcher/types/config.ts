@@ -32,6 +32,14 @@ export interface CommandExecutorConfig {
   prompts?: Record<string, string>;
   useStdin?: boolean;
   followUp?: boolean;
+  /**
+   * Template for the follow-up comment posted after the command completes.
+   * Supports {output} placeholder for the command's stdout.
+   * Example: "Session started: {output}"
+   * If not set, the raw command output is posted as-is.
+   * Only used when followUp is true.
+   */
+  followUpTemplate?: string;
   dryRun?: boolean;
 }
 

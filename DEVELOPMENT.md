@@ -11,6 +11,9 @@ auto-coder/
 ├── src/
 │   ├── watcher/              # Watcher subsystem
 │   │   ├── types/            # Type definitions
+│   │   │   ├── config.ts
+│   │   │   ├── index.ts
+│   │   │   └── provider.ts
 │   │   ├── core/             # Core components
 │   │   │   ├── ConfigLoader.ts
 │   │   │   └── EventEmitter.ts
@@ -21,25 +24,39 @@ auto-coder/
 │   │   ├── providers/        # Provider implementations
 │   │   │   ├── BaseProvider.ts
 │   │   │   ├── ProviderRegistry.ts
-│   │   │   └── github/
-│   │   │       ├── GitHubProvider.ts
-│   │   │       ├── GitHubWebhook.ts
-│   │   │       ├── GitHubPoller.ts
-│   │   │       ├── GitHubComments.ts
-│   │   │       └── GitHubReactor.ts
-│   │   └── utils/            # Utilities
-│   │       ├── CommandExecutor.ts
-│   │       ├── logger.ts
-│   │       └── errors.ts
+│   │   │   ├── github/
+│   │   │   ├── gitlab/
+│   │   │   ├── linear/
+│   │   │   └── slack/
+│   │   ├── utils/            # Utilities
+│   │   │   ├── CommandExecutor.ts
+│   │   │   ├── crypto.ts
+│   │   │   ├── errors.ts
+│   │   │   ├── linkFormatter.ts
+│   │   │   ├── logger.ts
+│   │   │   └── retry.ts
+│   │   ├── index.ts          # Library exports
+│   │   └── Watcher.ts        # Main watcher class
 │   ├── standalone.ts         # Standalone entry point
 │   └── index.ts              # Main entry point
 ├── config/                   # Configuration files
 │   ├── watcher.example.yaml
-│   ├── watcher-with-executor.example.yaml
 │   └── event-prompt.example.hbs
 └── docs/                     # Documentation
     ├── overview.md
-    └── watcher.md
+    ├── watcher.md
+    ├── quickstart.md
+    ├── setup/
+    │   ├── index.md
+    │   ├── configuration.md
+    │   ├── security.md
+    │   ├── github.md
+    │   ├── gitlab.md
+    │   ├── linear.md
+    │   └── slack.md
+    └── examples/flows/
+        ├── github-issue-to-pr-flow.md
+        └── slack-thread-to-pr-flow.md
 ```
 
 ## Core Concepts
@@ -84,7 +101,7 @@ Example configuration:
 ```yaml
 commandExecutor:
   enabled: true
-  command: "cat | claude-code"
+  command: "cs llm session run --approval=auto --name=$EVENT_SHORT_ID --task"
   promptTemplateFile: ./config/event-prompt.example.hbs
   useStdin: true      # Pass prompt to stdin
   followUp: true      # Update comment with output
@@ -154,7 +171,7 @@ await watcher.stop();
 
 ## Adding Custom Providers
 
-To add a new provider (GitLab, Jira, Linear, etc.):
+To add a new provider beyond the built-in ones (GitHub, GitLab, Linear, Slack):
 
 1. **Implement the IProvider interface:**
 

@@ -1,6 +1,12 @@
 env:
-  - GITHUB_PERSONAL_ACCESS_TOKEN=${secret:github_pat}
-  - SLACK_MCP_XOXB_TOKEN=${secret:slack_token}
+  - GITHUB_PERSONAL_ACCESS_TOKEN=${secret:github-pat}
+  - GITHUB_WEBHOOK_SECRET=${secret:github-webhook-secret}
+  - GITHUB_BOT_USERNAME=your-bot-github-username
+  - GITHUB_REPOSITORIES=owner/repo
+  - SLACK_BOT_TOKEN=${secret:slack-bot-token}
+  - SLACK_SIGNING_SECRET=${secret:slack-signing-secret}
+  - SLACK_MCP_XOXB_TOKEN=${secret:slack-bot-token}
+
 endpoints:
   - name: webhook
     http:
@@ -33,6 +39,7 @@ endpoints:
       auth_proxy:
         disabled: true
       path: /sse
+
 workspaces:
   - name: dev
     ports:
@@ -43,6 +50,39 @@ workspaces:
       - path: auto-coder
         repo:
           git: git@github.com:crafting-test1/auto-coder.git
+        manifest:
+          overlays:
+            - content: |
+                daemons:
+                  watcher: # Name of the process, please name after your service
+                    run:
+                      cmd: pnpm run dev
+
+    system:
+      files:
+        - path: /home/owner/auto-coder/config/watcher.yaml
+          owner: 1000:1000
+          mode: "0644"
+          overwrite: true
+          content: |
+            server:
+              host: 0.0.0.0
+              port: 3000
+            commandExecutor:
+              enabled: true
+              command: "cs llm session run --approval=auto --name=$EVENT_SHORT_ID --task"
+              promptTemplateFile: ./config/event-prompt.example.hbs
+              useStdin: true
+              followUp: true
+            deduplication:
+              enabled: true
+              commentTemplate: "Agent is working on {id}"
+            providers:
+              github:
+                enabled: true
+              slack:
+                enabled: true
+
 containers:
   - name: github-mcp
     image: ghcr.io/github/github-mcp-server
@@ -56,27 +96,33 @@ containers:
         protocol: HTTP/TCP
   - name: mcp-proxy
     image: nginx:alpine
-    args:
-      - /bin/sh
-      - -c
-      - |
-        printf 'events {} 
-        http { 
-          server { 
-            listen 8082; 
-            location /mcp { 
-              proxy_set_header Authorization "Bearer $GITHUB_PERSONAL_ACCESS_TOKEN"; 
-              proxy_set_header Host github-mcp; 
-              proxy_pass http://github-mcp:8082/mcp; 
-              proxy_http_version 1.1; 
-              proxy_buffering off; 
-            } 
-          } 
-        }' > /etc/nginx/nginx.conf && nginx -g 'daemon off;'
+    env:
+      - GITHUB_PERSONAL_ACCESS_TOKEN=${secret:github-pat}
     ports:
       - name: github
         port: 8082
         protocol: HTTP/TCP
+    volume_mounts:
+      - name: inline-volume
+        path: /etc/nginx/templates/default.conf.template
+        from:
+          volume:
+            name: inline-volume
+            content:
+              text: |
+                events {}
+                http {
+                  server {
+                    listen 8082;
+                    location /mcp {
+                      proxy_set_header Authorization "Bearer ${GITHUB_PERSONAL_ACCESS_TOKEN}";
+                      proxy_set_header Host github-mcp;
+                      proxy_pass http://github-mcp:8082/mcp;
+                      proxy_http_version 1.1;
+                      proxy_buffering off;
+                    }
+                  }
+                }
   - name: slack-mcp
     image: ghcr.io/korotovsky/slack-mcp-server:latest
     entrypoint:
@@ -91,6 +137,7 @@ containers:
       - name: slack
         port: 8081
         protocol: HTTP/TCP
+
 customizations:
   - mcp_server:
       endpoint: github-mcp

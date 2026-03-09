@@ -11,7 +11,7 @@ async function main(): Promise<void> {
     process.env.WATCHER_CONFIG || './config/watcher.yaml';
 
   try {
-    const config = ConfigLoader.load(configPath);
+    const config = ConfigLoader.loadWithEnv(configPath);
 
     const watcher = new Watcher(config);
 

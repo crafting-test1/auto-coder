@@ -214,15 +214,12 @@ providers:
       webhookSecretEnv: GITHUB_WEBHOOK_SECRET
       repositories:
         - your-org/your-repo
-      events:
-        - issues              # Detect new issues
-        - issue_comment       # Detect follow-up comments
-        - pull_request        # Detect PR updates
 
 commandExecutor:
   enabled: true
-  command: "cs llm session run --approval=auto --name=$EVENT_SHORT_ID"
+  command: "cs llm session run --approval=auto --name=$EVENT_SHORT_ID --task"
   promptTemplateFile: ./config/event-prompt.example.hbs
+  useStdin: true
   followUp: true              # Post result back to issue
 ```
 

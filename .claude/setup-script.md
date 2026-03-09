@@ -387,7 +387,7 @@ Create a test issue in one of your monitored repositories. auto-coder should det
 - `cs secret list` — view stored secrets
 
 **Troubleshooting:**
-- See `examples/github.md`, `examples/linear.md`, `examples/slack.md` for provider-specific help
+- See `docs/setup/github.md`, `docs/setup/linear.md`, `docs/setup/slack.md` for provider-specific help
 - See `docs/overview.md` for architecture details
 - Set `logLevel: debug` in `config/watcher.yaml` for verbose logging
 

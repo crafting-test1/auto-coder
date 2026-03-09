@@ -1,0 +1,177 @@
+# Setup Guide
+
+Deploy auto-coder on your Crafting site with one or more event providers. This guide covers all providers and is suitable for IaC / Config-as-Code workflows.
+
+**Prerequisites:** [Crafting CLI (`cs`)](https://docs.sandboxes.cloud/docs/cli) installed and authenticated as an org admin.
+
+---
+
+## Part 1 — Configure Providers
+
+Each provider requires its own credentials and, in some cases, an MCP server for the agent to act on your behalf. Follow the guide for each provider you want to use:
+
+| Provider | Credentials needed | MCP available |
+|---|---|---|
+| [GitHub](github.md) | Fine-grained PAT + webhook secret | GitHub MCP server (container, auto-configured) |
+| [GitLab](gitlab.md) | API token + webhook secret | None |
+| [Linear](linear.md) | API key + webhook secret | Remote MCP at `https://mcp.linear.app/mcp` |
+| [Slack](slack.md) | Bot token + signing secret | Slack MCP server (container, auto-configured) |
+
+Complete the relevant provider guide(s) before continuing. Each guide ends with a list of secrets to create; you will reference those secret names in Part 2.
+
+---
+
+## Part 2 — Configure the Sandbox
+
+### 1. Create Crafting secrets
+
+Create a Crafting secret for each credential you collected in the provider guides. Use the canonical secret names listed there (they must match the template's `${secret:...}` references exactly).
+
+Example for GitHub (run in a separate terminal — never paste tokens into this chat):
+```bash
+echo "YOUR_TOKEN" | cs secret create github-pat -f -
+echo "YOUR_WEBHOOK_SECRET" | cs secret create github-webhook-secret -f -
+```
+
+After creating each secret, open the Crafting Web Console and mark it as **Admin Only** and **Not Mountable**:
+
+Web Console → **Secrets** → select the secret → **Edit** → check **Admin Only** and **Not Mountable** → Save.
+
+- **Admin Only** — the secret is only accessible when the sandbox is in Restriction Mode, preventing the agent from reading its own credentials
+- **Not Mountable** — the secret is never written to the filesystem; it is only available as an environment variable
+
+### 2. Download and configure the template
+
+Download the sandbox template into a local folder (gitignored, safe for customizations):
+
+```bash
+mkdir -p _local
+curl -o _local/auto-coder-quick-start.yaml \
+  https://raw.githubusercontent.com/crafting-test1/auto-coder/refs/heads/main/templates/auto-coder-quick-start.yaml
+```
+
+For multi-provider setups, use `templates/auto-coder-full.example.yaml` as your base.
+
+Open the template and fill in the required values in the `env:` block. At minimum:
+
+```yaml
+env:
+  - GITHUB_PERSONAL_ACCESS_TOKEN=${secret:github-pat}    # already set
+  - GITHUB_WEBHOOK_SECRET=${secret:github-webhook-secret} # already set
+
+  # Fill these in:
+  - GITHUB_BOT_USERNAME=your-bot-github-username   # from Step 1 of github.md
+  - GITHUB_REPOSITORIES=owner/repo                 # comma-separated: owner/repo1,owner/repo2
+```
+
+See [docs/setup/configuration.md](configuration.md) for the full env var and `watcher.yaml` reference.
+
+### 3. Create the template and sandbox
+
+```bash
+# Register the template with your Crafting site
+cs template create auto-coder ./_local/auto-coder-quick-start.yaml
+
+# Create the sandbox from the template
+cs sandbox create auto-coder -t auto-coder
+
+# Pin it so it stays running 24/7 to receive webhook events
+cs sandbox pin auto-coder
+```
+
+**MUST pin the sandbox.** Without pinning, the sandbox suspends after inactivity and misses webhook events. Events received while suspended are lost (polling will catch events from the past hour when it resumes, but real-time response requires the sandbox to be pinned).
+
+### 4. Authorize MCP servers
+
+This one-time step is required for providers with MCP support (GitHub, Linear, Slack). It allows Crafting Coding Agent sessions to use the MCP tools.
+
+1. Open the **Crafting Web Console**
+2. Navigate to **Connect → LLM**
+3. Click the **Discovery** tab
+4. Find the `auto-coder` sandbox in the list
+5. Click **Authorize**
+
+**MUST:** Without this step, Claude sessions inside the sandbox cannot use MCP tools (GitHub, Linear, Slack actions) and will fail to read issues or create PRs.
+
+### 5. Configure webhooks in your provider
+
+Each provider has a specific webhook URL. Find yours in the Web Console: sandbox → **Endpoints** → **webhook** → copy the URL. It follows the pattern:
+
+```
+https://webhook--auto-coder-<your-org>.sandboxes.site/webhook/<provider>
+```
+
+Configure the webhook in each provider's settings page. See the relevant provider guide for the exact steps and required fields.
+
+### 6. Verify
+
+```bash
+cs logs --workspace auto-coder/dev --follow watcher
+```
+
+Look for: `Watcher started successfully` and `Initialized provider: <name>`.
+
+**Trigger a test event:** Create a new issue in one of your monitored repositories. Within ~30 seconds, the bot should post a comment: `"Agent is working on #<issue-number>"` and a Crafting Coding Agent session will start.
+
+---
+
+## Part 3 — Security & Operations
+
+For a full security hardening checklist covering secrets, webhook signatures, token scoping, rotation, and Restriction Mode, see **[security.md](security.md)**.
+
+### Token rotation
+
+Rotate credentials on your standard schedule. After rotating any token:
+
+```bash
+echo "NEW_VALUE" | cs secret update <secret-name> -f -
+cs sandbox restart auto-coder
+```
+
+For webhook secrets, also update the secret value in the provider's webhook settings.
+
+### Scope minimization
+
+- **GitHub:** Fine-grained token scoped to specific repositories with Issues + Pull Requests read/write only. Avoid org-level tokens or classic tokens with full `repo` scope.
+- **GitLab:** API token with the minimum scopes required (`api` for full access, or narrower scopes if your workflow allows).
+- **Linear:** API keys have full workspace access. Use a dedicated service account when possible.
+- **Slack:** Restrict bot scopes to the minimum listed in [slack.md](slack.md). Only invite the bot to channels it needs to monitor.
+
+### Cost control
+
+Each triggered event starts a Crafting Coding Agent session. A busy repository with many issues/comments will start many sessions. To control costs:
+
+- Use `eventFilter` in `watcher.yaml` (see `config/watcher.example.yaml`) to restrict which event types and actions trigger sessions.
+- Increase polling intervals and rely on webhooks as the primary trigger.
+- Monitor session usage in the Crafting Web Console.
+
+### Restriction Mode
+
+For stricter environments, enable Restriction Mode in the template to prevent the sandbox owner from accessing the workspace:
+
+```yaml
+restriction:
+  life_time: ALWAYS
+```
+
+See [Crafting docs — Restriction Mode](https://docs.sandboxes.cloud/docs/restriction-mode) for details.
+
+### Troubleshooting
+
+For provider-specific troubleshooting, see the relevant provider guide:
+
+- [GitHub troubleshooting](github.md#troubleshooting)
+- [GitLab troubleshooting](gitlab.md#troubleshooting)
+- [Linear troubleshooting](linear.md#troubleshooting)
+- [Slack troubleshooting](slack.md#troubleshooting)
+
+**Watcher fails to start — "No providers enabled"**
+
+The env vars are not reaching the watcher. Check:
+- Secrets exist: `cs secret list`
+- Template references the correct secret names (e.g. `${secret:github-pat}`)
+- Sandbox was created from the updated template: `cs sandbox info auto-coder`
+
+**Agent sessions fail to use MCP tools**
+
+MCP servers are not authorized. Repeat the Authorize step in Part 2. Also confirm the sandbox is pinned (`cs sandbox pin auto-coder`) — MCP servers are unavailable when the sandbox is suspended.

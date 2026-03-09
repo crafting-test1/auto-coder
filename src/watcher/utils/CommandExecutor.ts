@@ -185,8 +185,10 @@ export class CommandExecutor {
 
       // Follow-up with output if enabled
       if (this.config.followUp && output) {
-        // Always post a new comment with command output
-        await reactor.postComment(output);
+        const followUpComment = this.config.followUpTemplate
+          ? this.config.followUpTemplate.replace('{output}', output.trim())
+          : output;
+        await reactor.postComment(followUpComment);
         logger.debug(`Posted follow-up comment with command output`);
       }
     } catch (error) {
