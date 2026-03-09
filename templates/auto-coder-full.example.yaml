@@ -6,7 +6,7 @@
 # documented as a starting point.
 #
 # SETUP STEPS before creating this template:
-#   1. Create secrets for each provider you want:  see docs/setup.md § Secrets
+#   1. Create secrets for each provider you want:  see docs/setup/index.md
 #   2. Fill in required env vars below (BOT_USERNAME, REPOSITORIES, TEAMS)
 #   3. Delete the env vars, endpoints, containers, and customizations for any
 #      providers you are NOT using — see DELETE comments throughout this file
@@ -65,7 +65,7 @@ env:
   #   cs secret create slack-bot-token <xoxb-token-from-slack-app>
   #   cs secret create slack-signing-secret <signing-secret-from-slack-app>
   #
-  # See examples/slack.md for Slack app creation and required OAuth scopes.
+  # See docs/setup/slack.md for Slack app creation and required OAuth scopes.
   # ---------------------------------------------------------------------------
   - SLACK_BOT_TOKEN=${secret:slack-bot-token}
   - SLACK_SIGNING_SECRET=${secret:slack-signing-secret}

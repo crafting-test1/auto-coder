@@ -11,8 +11,7 @@ Automated coding assistant that monitors GitHub, GitLab, Linear, and Slack for e
 - `src/` — TypeScript source (watcher, providers, transport, utils)
 - `config/` — Runtime configuration (`watcher.yaml`) and prompt templates (`.hbs`)
 - `templates/` — Crafting Sandbox YAML templates for different provider combinations
-- `examples/` — Provider-specific setup guides and example flows
-- `docs/` — Architecture overview and component docs
+- `docs/` — Architecture overview, component docs, setup guides, and example flows
 - `tests/` — Test files
 
 ## Key Files

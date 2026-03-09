@@ -40,13 +40,14 @@ Create (secrets)[https://docs.sandboxes.cloud/concepts/secret.html] for Github r
 - `github-pat`
 - `github-webhook-secret`
 
-These secrets can be created using:
+These secrets can be created using (run in a separate terminal — never paste tokens here):
 
 ```bash
-cs secret create NAME ...
+echo "YOUR_PAT" | cs secret create github-pat -f -
+echo "YOUR_WEBHOOK_SECRET" | cs secret create github-webhook-secret -f -
 ```
 
-or using Web Console.
+or using the Web Console.
 
 After creating each secret, make sure both secrets are marked as **Admin Only** and **Not Mountable**.
 ---
@@ -80,17 +81,13 @@ cs sandbox pin auto-coder   # keeps it running 24/7 to receive webhook events
 
 ## 6. Configure the GitHub webhook
 
-Find your webhook URL:
-```bash
-# Or find it in: Web Console → Sandbox → Endpoints → "webhook"
-echo "https://auto-coder.<your-org>.sandboxes.cloud/webhook/github"
-```
+Find your webhook URL: Web Console → Sandbox → Endpoints → "webhook"
 
 In each monitored repository go to **Settings → Webhooks → Add webhook**:
 
 | Field | Value |
 |---|---|
-| Payload URL | `https://auto-coder.<your-org>.sandboxes.cloud/webhook/github` |
+| Payload URL | `https://auto-coder.<your-org>.sandboxes.site/webhook/github` |
 | Content type | `application/json` ← **required** |
 | Secret | webhook secret from Step 3 |
 | Events | Issues, Pull requests, Issue comments |
@@ -108,7 +105,7 @@ Without this step the agent cannot read issues or create PRs.
 ## 8. Verify
 
 ```bash
-cs sandbox logs auto-coder --follow
+cs logs --workspace auto-coder/dev --follow watcher
 # Look for: "Watcher started successfully" and "Initialized provider: github"
 ```
 
@@ -116,4 +113,4 @@ Create a test issue in one of your monitored repos. Within ~30 seconds the bot s
 
 ---
 
-For security hardening, token rotation, event filtering, and multi-provider setup, see **[docs/setup.md](setup.md)**.
+For security hardening, token rotation, event filtering, and multi-provider setup, see **[docs/setup/index.md](setup/index.md)**.

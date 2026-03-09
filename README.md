@@ -19,7 +19,7 @@ Get up and running with GitHub in ~10 minutes: **[GitHub Quick Start →](docs/q
 
 | | |
 |---|---|
-| [docs/setup.md](docs/setup.md) | Full setup guide — security hardening, troubleshooting, IaC |
+| [docs/setup/index.md](docs/setup/index.md) | Full setup guide — all providers, security hardening, troubleshooting |
 | [templates/auto-coder-quick-start.yaml](templates/auto-coder-quick-start.yaml) | GitHub sandbox template (annotated) |
 | [templates/auto-coder-full.example.yaml](templates/auto-coder-full.example.yaml) | GitHub + Linear + Slack template |
 | [config/watcher.example.yaml](config/watcher.example.yaml) | All watcher config options documented |

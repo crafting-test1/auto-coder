@@ -2,7 +2,7 @@
 # auto-coder — GitHub Issue/PR → AI Agent → GitHub PR
 #
 # QUICK START (4 steps before creating this template):
-#   1. Create secrets:    see docs/setup.md § Secrets
+#   1. Create secrets:    see docs/setup/github.md
 #   2. Fill in env vars:  edit GITHUB_BOT_USERNAME and GITHUB_REPOSITORIES below
 #   3. Create template:   cs template create auto-coder ./templates/auto-coder-quick-start.yaml
 #   4. Create sandbox:    cs sandbox create auto-coder -t auto-coder
@@ -10,7 +10,7 @@
 # After sandbox is created:
 #   5. Pin the sandbox:   cs sandbox pin auto-coder  (keeps it running 24/7)
 #   6. Authorize MCP:     Web Console → Connect → LLM → Discovery → Authorize
-#   7. Set GitHub webhook: see docs/setup.md § GitHub Webhook
+#   7. Set GitHub webhook: see docs/setup/github.md
 #
 # For multi-provider (GitHub + Linear + Slack), see templates/auto-coder-full.example.yaml
 # =============================================================================
@@ -158,32 +158,7 @@ workspaces:
       #             #     actions: ['closed', 'reopened', 'review_requested']
       #             #   issue_comment: {}
 
-# =============================================================================
-# Volumes — config files injected into containers.
-# Content is static. ${GITHUB_PERSONAL_ACCESS_TOKEN} in the nginx config
-# is substituted at startup by the nginx:alpine entrypoint (envsubst).
-# =============================================================================
-volumes:
-  - name: nginx-mcp-proxy-config
-    content:
-      text: |
-        # nginx reverse proxy for the GitHub MCP server.
-        # Injects the GitHub PAT as a Bearer token on every MCP request.
-        # This is required because the MCP server endpoint does not handle
-        # authentication itself — auth is added at the proxy layer.
-        events {}
-        http {
-          server {
-            listen 8082;
-            location /mcp {
-              proxy_set_header Authorization "Bearer ${GITHUB_PERSONAL_ACCESS_TOKEN}";
-              proxy_set_header Host github-mcp;
-              proxy_pass http://github-mcp:8082/mcp;
-              proxy_http_version 1.1;
-              proxy_buffering off;
-            }
-          }
-        }
+
 
 containers:
   # ---------------------------------------------------------------------------
@@ -219,15 +194,27 @@ containers:
     env:
       # This env var is used by envsubst inside the nginx config template.
       - GITHUB_PERSONAL_ACCESS_TOKEN=${secret:github-pat}
-    volume_mounts:
-      - name: nginx-config
-        path: /etc/nginx/templates/nginx.conf.template
-        from:
-          volume_name: nginx-mcp-proxy-config
     ports:
       - name: github
         port: 8082
         protocol: HTTP/TCP
+    args:
+      - /bin/sh
+      - -c
+      - |
+        printf 'events {}
+        http {
+          server {
+            listen 8082;
+            location /mcp {
+              proxy_set_header Authorization "Bearer $GITHUB_PERSONAL_ACCESS_TOKEN";
+              proxy_set_header Host github-mcp;
+              proxy_pass http://github-mcp:8082/mcp;
+              proxy_http_version 1.1;
+              proxy_buffering off;
+            }
+          }
+        }' > /etc/nginx/nginx.conf && nginx -g 'daemon off;'
 
 # =============================================================================
 # MCP server registration — makes GitHub tools available to all Crafting LLM

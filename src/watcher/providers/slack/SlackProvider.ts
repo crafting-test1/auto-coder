@@ -64,7 +64,7 @@ export class SlackProvider extends BaseProvider {
 
     if (!this.token) {
       throw new ProviderError(
-        'Slack bot token is required. Set SLACK_BOT_TOKEN environment variable or configure token/tokenFile in auth section. See examples/slack.md for setup instructions.',
+        'Slack bot token is required. Set SLACK_BOT_TOKEN environment variable or configure token/tokenFile in auth section. See docs/setup/slack.md for setup instructions.',
         'slack'
       );
     }
@@ -110,7 +110,7 @@ export class SlackProvider extends BaseProvider {
         );
       } else {
         throw new ProviderError(
-          `Slack authentication failed: ${errorMessage}. Please verify your bot token and network connectivity. See examples/slack.md for setup instructions.`,
+          `Slack authentication failed: ${errorMessage}. Please verify your bot token and network connectivity. See docs/setup/slack.md for setup instructions.`,
           'slack',
           error
         );
