@@ -57,20 +57,20 @@ The full `NormalizedEvent` object is available in every template. The most commo
 | `{{provider}}` | `github` \| `gitlab` \| `linear` \| `slack` |
 | `{{type}}` | `issue`, `pull_request`, `merge_request`, `message` |
 | `{{action}}` | e.g. `opened`, `edited`, `poll` |
-| `{{resource.number}}` | Issue or PR number |
-| `{{resource.title}}` | Title / summary |
+| `{{resource.number}}` | Issue or PR number (GitHub/GitLab/Linear) · always `0` for Slack |
+| `{{resource.title}}` | Title / summary (Slack: auto-generated `"Message in #<channelId>"`) |
 | `{{resource.description}}` | Body / description (Slack: full thread history) |
-| `{{resource.url}}` | URL to the issue or PR |
+| `{{resource.url}}` | URL to the issue or PR (Slack: empty for webhook events, populated for polled mentions) |
 | `{{resource.repository}}` | `owner/repo` (GitHub/GitLab) · team key (Linear) · channel ID (Slack) |
-| `{{resource.author}}` | Who created the issue/PR |
-| `{{resource.assignees}}` | Array — truthy if the issue is assigned |
-| `{{resource.labels}}` | Array of label name strings |
-| `{{resource.branch}}` | Head branch — PR/MR only |
-| `{{resource.mergeTo}}` | Target branch — PR/MR only |
-| `{{resource.comment.body}}` | Comment text — only present when triggered by a comment |
-| `{{resource.comment.author}}` | Comment author |
-| `{{actor.username}}` | Who triggered the event |
-| `{{metadata.timestamp}}` | ISO 8601 timestamp |
+| `{{resource.author}}` | GitHub/GitLab: login username · Linear: display name · Slack: user ID (e.g. `U01ABC123`) |
+| `{{resource.assignees}}` | Array — truthy if the issue is assigned · not populated for Slack |
+| `{{resource.labels}}` | Array of label name strings · not populated for Slack |
+| `{{resource.branch}}` | Head branch — GitHub/GitLab PR/MR only |
+| `{{resource.mergeTo}}` | Target branch — GitHub/GitLab PR/MR only |
+| `{{resource.comment.body}}` | Comment text (Slack: the triggering mention only, not full thread) · absent if event is not comment-triggered (except Slack, where it is always present) |
+| `{{resource.comment.author}}` | Comment author (Slack: user ID) |
+| `{{actor.username}}` | GitHub/GitLab: login username · Linear: display name · Slack: user ID |
+| `{{metadata.timestamp}}` | ISO 8601 timestamp (GitHub/GitLab/Linear) · Slack message timestamp, e.g. `1234567890.123456` |
 
 For the complete field-by-field reference including provider-specific quirks, see the comments at the top of each example template.
 
