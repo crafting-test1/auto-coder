@@ -2,7 +2,14 @@
 
 Deploy auto-coder on your Crafting site with one or more event providers. This guide covers all providers and is suitable for IaC / Config-as-Code workflows.
 
-**Prerequisites:** [Crafting CLI (`cs`)](https://docs.sandboxes.cloud/docs/cli) installed and authenticated as an org admin.
+## Prerequisites
+
+Before starting, make sure you have:
+
+- **[Crafting CLI (`cs`)](https://docs.sandboxes.cloud/docs/cli)** — installed and authenticated as an org admin (`cs auth login`)
+- **A Crafting org** — with permission to create sandboxes, secrets, and templates
+- **A dedicated bot account** — a separate account for each provider you use (GitHub user, Linear user, Slack bot app); must not be your personal account
+- **Provider credentials** — API tokens and webhook secrets for each provider you want to enable (collected in Part 1 below)
 
 ---
 

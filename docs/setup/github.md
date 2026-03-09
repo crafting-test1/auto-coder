@@ -181,6 +181,7 @@ The env vars are not reaching the watcher. Check:
 
 **Webhook events not received**
 
+- Verify the sandbox is pinned (`cs sandbox pin auto-coder`) — a suspended sandbox cannot receive webhooks
 - Verify the webhook URL is correct (Web Console → Endpoints → webhook)
 - Check GitHub webhook delivery log: repository → Settings → Webhooks → Recent Deliveries
 - Verify content type is `application/json`

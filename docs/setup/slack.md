@@ -156,6 +156,7 @@ The env vars are not reaching the watcher. Check:
 
 **Webhooks not received — bot doesn't respond to mentions**
 
+- Verify the sandbox is pinned (`cs sandbox pin auto-coder`) — a suspended sandbox cannot receive webhooks
 - Verify the Request URL is correct in Slack app settings → Event Subscriptions (should show a green checkmark)
 - Verify the `app_mention` event is subscribed in Event Subscriptions
 - Check sandbox logs for webhook validation errors

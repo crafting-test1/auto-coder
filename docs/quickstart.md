@@ -78,8 +78,10 @@ Create the template and sandbox from the local file:
 ```bash
 cs template create auto-coder ./_local/auto-coder-quick-start.yaml
 cs sandbox create auto-coder -t auto-coder
-cs sandbox pin auto-coder   # keeps it running 24/7 to receive webhook events
+cs sandbox pin auto-coder
 ```
+
+> **MUST pin the sandbox.** Without pinning, the sandbox suspends after inactivity and misses webhook events. Events received while suspended are lost.
 
 ---
 
