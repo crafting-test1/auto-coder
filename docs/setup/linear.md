@@ -25,7 +25,7 @@ Set up auto-coder to monitor Linear issues and automatically dispatch a Crafting
 1. Go to [Linear Settings → API → Webhooks](https://linear.app/settings/api)
 2. Click **Create webhook**
 3. Set:
-   - **Webhook URL:** `https://auto-coder.<your-org>.sandboxes.cloud/webhook/linear` (fill in after sandbox is created — you can update this later)
+   - **Webhook URL:** `https://auto-coder.<your-org>.sandboxes.site/webhook/linear` (fill in after sandbox is created — you can update this later)
    - **Label:** `auto-coder`
    - **Resource types:** check **Issue** and **Comment**
 4. Click **Create webhook**

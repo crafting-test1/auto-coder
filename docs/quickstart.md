@@ -35,16 +35,16 @@ Note the token value — you will use it in the next step.
 GITHUB_WEBHOOK_SECRET=$(openssl rand -hex 32)
 ```
 
-Create (secrets)[https://docs.sandboxes.cloud/concepts/secret.html] for Github related information.
+Create [secrets](https://docs.sandboxes.cloud/concepts/secret.html) for GitHub related information.
 
 - `github-pat`
 - `github-webhook-secret`
 
-These secrets can be created using (run in a separate terminal — never paste tokens here):
+Create them (run in a separate terminal — never paste tokens here):
 
 ```bash
 echo "YOUR_PAT" | cs secret create github-pat -f -
-echo "YOUR_WEBHOOK_SECRET" | cs secret create github-webhook-secret -f -
+echo "$GITHUB_WEBHOOK_SECRET" | cs secret create github-webhook-secret -f -
 ```
 
 or using the Web Console.
@@ -79,7 +79,7 @@ cs sandbox pin auto-coder   # keeps it running 24/7 to receive webhook events
 
 ---
 
-## 6. Configure the GitHub webhook
+## 5. Configure the GitHub webhook
 
 Find your webhook URL: Web Console → Sandbox → Endpoints → "webhook"
 
@@ -94,7 +94,7 @@ In each monitored repository go to **Settings → Webhooks → Add webhook**:
 
 ---
 
-## 7. Authorize MCP servers
+## 6. Authorize MCP servers
 
 Web Console → **Connect → LLM → Discovery** → click **Authorize** next to the auto-coder sandbox.
 
@@ -102,7 +102,7 @@ Without this step the agent cannot read issues or create PRs.
 
 ---
 
-## 8. Verify
+## 7. Verify
 
 ```bash
 cs logs --workspace auto-coder/dev --follow watcher

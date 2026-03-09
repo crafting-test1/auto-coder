@@ -98,7 +98,7 @@ This one-time step is required for providers with MCP support (GitHub, Linear, S
 Each provider has a specific webhook URL. Find yours in the Web Console: sandbox → **Endpoints** → **webhook** → copy the URL. It follows the pattern:
 
 ```
-https://auto-coder.<your-org>.sandboxes.cloud/webhook/<provider>
+https://auto-coder.<your-org>.sandboxes.site/webhook/<provider>
 ```
 
 Configure the webhook in each provider's settings page. See the relevant provider guide for the exact steps and required fields.
@@ -106,7 +106,7 @@ Configure the webhook in each provider's settings page. See the relevant provide
 ### 6. Verify
 
 ```bash
-cs sandbox logs auto-coder --follow
+cs logs --workspace auto-coder/dev --follow watcher
 ```
 
 Look for: `Watcher started successfully` and `Initialized provider: <name>`.
@@ -122,7 +122,7 @@ Look for: `Watcher started successfully` and `Initialized provider: <name>`.
 Rotate credentials on your standard schedule. After rotating any token:
 
 ```bash
-cs secret update <secret-name> <new-value>
+echo "NEW_VALUE" | cs secret update <secret-name> -f -
 cs sandbox restart auto-coder
 ```
 
