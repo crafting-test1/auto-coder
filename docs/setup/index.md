@@ -57,7 +57,7 @@ curl -o _local/auto-coder-quick-start.yaml \
   https://raw.githubusercontent.com/crafting-test1/auto-coder/refs/heads/main/templates/auto-coder-quick-start.yaml
 ```
 
-For multi-provider setups, use `templates/auto-coder-full.example.yaml` as your base.
+For multi-provider setups, use `templates/auto-coder-full.yaml` as your base.
 
 Open the template and fill in the required values in the `env:` block. At minimum:
 
@@ -94,9 +94,8 @@ This one-time step is required for providers with MCP support (GitHub, Linear, S
 
 1. Open the **Crafting Web Console**
 2. Navigate to **Connect → LLM**
-3. Click the **Discovery** tab
-4. Find the `auto-coder` sandbox in the list
-5. Click **Authorize**
+3. Under **Sandboxes Authorized to Expose MCP Servers**, click **Add**
+4. Select the `auto-coder` sandbox and confirm
 
 **MUST:** Without this step, Claude sessions inside the sandbox cannot use MCP tools (GitHub, Linear, Slack actions) and will fail to read issues or create PRs.
 
@@ -181,4 +180,4 @@ The env vars are not reaching the watcher. Check:
 
 **Agent sessions fail to use MCP tools**
 
-MCP servers are not authorized. Repeat the Authorize step in Part 2. Also confirm the sandbox is pinned (`cs sandbox pin auto-coder`) — MCP servers are unavailable when the sandbox is suspended.
+MCP servers are not authorized. Repeat the authorization step in Part 2 (Web Console → **Connect → LLM** → **Sandboxes Authorized to Expose MCP Servers** → **Add**). Also confirm the sandbox is pinned (`cs sandbox pin auto-coder`) — MCP servers are unavailable when the sandbox is suspended.

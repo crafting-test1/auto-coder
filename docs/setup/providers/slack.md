@@ -187,4 +187,4 @@ The bot responds multiple times to the same mention. Check sandbox logs on start
 
 **MCP tools not working**
 
-MCP servers are not authorized. Repeat the authorization step (Web Console → Connect → LLM → Discovery → Authorize). Also confirm the sandbox is pinned (`cs sandbox pin auto-coder`).
+MCP servers are not authorized. Repeat the authorization step (Web Console → **Connect → LLM** → **Sandboxes Authorized to Expose MCP Servers** → **Add**). Also confirm the sandbox is pinned (`cs sandbox pin auto-coder`).

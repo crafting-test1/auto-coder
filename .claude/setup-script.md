@@ -283,7 +283,7 @@ ACTION: Based on the providers the user selected, choose the best base template:
 
 - **GitHub only** → `templates/auto-coder-quick-start.yaml`
 - **GitHub + Slack** (no Linear, no GitLab) → `templates/auto-coder-slack-2-github-pr.example.yaml`
-- **Any combination including Linear or GitLab**, or **all providers** → `templates/auto-coder-full.example.yaml`
+- **Any combination including Linear or GitLab**, or **all providers** → `templates/auto-coder-full.yaml`
 
 Read the chosen template file. You will need to create a working copy with adjustments.
 

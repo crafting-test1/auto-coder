@@ -205,7 +205,7 @@ cs sandbox restart auto-coder
 
 **Claude sessions fail to use GitHub tools**
 
-MCP servers are not authorized. Repeat the MCP authorization step (Web Console → Connect → LLM → Discovery → Authorize). Also confirm the sandbox is pinned (`cs sandbox pin auto-coder`) — the MCP server is unavailable when the sandbox is suspended.
+MCP servers are not authorized. Repeat the authorization step (Web Console → **Connect → LLM** → **Sandboxes Authorized to Expose MCP Servers** → **Add**). Also confirm the sandbox is pinned (`cs sandbox pin auto-coder`) — the MCP server is unavailable when the sandbox is suspended.
 
 **Agent triggers on the wrong events**
 
