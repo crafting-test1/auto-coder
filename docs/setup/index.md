@@ -98,7 +98,7 @@ This one-time step is required for providers with MCP support (GitHub, Linear, S
 Each provider has a specific webhook URL. Find yours in the Web Console: sandbox → **Endpoints** → **webhook** → copy the URL. It follows the pattern:
 
 ```
-https://auto-coder.<your-org>.sandboxes.site/webhook/<provider>
+https://webhook--auto-coder-<your-org>.sandboxes.site/webhook/<provider>
 ```
 
 Configure the webhook in each provider's settings page. See the relevant provider guide for the exact steps and required fields.

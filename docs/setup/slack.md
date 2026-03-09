@@ -41,7 +41,7 @@ Navigate to **Event Subscriptions**:
 1. Toggle **Enable Events** to **On**
 2. Set **Request URL** to your sandbox's webhook endpoint:
    ```
-   https://auto-coder.<your-org>.sandboxes.site/webhook/slack
+   https://webhook--auto-coder-<your-org>.sandboxes.site/webhook/slack
    ```
    Slack will send a verification challenge. auto-coder responds to it automatically — the URL should show a green checkmark.
 3. Under **Subscribe to bot events**, add: `app_mention`

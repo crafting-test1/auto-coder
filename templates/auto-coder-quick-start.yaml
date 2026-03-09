@@ -59,7 +59,7 @@ endpoints:
   # Public webhook endpoint — receives events pushed from GitHub.
   #
   # Use this URL when configuring your GitHub webhook:
-  #   https://<sandbox-name>.<org>.sandboxes.cloud/webhook/github
+  #   https://webhook--<sandbox-name>-<org>.sandboxes.site/webhook/github
   #
   # Find the exact URL: Web Console → Sandbox → Endpoints → "webhook"
   #

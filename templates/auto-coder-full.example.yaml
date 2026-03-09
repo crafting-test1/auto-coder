@@ -83,7 +83,7 @@ endpoints:
   # ---------------------------------------------------------------------------
   # Public webhook endpoint — receives events pushed from all providers.
   # Use this base URL when configuring webhooks:
-  #   https://<sandbox-name>.<org>.sandboxes.cloud/webhook/<provider>
+  #   https://webhook--<sandbox-name>-<org>.sandboxes.site/webhook/<provider>
   #
   # Provider-specific paths (appended to the base URL above):
   #   GitHub:  /webhook/github

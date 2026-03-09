@@ -109,7 +109,7 @@ options:
 Find the webhook URL for your sandbox:
 
 ```
-https://auto-coder.<your-org>.sandboxes.site/webhook/gitlab
+https://webhook--auto-coder-<your-org>.sandboxes.site/webhook/gitlab
 ```
 
 You can also find it in the Web Console: select the sandbox → **Endpoints** → **webhook** → copy the URL.
