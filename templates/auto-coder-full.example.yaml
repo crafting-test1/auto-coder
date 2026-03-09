@@ -31,6 +31,7 @@ env:
   # MUST mark both secrets as Admin Only + Not Mountable in the Web Console.
   # ---------------------------------------------------------------------------
   - GITHUB_PERSONAL_ACCESS_TOKEN=${secret:github-pat}
+  - GITHUB_WEBHOOK_SECRET=${secret:github-webhook-secret}
 
   # Bot account GitHub username — used to detect and skip the agent's own comments.
   # MUST be a dedicated bot account, not your personal account.
@@ -255,34 +256,7 @@ containers:
     image: nginx:alpine
     env:
       - GITHUB_PERSONAL_ACCESS_TOKEN=${secret:github-pat}
-    args:
-      - /bin/sh
-      - -c
-      - |
-        printf 'events {}
-        http {
-          server {
-            listen 8082;
-            location /mcp {
-              proxy_set_header Authorization "Bearer $GITHUB_PERSONAL_ACCESS_TOKEN";
-              proxy_set_header Host github-mcp;
-              proxy_pass http://github-mcp:8082/mcp;
-              proxy_http_version 1.1;
-              proxy_buffering off;
-            }
-          }
-          server {
-            listen 8080;
-            location /mcp {
-              proxy_set_header Authorization "Bearer $LINEAR_API_TOKEN";
-              proxy_set_header Host mcp.linear.app;
-              proxy_pass https://mcp.linear.app/mcp;
-              proxy_http_version 1.1;
-              proxy_buffering off;
-              proxy_ssl_server_name on;
-            }
-          }
-        }' > /etc/nginx/nginx.conf && nginx -g 'daemon off;'
+      - LINEAR_API_TOKEN=${secret:linear-pat}
     ports:
       # DELETE the github port if not using GitHub.
       - name: github
@@ -292,6 +266,38 @@ containers:
       - name: linear
         port: 8080
         protocol: HTTP/TCP
+    volume_mounts:
+      - name: inline-volume
+        path: /etc/nginx/templates/default.conf.template
+        from:
+          volume:
+            name: inline-volume
+            content:
+              text: |
+                events {}
+                http {
+                  server {
+                    listen 8082;
+                    location /mcp {
+                      proxy_set_header Authorization "Bearer ${GITHUB_PERSONAL_ACCESS_TOKEN}";
+                      proxy_set_header Host github-mcp;
+                      proxy_pass http://github-mcp:8082/mcp;
+                      proxy_http_version 1.1;
+                      proxy_buffering off;
+                    }
+                  }
+                  server {
+                    listen 8080;
+                    location /mcp {
+                      proxy_set_header Authorization "Bearer ${LINEAR_API_TOKEN}";
+                      proxy_set_header Host mcp.linear.app;
+                      proxy_pass https://mcp.linear.app/mcp;
+                      proxy_http_version 1.1;
+                      proxy_buffering off;
+                      proxy_ssl_server_name on;
+                    }
+                  }
+                }
 
   # ---------------------------------------------------------------------------
   # Slack MCP server container

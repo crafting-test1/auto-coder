@@ -1,6 +1,12 @@
 env:
-  - GITHUB_PERSONAL_ACCESS_TOKEN=${secret:github_pat}
-  - SLACK_MCP_XOXB_TOKEN=${secret:slack_token}
+  - GITHUB_PERSONAL_ACCESS_TOKEN=${secret:github-pat}
+  - GITHUB_WEBHOOK_SECRET=${secret:github-webhook-secret}
+  - GITHUB_BOT_USERNAME=your-bot-github-username
+  - GITHUB_REPOSITORIES=owner/repo
+  - SLACK_BOT_TOKEN=${secret:slack-bot-token}
+  - SLACK_SIGNING_SECRET=${secret:slack-signing-secret}
+  - SLACK_MCP_XOXB_TOKEN=${secret:slack-bot-token}
+
 endpoints:
   - name: webhook
     http:
@@ -33,6 +39,7 @@ endpoints:
       auth_proxy:
         disabled: true
       path: /sse
+
 workspaces:
   - name: dev
     ports:
@@ -47,7 +54,7 @@ workspaces:
           overlays:
             - content: |
                 daemons:
-                  watcher:
+                  watcher: # Name of the process, please name after your service
                     run:
                       cmd: pnpm run dev
 
@@ -90,28 +97,32 @@ containers:
   - name: mcp-proxy
     image: nginx:alpine
     env:
-      - GITHUB_PERSONAL_ACCESS_TOKEN=${secret:github_pat}
-    args:
-      - /bin/sh
-      - -c
-      - |
-        printf 'events {}
-        http {
-          server {
-            listen 8082;
-            location /mcp {
-              proxy_set_header Authorization "Bearer $GITHUB_PERSONAL_ACCESS_TOKEN";
-              proxy_set_header Host github-mcp;
-              proxy_pass http://github-mcp:8082/mcp;
-              proxy_http_version 1.1;
-              proxy_buffering off;
-            }
-          }
-        }' > /etc/nginx/nginx.conf && nginx -g 'daemon off;'
+      - GITHUB_PERSONAL_ACCESS_TOKEN=${secret:github-pat}
     ports:
       - name: github
         port: 8082
         protocol: HTTP/TCP
+    volume_mounts:
+      - name: inline-volume
+        path: /etc/nginx/templates/default.conf.template
+        from:
+          volume:
+            name: inline-volume
+            content:
+              text: |
+                events {}
+                http {
+                  server {
+                    listen 8082;
+                    location /mcp {
+                      proxy_set_header Authorization "Bearer ${GITHUB_PERSONAL_ACCESS_TOKEN}";
+                      proxy_set_header Host github-mcp;
+                      proxy_pass http://github-mcp:8082/mcp;
+                      proxy_http_version 1.1;
+                      proxy_buffering off;
+                    }
+                  }
+                }
   - name: slack-mcp
     image: ghcr.io/korotovsky/slack-mcp-server:latest
     entrypoint:
@@ -126,6 +137,7 @@ containers:
       - name: slack
         port: 8081
         protocol: HTTP/TCP
+
 customizations:
   - mcp_server:
       endpoint: github-mcp
