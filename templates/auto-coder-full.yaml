@@ -25,8 +25,8 @@ env:
   # DELETE this block if you are not using GitHub.
   #
   # Required secrets (create with cs secret create):
-  #   cs secret create github-pat <fine-grained-token>
-  #   cs secret create github-webhook-secret <openssl rand -hex 32>
+  #   cs secret create github-pat --shared <fine-grained-token>
+  #   cs secret create github-webhook-secret --shared <openssl rand -hex 32>
   #
   # MUST mark both secrets as Admin Only + Not Mountable in the Web Console.
   # ---------------------------------------------------------------------------
@@ -45,8 +45,8 @@ env:
   # DELETE this block if you are not using Linear.
   #
   # Required secrets:
-  #   cs secret create linear-pat <api-key-from-linear-settings>
-  #   cs secret create linear-webhook-secret <openssl rand -hex 32>
+  #   cs secret create linear-pat --shared <api-key-from-linear-settings>
+  #   cs secret create linear-webhook-secret --shared <openssl rand -hex 32>
   # ---------------------------------------------------------------------------
   - LINEAR_API_TOKEN=${secret:linear-pat}
   - LINEAR_WEBHOOK_SECRET=${secret:linear-webhook-secret}
@@ -63,8 +63,8 @@ env:
   # DELETE this block if you are not using Slack.
   #
   # Required secrets:
-  #   cs secret create slack-bot-token <xoxb-token-from-slack-app>
-  #   cs secret create slack-signing-secret <signing-secret-from-slack-app>
+  #   cs secret create slack-bot-token --shared <xoxb-token-from-slack-app>
+  #   cs secret create slack-signing-secret --shared <signing-secret-from-slack-app>
   #
   # See docs/setup/slack.md for Slack app creation and required OAuth scopes.
   # ---------------------------------------------------------------------------

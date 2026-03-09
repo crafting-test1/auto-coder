@@ -47,8 +47,8 @@ Create [secrets](https://docs.sandboxes.cloud/concepts/secret.html) for GitHub r
 Create them using the below commands:
 
 ```bash
-echo "YOUR_PAT" | cs secret create github-pat -f -
-echo "$GITHUB_WEBHOOK_SECRET" | cs secret create github-webhook-secret -f -
+echo "YOUR_PAT" | cs secret create github-pat --shared -f -
+echo "$GITHUB_WEBHOOK_SECRET" | cs secret create github-webhook-secret --shared -f -
 ```
 
 or using the Web Console.

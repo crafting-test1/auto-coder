@@ -36,8 +36,8 @@ Create a Crafting secret for each credential you collected in the provider guide
 
 Example for GitHub (run in a separate terminal — never paste tokens into this chat):
 ```bash
-echo "YOUR_TOKEN" | cs secret create github-pat -f -
-echo "YOUR_WEBHOOK_SECRET" | cs secret create github-webhook-secret -f -
+echo "YOUR_TOKEN" | cs secret create github-pat --shared -f -
+echo "YOUR_WEBHOOK_SECRET" | cs secret create github-webhook-secret --shared -f -
 ```
 
 After creating each secret, open the Crafting Web Console and mark it as **Admin Only** and **Not Mountable**:

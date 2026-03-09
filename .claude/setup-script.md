@@ -74,8 +74,8 @@ Copy the output — this is your webhook secret.
 In the same separate terminal:
 
 ```
-echo "YOUR_PAT_HERE" | cs secret create github-pat -f -
-echo "YOUR_WEBHOOK_SECRET_HERE" | cs secret create github-webhook-secret -f -
+echo "YOUR_PAT_HERE" | cs secret create github-pat --shared -f -
+echo "YOUR_WEBHOOK_SECRET_HERE" | cs secret create github-webhook-secret --shared -f -
 ```
 
 After creating each secret, mark it as **Admin Only** and **Not Mountable** in the Web Console (Secrets → select secret → Edit).
@@ -135,8 +135,8 @@ Copy the output — this is your webhook secret.
 In the same separate terminal:
 
 ```
-echo "YOUR_TOKEN_HERE" | cs secret create gitlab-pat -f -
-echo "YOUR_WEBHOOK_SECRET_HERE" | cs secret create gitlab-webhook-secret -f -
+echo "YOUR_TOKEN_HERE" | cs secret create gitlab-pat --shared -f -
+echo "YOUR_WEBHOOK_SECRET_HERE" | cs secret create gitlab-webhook-secret --shared -f -
 ```
 
 Mark both as **Admin Only** and **Not Mountable** in the Web Console.
@@ -192,8 +192,8 @@ On the same page, under **Webhooks**:
 Open a **separate terminal**:
 
 ```
-echo "YOUR_API_KEY_HERE" | cs secret create linear-pat -f -
-echo "YOUR_WEBHOOK_SECRET_HERE" | cs secret create linear-webhook-secret -f -
+echo "YOUR_API_KEY_HERE" | cs secret create linear-pat --shared -f -
+echo "YOUR_WEBHOOK_SECRET_HERE" | cs secret create linear-webhook-secret --shared -f -
 ```
 
 Mark both as **Admin Only** and **Not Mountable** in the Web Console.
@@ -261,8 +261,8 @@ ACTION: Open the Slack app creation page for the user: https://api.slack.com/app
 Open a **separate terminal**:
 
 ```
-echo "YOUR_BOT_TOKEN" | cs secret create slack-bot-token -f -
-echo "YOUR_SIGNING_SECRET" | cs secret create slack-signing-secret -f -
+echo "YOUR_BOT_TOKEN" | cs secret create slack-bot-token --shared -f -
+echo "YOUR_SIGNING_SECRET" | cs secret create slack-signing-secret --shared -f -
 ```
 
 Mark both as **Admin Only** and **Not Mountable** in the Web Console.
