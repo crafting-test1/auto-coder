@@ -32,13 +32,14 @@ env:
   # ---------------------------------------------------------------------------
 
   # The GitHub username of the bot account that posts comments.
+  # Optional — auto-detected from the PAT if not set (via GET /user).
   # MUST be a dedicated bot account, not your personal account.
-  # Used to prevent the watcher from triggering on its own comments.
-  - GITHUB_BOT_USERNAME=your-bot-github-username
+  # - GITHUB_BOT_USERNAME=your-bot-github-username
 
   # Repositories to monitor, comma-separated: owner/repo1,owner/repo2
-  # For polling mode (catching missed events). Webhooks work without this.
-  - GITHUB_REPOSITORIES=owner/repo
+  # Optional — auto-detected from the PAT if not set (fine-grained PATs return
+  # only their scoped repos via GET /user/repos).
+  # - GITHUB_REPOSITORIES=owner/repo
 
   # ---------------------------------------------------------------------------
   # Optional tuning — safe to leave as-is for most setups.

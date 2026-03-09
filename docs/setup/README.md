@@ -63,9 +63,12 @@ env:
   - GITHUB_PERSONAL_ACCESS_TOKEN=${secret:github-pat}    # already set
   - GITHUB_WEBHOOK_SECRET=${secret:github-webhook-secret} # already set
 
-  # Fill these in:
-  - GITHUB_BOT_USERNAME=your-bot-github-username   # from Step 1 of providers/github.md
-  - GITHUB_REPOSITORIES=owner/repo                 # comma-separated: owner/repo1,owner/repo2
+  # Optional — both are auto-detected from the PAT if not set:
+  #   GITHUB_BOT_USERNAME    auto-detected via GET /user
+  #   GITHUB_REPOSITORIES    auto-detected via GET /user/repos (fine-grained PATs return only scoped repos)
+  # Uncomment to override:
+  # - GITHUB_BOT_USERNAME=your-bot-github-username
+  # - GITHUB_REPOSITORIES=owner/repo1,owner/repo2
 ```
 
 See [docs/setup/configuration.md](configuration.md) for the full env var and `watcher.yaml` reference.

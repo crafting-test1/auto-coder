@@ -66,12 +66,7 @@ curl -o _local/auto-coder-quick-start.yaml \
   https://raw.githubusercontent.com/crafting-test1/auto-coder/refs/heads/main/templates/auto-coder-quick-start.yaml
 ```
 
-Open `_local/auto-coder-quick-start.yaml` and fill in the two required values in the `env:` block:
-
-```yaml
-- GITHUB_BOT_USERNAME=your-bot-github-username   # from Step 1
-- GITHUB_REPOSITORIES=owner/repo                 # comma-separated for multiple repos
-```
+Open `_local/auto-coder-quick-start.yaml`. The two env vars `GITHUB_BOT_USERNAME` and `GITHUB_REPOSITORIES` are **auto-detected from the PAT** (bot username via `GET /user`, repositories via `GET /user/repos`) and can be left commented out. Uncomment and set them explicitly only if you want to override the auto-detected values.
 
 Create the template and sandbox from the local file:
 

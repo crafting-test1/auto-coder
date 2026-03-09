@@ -109,12 +109,20 @@ export class GitHubProvider extends BaseProvider {
       eventFilter?: Record<string, { actions?: string[]; skipActions?: string[] }>;
     } | undefined;
 
-    // Read bot username(s) for deduplication
+    // Read bot username(s) for deduplication — auto-detect from PAT if not configured
     if (options?.botUsername) {
       this.botUsernames = Array.isArray(options.botUsername)
         ? options.botUsername
         : [options.botUsername];
       logger.debug(`GitHub bot usernames configured: ${this.botUsernames.join(', ')}`);
+    } else if (this.comments) {
+      const detected = await this.comments.getAuthenticatedUser();
+      if (detected) {
+        this.botUsernames = [detected];
+        logger.info(`GitHub bot username auto-detected from PAT: ${detected}`);
+      } else {
+        logger.warn('GitHub: botUsername not configured and auto-detection failed - deduplication will not work');
+      }
     } else {
       logger.warn('GitHub: No botUsername configured - deduplication will not work');
     }
@@ -142,8 +150,16 @@ export class GitHubProvider extends BaseProvider {
     }
     logger.info(`GitHub event filter: ${Object.keys(this.eventFilter).join(', ')}`);
 
-    const hasPollingConfig =
-      this.token && options?.repositories && options.repositories.length > 0;
+    // Auto-detect repositories from PAT if not explicitly configured
+    let repositories = options?.repositories ?? [];
+    if (this.token && repositories.length === 0 && this.comments) {
+      repositories = await this.comments.getAccessibleRepositories();
+      if (repositories.length > 0) {
+        logger.info(`GitHub repositories auto-detected from PAT: ${repositories.join(', ')}`);
+      }
+    }
+
+    const hasPollingConfig = this.token && repositories.length > 0;
 
     if (hasPollingConfig) {
       const pollerConfig: {
@@ -154,15 +170,15 @@ export class GitHubProvider extends BaseProvider {
         maxItemsPerPoll?: number;
       } = {
         token: this.token!,
-        repositories: options!.repositories!,
+        repositories,
         events: Object.keys(this.eventFilter),
       };
 
-      if (options!.initialLookbackHours !== undefined) {
+      if (options?.initialLookbackHours !== undefined) {
         pollerConfig.initialLookbackHours = options.initialLookbackHours;
       }
 
-      if (options!.maxItemsPerPoll !== undefined) {
+      if (options?.maxItemsPerPoll !== undefined) {
         pollerConfig.maxItemsPerPoll = options.maxItemsPerPoll;
       }
 

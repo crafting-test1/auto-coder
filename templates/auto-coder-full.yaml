@@ -34,11 +34,14 @@ env:
   - GITHUB_WEBHOOK_SECRET=${secret:github-webhook-secret}
 
   # Bot account GitHub username — used to detect and skip the agent's own comments.
+  # Optional — auto-detected from the PAT if not set (via GET /user).
   # MUST be a dedicated bot account, not your personal account.
-  - GITHUB_BOT_USERNAME=your-bot-github-username
+  # - GITHUB_BOT_USERNAME=your-bot-github-username
 
   # Repositories to monitor, comma-separated: owner/repo1,owner/repo2
-  - GITHUB_REPOSITORIES=owner/repo
+  # Optional — auto-detected from the PAT if not set (fine-grained PATs return
+  # only their scoped repos via GET /user/repos).
+  # - GITHUB_REPOSITORIES=owner/repo
 
   # ---------------------------------------------------------------------------
   # Linear secrets and configuration
