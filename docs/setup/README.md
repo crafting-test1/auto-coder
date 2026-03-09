@@ -20,7 +20,6 @@ Each provider requires its own credentials and, in some cases, an MCP server for
 | Provider | Credentials needed | MCP available |
 |---|---|---|
 | [GitHub](providers/github.md) | Fine-grained PAT + webhook secret | GitHub MCP server (container, auto-configured) |
-| [GitLab](providers/gitlab.md) | API token + webhook secret | None |
 | [Linear](providers/linear.md) | API key + webhook secret | Remote MCP at `https://mcp.linear.app/mcp` |
 | [Slack](providers/slack.md) | Bot token + signing secret | Slack MCP server (container, auto-configured) |
 
@@ -139,7 +138,6 @@ For webhook secrets, also update the secret value in the provider's webhook sett
 ### Scope minimization
 
 - **GitHub:** Fine-grained token scoped to specific repositories with Issues + Pull Requests read/write only. Avoid org-level tokens or classic tokens with full `repo` scope.
-- **GitLab:** API token with the minimum scopes required (`api` for full access, or narrower scopes if your workflow allows).
 - **Linear:** API keys have full workspace access. Use a dedicated service account when possible.
 - **Slack:** Restrict bot scopes to the minimum listed in [slack.md](providers/slack.md). Only invite the bot to channels it needs to monitor.
 
@@ -167,7 +165,6 @@ See [Crafting docs — Restriction Mode](https://docs.sandboxes.cloud/docs/restr
 For provider-specific troubleshooting, see the relevant provider guide:
 
 - [GitHub troubleshooting](providers/github.md#troubleshooting)
-- [GitLab troubleshooting](providers/gitlab.md#troubleshooting)
 - [Linear troubleshooting](providers/linear.md#troubleshooting)
 - [Slack troubleshooting](providers/slack.md#troubleshooting)
 

@@ -11,9 +11,8 @@ Print this exactly, then wait for the user to reply:
 Which providers would you like to set up? *(enter numbers, e.g. "1" or "1, 4")*
 
 1. **GitHub** — Monitor issues, PRs, and comments. Auto-creates PRs from issues. *(Recommended)*
-2. **GitLab** — Monitor issues, merge requests, and notes
-3. **Linear** — Monitor Linear issues based on state changes
-4. **Slack** — Respond to @mentions and create PRs from Slack threads
+2. **Linear** — Monitor Linear issues based on state changes
+3. **Slack** — Respond to @mentions and create PRs from Slack threads
 
 You can always add more later.
 
@@ -99,67 +98,6 @@ USER: Provides repositories
 [Store the GitHub bot username, repository list, and that GITHUB_WEBHOOK_SECRET was created — needed for template generation later.]
 
 GitHub is all set!
-
----
-
-### GitLab Credentials
-
-You'll need a **GitLab Personal Access Token** with API scope.
-
-**Step 1 — Create an access token:**
-
-ACTION: Open that link for the user: https://gitlab.com/-/user_settings/personal_access_tokens
-
-[If the user is on a self-hosted GitLab, the URL will be different — tell them to navigate to their GitLab instance → avatar → Preferences → Access Tokens.]
-
-On that page, configure:
-- **Token name:** `auto-coder`
-- **Expiration date:** your preference
-- **Scopes:** select `api`
-
-Click **"Create personal access token"** and **copy it immediately**.
-
-**Step 2 — Generate a webhook secret:**
-
-Open a **separate terminal** and run:
-
-```
-GITLAB_WEBHOOK_SECRET=$(openssl rand -hex 32)
-echo $GITLAB_WEBHOOK_SECRET
-```
-
-Copy the output — this is your webhook secret.
-
-**Step 3 — Store as Crafting secrets:**
-
-In the same separate terminal:
-
-```
-echo "YOUR_TOKEN_HERE" | cs secret create gitlab-pat --shared -f -
-echo "YOUR_WEBHOOK_SECRET_HERE" | cs secret create gitlab-webhook-secret --shared -f -
-```
-
-Mark both as **Admin Only** and **Not Mountable** in the Web Console.
-
-STOP: Go create the token and webhook secret, store them with the commands above, and mark them in the Web Console. Let me know when it's done.
-
-USER: Confirms secrets are stored
-
-STOP: What's your **GitLab username**? (Used for deduplication so auto-coder doesn't re-process its own comments)
-
-USER: Provides username
-
-STOP: Which **projects** should auto-coder monitor? Format: `group/project` or `username/project`, comma-separated.
-
-USER: Provides projects
-
-STOP: Are you using **gitlab.com** or a **self-hosted** GitLab? If self-hosted, what's the URL? (e.g., `https://gitlab.example.com`)
-
-USER: Provides answer
-
-[Store all GitLab configuration for later.]
-
-GitLab is all set!
 
 ---
 
@@ -282,8 +220,8 @@ All credentials are stored. Now let's create your Crafting Sandbox.
 ACTION: Based on the providers the user selected, choose the best base template:
 
 - **GitHub only** → `templates/auto-coder-quick-start.yaml`
-- **GitHub + Slack** (no Linear, no GitLab) → `templates/auto-coder-slack-2-github-pr.example.yaml`
-- **Any combination including Linear or GitLab**, or **all providers** → `templates/auto-coder-full.yaml`
+- **GitHub + Slack** (no Linear) → `templates/auto-coder-slack-2-github-pr.example.yaml`
+- **Any combination including Linear**, or **all providers** → `templates/auto-coder-full.yaml`
 
 Read the chosen template file. You will need to create a working copy with adjustments.
 
@@ -299,7 +237,6 @@ ACTION: Create a working copy of the template at `_local/setup-generated.yaml` (
    - `LINEAR_TEAMS` — comma-separated team keys, or omit the line entirely if "all" (Linear, if selected)
 4. Ensure the `env` secret references match what was created:
    - GitHub: `${secret:github-pat}`, `${secret:github-webhook-secret}`
-   - GitLab: `${secret:gitlab-pat}`, `${secret:gitlab-webhook-secret}`
    - Linear: `${secret:linear-pat}`, `${secret:linear-webhook-secret}`
    - Slack: `${secret:slack-bot-token}`, `${secret:slack-signing-secret}`
 5. If providers were not selected, remove their corresponding `env` entries, `containers`, `endpoints`, and `customizations` from the template. Keep only what's needed.
@@ -360,16 +297,6 @@ providers:
   #     botUsername: <GITHUB_BOT_USERNAME — already set via env var, can omit>
   #     repositories:   <GITHUB_REPOSITORIES — already set via env var, can omit>
   #       - owner/repo
-  #
-  # GitLab:
-  #   enabled: true
-  #   pollingInterval: 60
-  #   options:
-  #     botUsername: <collected_gitlab_username>
-  #     projects:
-  #       - group/project
-  #     # If self-hosted:
-  #     # baseUrl: <collected_url>/api/v4
   #
   # Linear:
   #   enabled: true

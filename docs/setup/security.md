@@ -18,8 +18,6 @@ Apply these flags to every secret:
 |---|---|
 | `github-pat` | GitHub |
 | `github-webhook-secret` | GitHub |
-| `gitlab-pat` | GitLab |
-| `gitlab-webhook-secret` | GitLab |
 | `linear-pat` | Linear |
 | `linear-webhook-secret` | Linear |
 | `slack-bot-token` | Slack |
@@ -36,7 +34,6 @@ Every provider should be configured with a webhook secret so the watcher can ver
 | Provider | Secret env var | How the secret is used |
 |---|---|---|
 | GitHub | `GITHUB_WEBHOOK_SECRET` | HMAC-SHA256 signature in `X-Hub-Signature-256` header |
-| GitLab | `GITLAB_WEBHOOK_TOKEN` | Token compared against `X-Gitlab-Token` header |
 | Linear | `LINEAR_WEBHOOK_SECRET` | HMAC-SHA256 signature in `Linear-Signature` header |
 | Slack | `SLACK_SIGNING_SECRET` | HMAC-SHA256 of timestamp + body in `X-Slack-Signature` header |
 
@@ -64,7 +61,6 @@ Each provider should have a dedicated service account used exclusively by auto-c
 | Provider | Guidance |
 |---|---|
 | GitHub | Create a separate GitHub account (e.g. `my-org-bot`). Add it as a collaborator only on monitored repos. |
-| GitLab | Create a separate GitLab account or use a project/group access token. Set `botUsername` accordingly. |
 | Linear | Linear API keys are workspace-wide. Use a dedicated service account where possible. |
 | Slack | The Slack app acts as its own bot user — no separate account needed. |
 
@@ -78,8 +74,6 @@ Grant each token only the permissions it actually needs.
 - Scope to specific repositories (not the entire org or account)
 - Repository permissions: **Issues** read/write + **Pull requests** read/write only
 - Never use classic tokens with full `repo` scope
-
-**GitLab** — The `api` scope is required for full access. If your workflow allows, use narrower project-level scopes instead of personal access tokens.
 
 **Linear** — API keys have full workspace access. Use a dedicated service account and treat the key as a high-value credential.
 
