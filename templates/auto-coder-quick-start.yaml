@@ -121,44 +121,24 @@ workspaces:
       # For most setups the env vars above are sufficient — the watcher
       # auto-configures from them and no watcher.yaml is needed.
       #
-      # Uncomment this block only if you need settings not available as env
-      # vars: custom event filters, multiple repos, non-default polling, etc.
-      #
       # IMPORTANT: overwrite: true means this file is re-written on every
       # sandbox start. Edit config here in the template, not inside the sandbox.
       # -----------------------------------------------------------------------
-      # files:
-      #   - path: /home/owner/auto-coder/config/watcher.yaml
-      #     overwrite: true
-      #     template: |
-      #       commandExecutor:
-      #         enabled: true
-      #         command: "cs llm session run --approval=auto --name=$EVENT_SHORT_ID --task"
-      #         promptTemplateFile: ./config/event-prompt.example.hbs
-      #         useStdin: true
-      #         followUp: true
-      #       providers:
-      #         github:
-      #           enabled: true
-      #           pollingInterval: 60
-      #           auth:
-      #             type: token
-      #             tokenEnv: GITHUB_PERSONAL_ACCESS_TOKEN
-      #           options:
-      #             webhookSecretEnv: GITHUB_WEBHOOK_SECRET
-      #             botUsername: {{env "$GITHUB_BOT_USERNAME"}}
-      #             repositories:
-      #               - {{env "$GITHUB_REPOSITORY"}}
-      #               # Add more repos here:
-      #               # - owner/another-repo
-      #             # Uncomment to filter which events trigger the agent:
-      #             # eventFilter:
-      #             #   issues: {}
-      #             #   pull_request:
-      #             #     actions: ['closed', 'reopened', 'review_requested']
-      #             #   issue_comment: {}
-
-
+      files:
+        - path: /home/owner/auto-coder/config/watcher.yaml
+          owner: 1000:1000
+          mode: "0644"
+          overwrite: true
+          content: |
+            server:
+              host: 0.0.0.0
+              port: 3000
+            commandExecutor:
+              enabled: true
+              command: "cs llm session run --approval=auto --name=$EVENT_SHORT_ID --task"
+              promptTemplateFile: ./config/event-prompt.example.hbs
+              useStdin: true
+              followUp: true
 
 containers:
   # ---------------------------------------------------------------------------
