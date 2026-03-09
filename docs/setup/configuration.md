@@ -18,6 +18,14 @@ Set env vars in the sandbox template's `env:` block. The watcher reads them at s
 | `GITHUB_WEBHOOK_SECRET` | Recommended | Shared secret used to verify webhook signatures |
 | `GITHUB_POLLING_INTERVAL` | Optional | Polling interval in seconds (default: `60`) |
 
+### GitLab
+
+| Variable | Required | Description |
+|---|---|---|
+| `GITLAB_TOKEN` | Yes — enables GitLab | Personal access token with `api` scope |
+| `GITLAB_WEBHOOK_TOKEN` | Recommended | Shared secret used to verify webhook signatures |
+| `GITLAB_POLLING_INTERVAL` | Optional | Polling interval in seconds (default: `60`) |
+
 ### Linear
 
 | Variable | Required | Description |

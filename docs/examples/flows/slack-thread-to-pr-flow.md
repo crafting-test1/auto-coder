@@ -233,7 +233,7 @@ providers:
 
 commandExecutor:
   enabled: true
-  command: "cs llm session run --approval=auto --name=$EVENT_SHORT_ID"
+  command: "cs llm session run --approval=auto --name=$EVENT_SHORT_ID --task"
   prompts:
     slack: ./config/event-prompt-slack.example.hbs  # Slack-specific template with thread history
   useStdin: true              # Pipe rendered prompt to command's stdin
@@ -251,7 +251,7 @@ commandExecutor:
 
 **Event Subscription:**
 - Subscribe to `app_mention` events
-- Set webhook URL: `https://your-server.com/webhook/slack`
+- Set webhook URL: `https://webhook--<sandbox-name>-<your-org>.sandboxes.site/webhook/slack`
 
 ## Advanced Use Cases
 

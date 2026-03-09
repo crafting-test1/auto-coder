@@ -104,7 +104,7 @@ Web Console → **Connect → LLM → Discovery** → click **Authorize** next t
 
 Without this step the agent cannot read issues or create PRs.
 
-For more details, please refer to this (doc)[https://docs.sandboxes.cloud/features/llm-config.html].
+For more details, please refer to this [doc](https://docs.sandboxes.cloud/features/llm-config.html).
 
 ---
 

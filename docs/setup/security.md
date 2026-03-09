@@ -36,7 +36,7 @@ Every provider should be configured with a webhook secret so the watcher can ver
 | Provider | Secret env var | How the secret is used |
 |---|---|---|
 | GitHub | `GITHUB_WEBHOOK_SECRET` | HMAC-SHA256 signature in `X-Hub-Signature-256` header |
-| GitLab | `GITLAB_WEBHOOK_SECRET` | Token compared against `X-Gitlab-Token` header |
+| GitLab | `GITLAB_WEBHOOK_TOKEN` | Token compared against `X-Gitlab-Token` header |
 | Linear | `LINEAR_WEBHOOK_SECRET` | HMAC-SHA256 signature in `Linear-Signature` header |
 | Slack | `SLACK_SIGNING_SECRET` | HMAC-SHA256 of timestamp + body in `X-Slack-Signature` header |
 
