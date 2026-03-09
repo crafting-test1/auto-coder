@@ -22,7 +22,7 @@ After creating the account:
 
 Create a fine-grained token for the bot account. Sign in as the bot account to do this.
 
-**External docs:** [GitHub — Creating a fine-grained token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-fine-grained-personal-access-token)
+**External docs:** [GitHub — Managing personal access tokens](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens)
 
 Steps:
 1. Go to **Settings → Developer settings → Personal access tokens → Fine-grained tokens**
@@ -64,7 +64,7 @@ How it works:
 - An nginx `mcp-proxy` container sits in front of it and injects `GITHUB_PERSONAL_ACCESS_TOKEN` as a Bearer token on every request
 - The MCP endpoint is registered so all Crafting Coding Agent sessions inside the sandbox can use GitHub tools
 
-**One-time authorization required:** After creating the sandbox, an org admin must authorize the MCP server. See [Part 2 of the setup guide](index.md#4-authorize-mcp-servers).
+**One-time authorization required:** After creating the sandbox, an org admin must authorize the MCP server. See [Part 2 of the setup guide](../index.md#4-authorize-mcp-servers).
 
 ---
 
@@ -144,6 +144,8 @@ eventFilter:
 ---
 
 ## Step 4 — Configure the GitHub Webhook
+
+**External docs:** [GitHub — Creating webhooks](https://docs.github.com/en/webhooks/using-webhooks/creating-webhooks)
 
 Find the webhook URL for your sandbox:
 

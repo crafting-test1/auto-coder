@@ -4,6 +4,8 @@ Set up auto-coder to monitor Linear issues and automatically dispatch a Crafting
 
 **Prerequisites:** Crafting CLI (`cs`) installed and authenticated as an org admin. A Linear account with access to the teams/issues you want to monitor.
 
+**External docs:** [Linear — API & Webhooks](https://linear.app/docs/api-and-webhooks)
+
 ---
 
 ## Step 1 — Generate a Linear API Key
@@ -43,7 +45,7 @@ How it works:
 - The sandbox nginx proxy runs on port 8080 and injects `LINEAR_API_TOKEN` as a Bearer token on every MCP request
 - The sandbox template handles the proxy setup automatically — you do not need to configure it manually
 
-**One-time authorization required:** After creating the sandbox, an org admin must authorize the MCP server. See [Part 2 of the setup guide](index.md#4-authorize-mcp-servers).
+**One-time authorization required:** After creating the sandbox, an org admin must authorize the MCP server. See [Part 2 of the setup guide](../index.md#4-authorize-mcp-servers).
 
 ---
 
