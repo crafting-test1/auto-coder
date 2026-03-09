@@ -27,9 +27,8 @@ Automated coding assistant that monitors GitHub, Linear, and Slack for events, t
 ## Development
 
 ```bash
-pnpm run dev       # Run with hot reload (tsx)
+pnpm start         # Run with tsx (hot reload)
 pnpm run build     # Compile TypeScript
-pnpm start         # Run compiled output
 pnpm test          # Run tests
 pnpm run type-check  # Type check without emitting
 ```

@@ -252,9 +252,8 @@ providers:
 
 ## Development Scripts
 
-- `pnpm run dev` - Run the watcher in development mode with hot reload
+- `pnpm start` - Run the watcher with tsx
 - `pnpm run build` - Compile TypeScript to JavaScript
-- `pnpm start` - Run the compiled JavaScript
 - `pnpm run type-check` - Check types without building
 - `pnpm test` - Run tests
 

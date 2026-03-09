@@ -59,7 +59,7 @@ workspaces:
                 daemons:
                   watcher:
                     run:
-                      cmd: pnpm run dev
+                      cmd: pnpm start
 
     system:
       files:

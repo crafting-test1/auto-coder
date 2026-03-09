@@ -178,7 +178,7 @@ workspaces:
                 daemons:
                   watcher:
                     run:
-                      cmd: pnpm run dev
+                      cmd: pnpm start
 
     # -----------------------------------------------------------------------
     # ADVANCED: watcher.yaml file injection (optional)
