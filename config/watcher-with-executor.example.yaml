@@ -24,7 +24,7 @@ commandExecutor:
 
   # Command to execute for each event
   # This could be any command, such as:
-  # - An AI agent CLI: "claude-code" or "openai-cli"
+  # - An AI agent CLI: "claude-code" or "openai-cli" or the built-in Sandbox Coding Agent.
   # - A custom script: "./scripts/process-issue.sh"
   # - A pipeline: "parse-event | analyze | respond"
   #

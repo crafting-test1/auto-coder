@@ -94,7 +94,7 @@ This one-time step is required for providers with MCP support (GitHub, Linear, S
 3. Under **Sandboxes Authorized to Expose MCP Servers**, click **Add**
 4. Select the `auto-coder` sandbox and confirm
 
-**MUST:** Without this step, Claude sessions inside the sandbox cannot use MCP tools (GitHub, Linear, Slack actions) and will fail to read issues or create PRs.
+**MUST:** Without this step, Coding Agent sessions cannot use MCP tools (GitHub, Linear, Slack actions) and will fail to read issues or create PRs.
 
 ### 5. Configure webhooks in your provider
 

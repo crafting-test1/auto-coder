@@ -147,7 +147,7 @@ workspaces:
 
 containers:
   # ---------------------------------------------------------------------------
-  # GitHub MCP server — exposes GitHub tools (issues, PRs, repos) to Claude.
+  # GitHub MCP server — exposes GitHub tools (issues, PRs, repos) to Sandbox Coding Agent.
   # The token is NOT set here; it is injected as an Authorization header by the
   # mcp-proxy container, so this container never holds the secret directly.
   #
@@ -212,7 +212,7 @@ containers:
 # REQUIRED MANUAL STEP after creating the sandbox:
 #   Web Console → Connect → LLM → Discovery tab → click "Authorize"
 #
-# Without this step, Claude sessions cannot use GitHub MCP tools.
+# Without this step, Coding Agent sessions cannot use GitHub MCP tools.
 # =============================================================================
 customizations:
   - mcp_server:
