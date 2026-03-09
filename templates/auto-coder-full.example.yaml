@@ -177,6 +177,41 @@ workspaces:
             cmd: pnpm run dev
             dir: /home/owner/auto-coder
 
+      # -----------------------------------------------------------------------
+      # ADVANCED: watcher.yaml file injection (optional)
+      #
+      # For most setups the env vars above are sufficient — the watcher
+      # auto-configures from them and no watcher.yaml is needed.
+      #
+      # IMPORTANT: overwrite: true means this file is re-written on every
+      # sandbox start. Edit config here in the template, not inside the sandbox.
+      # -----------------------------------------------------------------------
+      files:
+        - path: /home/owner/auto-coder/config/watcher.yaml
+          owner: 1000:1000
+          mode: "0644"
+          overwrite: true
+          content: |
+            server:
+              host: 0.0.0.0
+              port: 3000
+            commandExecutor:
+              enabled: true
+              command: "cs llm session run --approval=auto --name=$EVENT_SHORT_ID --task"
+              promptTemplateFile: ./config/event-prompt.example.hbs
+              useStdin: true
+              followUp: true
+            deduplication:
+              enabled: true
+              commentTemplate: "Agent is working on {id}"
+            providers:
+              github:
+                enabled: true
+              linear:
+                enabled: true
+              slack:
+                enabled: true
+
 containers:
   # ---------------------------------------------------------------------------
   # GitHub MCP server container
@@ -218,6 +253,8 @@ containers:
   # ---------------------------------------------------------------------------
   - name: mcp-proxy
     image: nginx:alpine
+    env:
+      - GITHUB_PERSONAL_ACCESS_TOKEN=${secret:github-pat}
     args:
       - /bin/sh
       - -c

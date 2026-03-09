@@ -2,7 +2,11 @@
 
 Get auto-coder running with GitHub in ~10 minutes.
 
-**Prerequisites:** [Crafting CLI (`cs`)](https://docs.sandboxes.cloud/docs/cli) installed and authenticated as an org admin.
+## Prerequisites
+
+- [Node.js](https://nodejs.org/) v20+ (LTS recommended)
+- [pnpm](https://pnpm.io/installation) — install via `npm install -g pnpm` or the [standalone installer](https://pnpm.io/installation)
+- [Crafting CLI (`cs`)](https://docs.sandboxes.cloud/docs/cli) installed and authenticated as an org admin
 
 ---
 

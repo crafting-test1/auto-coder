@@ -139,6 +139,12 @@ workspaces:
               promptTemplateFile: ./config/event-prompt.example.hbs
               useStdin: true
               followUp: true
+            deduplication:
+              enabled: true
+              commentTemplate: "Agent is working on {id}"
+            providers:
+              github:
+                enabled: true
 
 containers:
   # ---------------------------------------------------------------------------
