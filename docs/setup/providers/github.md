@@ -64,7 +64,7 @@ How it works:
 - An nginx `mcp-proxy` container sits in front of it and injects `GITHUB_PERSONAL_ACCESS_TOKEN` as a Bearer token on every request
 - The MCP endpoint is registered so all Crafting Coding Agent sessions inside the sandbox can use GitHub tools
 
-**One-time authorization required:** After creating the sandbox, an org admin must authorize the MCP server. See [Part 2 of the setup guide](../index.md#4-authorize-mcp-servers).
+**One-time authorization required:** After creating the sandbox, an org admin must authorize the MCP server. See [Part 2 of the setup guide](../README.md#4-authorize-mcp-servers).
 
 ---
 

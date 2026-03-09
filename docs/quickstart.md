@@ -121,4 +121,4 @@ Create a test issue in one of your monitored repos. Within ~30 seconds the bot s
 
 ---
 
-For security hardening, token rotation, event filtering, and multi-provider setup, see **[docs/setup/index.md](setup/index.md)**.
+For security hardening, token rotation, event filtering, and multi-provider setup, see **[docs/setup/README.md](setup/README.md)**.

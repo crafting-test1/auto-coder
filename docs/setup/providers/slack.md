@@ -81,7 +81,7 @@ How it works:
 - Message posting is **disabled by default** for safety. To enable posting in specific channels, set `SLACK_MCP_ADD_MESSAGE_TOOL=<channel_id>` (comma-separated for multiple channels) in the sandbox template's `env:` block
 - The sandbox template handles the container setup automatically
 
-**One-time authorization required:** After creating the sandbox, an org admin must authorize the MCP server. See [Part 2 of the setup guide](../index.md#4-authorize-mcp-servers).
+**One-time authorization required:** After creating the sandbox, an org admin must authorize the MCP server. See [Part 2 of the setup guide](../README.md#4-authorize-mcp-servers).
 
 ---
 
