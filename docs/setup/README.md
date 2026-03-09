@@ -52,11 +52,9 @@ Download the sandbox template into a local folder (gitignored, safe for customiz
 
 ```bash
 mkdir -p _local
-curl -o _local/auto-coder-quick-start.yaml \
-  https://raw.githubusercontent.com/crafting-test1/auto-coder/refs/heads/main/templates/auto-coder-quick-start.yaml
+curl -o _local/auto-coder-full.yaml \
+  https://raw.githubusercontent.com/crafting-test1/auto-coder/refs/heads/main/templates/auto-coder-full.yaml
 ```
-
-For multi-provider setups, use `templates/auto-coder-full.yaml` as your base.
 
 Open the template and fill in the required values in the `env:` block. At minimum:
 
