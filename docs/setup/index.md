@@ -64,7 +64,7 @@ env:
   - GITHUB_REPOSITORIES=owner/repo                 # comma-separated: owner/repo1,owner/repo2
 ```
 
-See `config/watcher.example.yaml` for all available env vars.
+See [docs/setup/configuration.md](configuration.md) for the full env var and `watcher.yaml` reference.
 
 ### 3. Create the template and sandbox
 
@@ -116,6 +116,8 @@ Look for: `Watcher started successfully` and `Initialized provider: <name>`.
 ---
 
 ## Part 3 — Security & Operations
+
+For a full security hardening checklist covering secrets, webhook signatures, token scoping, rotation, and Restriction Mode, see **[security.md](security.md)**.
 
 ### Token rotation
 

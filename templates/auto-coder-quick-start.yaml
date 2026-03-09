@@ -106,15 +106,13 @@ workspaces:
       - path: auto-coder
         repo:
           git: git@github.com:crafting-test1/auto-coder.git
-
-    system:
-      daemons:
-        # The watcher process starts automatically and restarts on failure.
-        - name: watcher
-          run:
-            cmd: pnpm run dev
-            dir: /home/owner/auto-coder
-
+        manifest:
+          overlays:
+            - content: |
+                daemons:
+                  watcher: # Name of the process, please name after your service
+                    run:
+                      cmd: pnpm run dev
       # -----------------------------------------------------------------------
       # ADVANCED: watcher.yaml file injection (optional)
       #
@@ -124,6 +122,7 @@ workspaces:
       # IMPORTANT: overwrite: true means this file is re-written on every
       # sandbox start. Edit config here in the template, not inside the sandbox.
       # -----------------------------------------------------------------------
+    system: 
       files:
         - path: /home/owner/auto-coder/config/watcher.yaml
           owner: 1000:1000
