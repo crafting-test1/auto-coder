@@ -164,19 +164,19 @@ workspaces:
 
     checkouts:
       # The auto-coder repo is checked out here on sandbox creation.
+      # The watcher daemon (below) runs from this directory.
       - path: auto-coder
         repo:
           git: git@github.com:crafting-test1/auto-coder.git
+        manifest:
+          overlays:
+            - content: |
+                daemons:
+                  watcher: # Name of the process, please name after your service
+                    run:
+                      cmd: pnpm run dev
 
     system:
-      daemons:
-        # The watcher process — starts automatically and restarts on failure.
-        # Receives events from all enabled providers and dispatches Coding Agent sessions.
-        - name: watcher
-          run:
-            cmd: pnpm run dev
-            dir: /home/owner/auto-coder
-
       # -----------------------------------------------------------------------
       # ADVANCED: watcher.yaml file injection (optional)
       #
