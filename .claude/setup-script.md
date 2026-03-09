@@ -28,7 +28,7 @@ USER: Enters one or more numbers
 
 ## Provider Credentials
 
-[Go through ONLY the sections below that match the user's selected providers. Skip the rest. Do them in this order: GitHub → GitLab → Linear → Slack.]
+[Go through ONLY the sections below that match the user's selected providers. Skip the rest. Do them in this order: GitHub → Linear → Slack.]
 
 ---
 
@@ -396,7 +396,7 @@ USER: Questions or ready to test
 
 - **Track all user input** — every piece of information collected (usernames, repos, teams) is needed for template generation. Don't lose it between sections.
 - **Never handle secrets directly** — always instruct the user to run `cs secret create` in a separate terminal. Never ask for, accept, or run commands containing tokens/secrets. If a user pastes one accidentally, don't echo it.
-- **Secret names must match the template** — the `cs secret create` name must match the `${secret:name}` in the sandbox template YAML. The wizard standardizes on hyphen naming: `github-pat`, `github-webhook-secret`, `gitlab-pat`, `gitlab-webhook-secret`, `linear-pat`, `linear-webhook-secret`, `slack-bot-token`, `slack-signing-secret`.
+- **Secret names must match the template** — the `cs secret create` name must match the `${secret:name}` in the sandbox template YAML. The wizard standardizes on hyphen naming: `github-pat`, `github-webhook-secret`, `linear-pat`, `linear-webhook-secret`, `slack-bot-token`, `slack-signing-secret`.
 - **Template YAML validation** — always validate generated templates with `/home/owner/yaml-linter/yaml-lint-go` before creating them.
 - **Git remote detection** — use `git remote get-url origin` to detect the user's repo URL. Fall back to asking if the command fails.
 - **Don't overwhelm** — only show provider sections relevant to the user's selection. Skip everything else.

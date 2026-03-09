@@ -1,6 +1,6 @@
 # auto-coder
 
-Automated coding assistant that monitors GitHub, GitLab, Linear, and Slack for events, then dispatches AI coding agents via Crafting Sandbox to handle them.
+Automated coding assistant that monitors GitHub, Linear, and Slack for events, then dispatches AI coding agents via Crafting Sandbox to handle them.
 
 ## Quick Start
 

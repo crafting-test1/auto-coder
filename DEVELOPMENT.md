@@ -51,7 +51,6 @@ auto-coder/
     │   ├── configuration.md
     │   ├── security.md
     │   ├── github.md
-    │   ├── gitlab.md
     │   ├── linear.md
     │   └── slack.md
     └── examples/flows/
@@ -171,7 +170,7 @@ await watcher.stop();
 
 ## Adding Custom Providers
 
-To add a new provider beyond the built-in ones (GitHub, GitLab, Linear, Slack):
+To add a new provider beyond the built-in ones (GitHub, Linear, Slack):
 
 1. **Implement the IProvider interface:**
 

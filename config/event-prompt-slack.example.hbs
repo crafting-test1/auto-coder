@@ -4,7 +4,7 @@
   This template is designed for conversational platforms like Slack, where the workflow
   involves responding to messages, coordinating work, and linking to code repositories.
 
-  For code repository platforms (GitHub, GitLab, Linear), use event-prompt.example.hbs.
+  For code repository platforms (GitHub, Linear), use event-prompt.example.hbs.
 
   ─── Available Template Variables ───────────────────────────────────────────────
 
@@ -116,7 +116,7 @@ Author: @{{resource.author}}
    {{#if resource.labels}}
    - Related tags/labels: {{#each resource.labels}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}
    {{/if}}
-   - Check if any GitHub/GitLab/Linear issues or PRs are mentioned in the message
+   - Check if any GitHub/Linear issues or PRs are mentioned in the message
    - If referenced, fetch their current state using available MCP tools
    - Provide status updates or summaries as relevant
 

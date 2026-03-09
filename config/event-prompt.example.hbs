@@ -1,7 +1,7 @@
 {{!--
   Event Prompt Template for Code Platforms
 
-  This template is designed for code repository platforms (GitHub, GitLab, Linear)
+  This template is designed for code repository platforms (GitHub, Linear)
   where the workflow involves creating/updating code via branches, PRs, and commits.
 
   For conversational platforms (Slack), use event-prompt-slack.example.hbs instead.
@@ -10,8 +10,8 @@
 
   Top-level:
     {{id}}                  Full event identifier (e.g. "github:owner/repo:opened:123:uuid")
-    {{provider}}            Provider name: "github" | "gitlab" | "linear"
-    {{type}}                Event type: "issue" | "pull_request" (GitHub) | "issue" | "merge_request" (GitLab) | "issue" (Linear)
+    {{provider}}            Provider name: "github" | "linear"
+    {{type}}                Event type: "issue" | "pull_request" (GitHub) | "issue" (Linear)
     {{action}}              Action that triggered the event (e.g. "opened", "closed", "edited", "poll")
 
   resource.*:
@@ -20,14 +20,14 @@
     {{resource.description}} Body / description
     {{resource.url}}        URL to the issue or PR/MR
     {{resource.state}}      Current state (e.g. "open", "closed")
-    {{resource.repository}} GitHub/GitLab: repository full name (e.g. "owner/repo")
+    {{resource.repository}} GitHub: repository full name (e.g. "owner/repo")
                             Linear: team key (e.g. "ENG")
-    {{resource.author}}     GitHub/GitLab: login username of the author
+    {{resource.author}}     GitHub: login username of the author
                             Linear: display name of the creator (e.g. "Jane Doe")
     {{resource.assignees}}  Array of assignees (truthy if any assignees exist)
     {{resource.labels}}     Array of label/tag name strings (optional)
-    {{resource.branch}}     Head branch name — GitHub/GitLab PRs/MRs only (optional)
-    {{resource.mergeTo}}    Target branch — GitHub/GitLab PRs/MRs only (optional)
+    {{resource.branch}}     Head branch name — GitHub PRs only (optional)
+    {{resource.mergeTo}}    Target branch — GitHub PRs only (optional)
 
   resource.comment.* (only present when event is triggered by a comment):
     {{resource.comment.body}}   Comment text

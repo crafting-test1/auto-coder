@@ -4,7 +4,7 @@ auto-coder is the central piece of the automated coding flow. It acts as an even
 
 ## What It Does
 
-auto-coder listens for events from developer platforms (GitHub, GitLab, Linear, Slack), filters and preprocesses them, constructs a task prompt, and starts a Crafting Sandbox LLM session via `cs llm` — which then drives the coding agent to complete the task. Refer to `cs llm --help` for more on the LLM session feature.
+auto-coder listens for events from developer platforms (GitHub, Linear, Slack), filters and preprocesses them, constructs a task prompt, and starts a Crafting Sandbox LLM session via `cs llm` — which then drives the coding agent to complete the task. Refer to `cs llm --help` for more on the LLM session feature.
 
 When a follow-up event arrives (e.g. a comment update or task revision), the same flow is triggered again with updated context, allowing the agent to iterate on its previous work.
 

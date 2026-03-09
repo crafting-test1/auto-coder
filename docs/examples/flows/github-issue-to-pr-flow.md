@@ -245,7 +245,7 @@ commandExecutor:
 - **Autonomous**: Crafting Sandbox Coding Agent has full access to read code, make changes, and create PRs
 - **Transparent**: All activity is visible as comments on your issues
 - **Scalable**: Multiple coding agents can work in parallel on different tasks
-- **Flexible**: Works with GitHub, GitLab, Linear, Slack, and more
+- **Flexible**: Works with GitHub, Linear, Slack, and more
 
 ## Quick Troubleshooting
 

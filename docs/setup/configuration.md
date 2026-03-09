@@ -18,14 +18,6 @@ Set env vars in the sandbox template's `env:` block. The watcher reads them at s
 | `GITHUB_WEBHOOK_SECRET` | Recommended | Shared secret used to verify webhook signatures |
 | `GITHUB_POLLING_INTERVAL` | Optional | Polling interval in seconds (default: `60`) |
 
-### GitLab
-
-| Variable | Required | Description |
-|---|---|---|
-| `GITLAB_TOKEN` | Yes — enables GitLab | Personal access token with `api` scope |
-| `GITLAB_WEBHOOK_TOKEN` | Recommended | Shared secret used to verify webhook signatures |
-| `GITLAB_POLLING_INTERVAL` | Optional | Polling interval in seconds (default: `60`) |
-
 ### Linear
 
 | Variable | Required | Description |
@@ -130,7 +122,6 @@ Provider defaults:
 | Provider | Default behaviour |
 |---|---|
 | GitHub | Issues and comments processed; most PR lifecycle events (open, sync, label, etc.) skipped |
-| GitLab | Issues and notes processed; MR open and update skipped |
 | Linear | Issue events only; done/cancelled states skipped |
 | Slack | `app_mention` events only |
 
