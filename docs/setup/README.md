@@ -140,7 +140,7 @@ For webhook secrets, also update the secret value in the provider's webhook sett
 
 ### Scope minimization
 
-- **GitHub:** Fine-grained token scoped to specific repositories with Issues + Pull Requests read/write only. Avoid org-level tokens or classic tokens with full `repo` scope.
+- **GitHub:** Fine-grained token scoped to specific repositories with Contents + Issues + Pull Requests read/write only. Avoid org-level tokens or classic tokens with full `repo` scope.
 - **Linear:** API keys have full workspace access. Use a dedicated service account when possible.
 - **Slack:** Restrict bot scopes to the minimum listed in [slack.md](providers/slack.md). Only invite the bot to channels it needs to monitor.
 

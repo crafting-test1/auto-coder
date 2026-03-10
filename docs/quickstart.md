@@ -26,6 +26,7 @@ Sign in as the bot account, then go to **Settings → Developer settings → Per
 
 Required permissions:
 
+- **Contents:** Read and write
 - **Issues:** Read and write
 - **Pull requests:** Read and write
 
@@ -109,7 +110,6 @@ For more details, please refer to this [doc](https://docs.sandboxes.cloud/featur
 
 ```bash
 cs logs --workspace auto-coder/dev --follow watcher
-# Look for: "Watcher started successfully" and "Initialized provider: github"
 ```
 
 Create a test issue in one of your monitored repos. Within ~30 seconds the bot should comment: _"Agent is working on #\<number\>"_ and a Crafting Coding Agent session will start.

@@ -35,6 +35,7 @@ Steps:
    - **Resource owner:** the org or user that owns the repositories
    - **Repository access:** select the specific repositories to monitor
    - **Repository permissions:**
+     - Contents: **Read and write**
      - Issues: **Read and write**
      - Pull requests: **Read and write**
      - Metadata: Read-only (auto-included)
@@ -220,7 +221,7 @@ Use `eventFilter` in `watcher.yaml` (or injected via the template's `files:` blo
 **Polling not working**
 
 - Verify `GITHUB_PERSONAL_ACCESS_TOKEN` is set correctly
-- Check token permissions (Issues + PRs read/write)
+- Check token permissions (Contents + Issues + PRs read/write)
 - Ensure `repositories` are configured in `options`
 - Check sandbox logs for authentication errors
 

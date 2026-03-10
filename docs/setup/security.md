@@ -75,7 +75,7 @@ Grant each token only the permissions it actually needs.
 **GitHub** — Use fine-grained personal access tokens:
 
 - Scope to specific repositories (not the entire org or account)
-- Repository permissions: **Issues** read/write + **Pull requests** read/write only
+- Repository permissions: **Contents** read/write + **Issues** read/write + **Pull requests** read/write only
 - Never use classic tokens with full `repo` scope
 
 **Linear** — API keys have full workspace access. Use a dedicated service account and treat the key as a high-value credential.
