@@ -63,7 +63,7 @@ Download the template into a local folder (gitignored, safe for customizations):
 ```bash
 mkdir -p _local
 curl -o _local/auto-coder-quick-start.yaml \
-  https://raw.githubusercontent.com/crafting-test1/auto-coder/refs/heads/main/templates/auto-coder-quick-start.yaml
+  https://raw.githubusercontent.com/crafting-test1/auto-coder/refs/heads/main/docs/examples/templates/auto-coder-quick-start.yaml
 ```
 
 Open `_local/auto-coder-quick-start.yaml`. The two env vars `GITHUB_BOT_USERNAME` and `GITHUB_REPOSITORIES` are **auto-detected from the PAT** (bot username via `GET /user`, repositories via `GET /user/repos`) and can be left commented out. Uncomment and set them explicitly only if you want to override the auto-detected values.

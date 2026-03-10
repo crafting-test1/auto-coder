@@ -219,8 +219,8 @@ All credentials are stored. Now let's create your Crafting Sandbox.
 
 ACTION: Based on the providers the user selected, choose the best base template:
 
-- **GitHub only** → `templates/auto-coder-quick-start.yaml`
-- **GitHub + Slack** (no Linear) → `templates/auto-coder-slack-2-github-pr.example.yaml`
+- **GitHub only** → `docs/examples/templates/auto-coder-quick-start.yaml`
+- **GitHub + Slack** (no Linear) → `docs/examples/templates/auto-coder-slack-2-github-pr.example.yaml`
 - **Any combination including Linear**, or **all providers** → `templates/auto-coder-full.yaml`
 
 Read the chosen template file. You will need to create a working copy with adjustments.

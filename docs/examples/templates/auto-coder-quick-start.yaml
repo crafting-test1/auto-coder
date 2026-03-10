@@ -4,7 +4,7 @@
 # QUICK START (4 steps before creating this template):
 #   1. Create secrets:    see docs/setup/github.md
 #   2. Fill in env vars:  edit GITHUB_BOT_USERNAME and GITHUB_REPOSITORIES below
-#   3. Create template:   cs template create auto-coder ./templates/auto-coder-quick-start.yaml
+#   3. Create template:   cs template create auto-coder ./docs/examples/templates/auto-coder-quick-start.yaml
 #   4. Create sandbox:    cs sandbox create auto-coder -t auto-coder
 #
 # After sandbox is created:
@@ -12,7 +12,7 @@
 #   6. Authorize MCP:     Web Console → Connect → LLM → Discovery → Authorize
 #   7. Set GitHub webhook: see docs/setup/github.md
 #
-# For multi-provider (GitHub + Linear + Slack), see templates/auto-coder-full.example.yaml
+# For multi-provider (GitHub + Linear + Slack), see templates/auto-coder-full.yaml
 # =============================================================================
 
 env:

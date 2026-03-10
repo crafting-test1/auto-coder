@@ -2,7 +2,7 @@
 # auto-coder — Full template: GitHub + Linear + Slack → Crafting Coding Agent
 #
 # Use this template if you need more than one provider. For GitHub-only, use
-# templates/auto-coder-quick-start.yaml instead — it is simpler and better
+# docs/examples/templates/auto-coder-quick-start.yaml instead — it is simpler and better
 # documented as a starting point.
 #
 # SETUP STEPS before creating this template:

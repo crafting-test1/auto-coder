@@ -70,7 +70,7 @@ How it works:
 
 ## watcher.yaml Configuration
 
-The watcher auto-configures from environment variables set in the sandbox template, so a `watcher.yaml` file is not required for standard setups. If you need custom event filters, multiple repositories, or non-default polling, inject a `watcher.yaml` via the template's `files:` block (see the commented example in `templates/auto-coder-quick-start.yaml`).
+The watcher auto-configures from environment variables set in the sandbox template, so a `watcher.yaml` file is not required for standard setups. If you need custom event filters, multiple repositories, or non-default polling, inject a `watcher.yaml` via the template's `files:` block (see the commented example in `docs/examples/templates/auto-coder-quick-start.yaml`).
 
 Reference configuration:
 
