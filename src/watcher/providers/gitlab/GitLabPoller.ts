@@ -1,4 +1,5 @@
 import { logger } from '../../utils/logger.js';
+import { fetchWithTimeout } from '../../utils/fetchWithTimeout.js';
 
 interface GitLabPollerConfig {
   token: string;
@@ -82,7 +83,7 @@ export class GitLabPoller {
 
     logger.debug(`Polling GitLab issues: ${url}`);
 
-    const response = await fetch(url, {
+    const response = await fetchWithTimeout(url, {
       headers: {
         Authorization: `Bearer ${this.config.token}`,
       },
@@ -120,7 +121,7 @@ export class GitLabPoller {
 
     logger.debug(`Polling GitLab merge requests: ${url}`);
 
-    const response = await fetch(url, {
+    const response = await fetchWithTimeout(url, {
       headers: {
         Authorization: `Bearer ${this.config.token}`,
       },

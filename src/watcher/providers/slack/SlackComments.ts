@@ -1,5 +1,6 @@
 import { withExponentialRetry } from '../../utils/retry.js';
 import { logger } from '../../utils/logger.js';
+import { fetchWithTimeout } from '../../utils/fetchWithTimeout.js';
 
 interface SlackMessage {
   ts: string;
@@ -28,7 +29,7 @@ export class SlackComments {
         inclusive: 'true',
       });
 
-      const response = await fetch(`${endpoint}?${params}`, {
+      const response = await fetchWithTimeout(`${endpoint}?${params}`, {
         headers: {
           Authorization: `Bearer ${this.token}`,
           'Content-Type': 'application/json',
@@ -98,7 +99,7 @@ export class SlackComments {
         payload.thread_ts = threadTs;
       }
 
-      const response = await fetch(endpoint, {
+      const response = await fetchWithTimeout(endpoint, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${this.token}`,
@@ -145,7 +146,7 @@ export class SlackComments {
 
       logger.debug('Calling Slack auth.test to get bot user ID');
 
-      const response = await fetch(endpoint, {
+      const response = await fetchWithTimeout(endpoint, {
         headers: {
           Authorization: `Bearer ${this.token}`,
           'Content-Type': 'application/json',

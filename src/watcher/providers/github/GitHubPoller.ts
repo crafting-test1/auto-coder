@@ -1,5 +1,6 @@
 import { logger } from '../../utils/logger.js';
 import { withExponentialRetry } from '../../utils/retry.js';
+import { fetchWithTimeout } from '../../utils/fetchWithTimeout.js';
 
 interface GitHubPollerConfig {
   token: string;
@@ -122,7 +123,7 @@ export class GitHubPoller {
     });
 
     const issues = await withExponentialRetry(async () => {
-      const response = await fetch(url.toString(), {
+      const response = await fetchWithTimeout(url.toString(), {
         headers: {
           Authorization: `Bearer ${this.config.token}`,
           Accept: 'application/vnd.github.v3+json',
@@ -195,7 +196,7 @@ export class GitHubPoller {
     });
 
     const prs = await withExponentialRetry(async () => {
-      const response = await fetch(url.toString(), {
+      const response = await fetchWithTimeout(url.toString(), {
         headers: {
           Authorization: `Bearer ${this.config.token}`,
           Accept: 'application/vnd.github.v3+json',

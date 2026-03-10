@@ -1,4 +1,5 @@
 import { logger } from '../../utils/logger.js';
+import { fetchWithTimeout } from '../../utils/fetchWithTimeout.js';
 
 interface LinearPollerConfig {
   apiKey: string;
@@ -125,7 +126,7 @@ export class LinearPoller {
     });
 
     const startTime = Date.now();
-    const response = await fetch(this.apiUrl, {
+    const response = await fetchWithTimeout(this.apiUrl, {
       method: 'POST',
       headers: {
         Authorization: this.config.apiKey,

@@ -1,5 +1,6 @@
 import { withExponentialRetry } from '../../utils/retry.js';
 import { logger } from '../../utils/logger.js';
+import { fetchWithTimeout } from '../../utils/fetchWithTimeout.js';
 
 interface SlackSearchResult {
   ok: boolean;
@@ -71,7 +72,7 @@ export class SlackPoller {
         count: '100', // Max results per request
       });
 
-      const response = await fetch(`${endpoint}?${params}`, {
+      const response = await fetchWithTimeout(`${endpoint}?${params}`, {
         headers: {
           Authorization: `Bearer ${this.token}`,
           'Content-Type': 'application/json',

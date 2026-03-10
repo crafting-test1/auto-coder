@@ -1,5 +1,6 @@
 import { withExponentialRetry } from '../../utils/retry.js';
 import { logger } from '../../utils/logger.js';
+import { fetchWithTimeout } from '../../utils/fetchWithTimeout.js';
 
 interface GitLabComment {
   id: number;
@@ -28,7 +29,7 @@ export class GitLabComments {
     const endpoint = this.getCommentsEndpoint(projectId, resourceType, resourceNumber);
     const url = `${this.baseUrl}${endpoint}`;
 
-    const response = await fetch(url, {
+    const response = await fetchWithTimeout(url, {
       headers: {
         Authorization: `Bearer ${this.token}`,
         'Content-Type': 'application/json',
@@ -61,7 +62,7 @@ export class GitLabComments {
 
     try {
       const response = await withExponentialRetry(async () => {
-        const res = await fetch(url, {
+        const res = await fetchWithTimeout(url, {
           headers: {
             Authorization: `Bearer ${this.token}`,
             'Content-Type': 'application/json',
@@ -86,7 +87,7 @@ export class GitLabComments {
   async getAuthenticatedUser(): Promise<string | null> {
     try {
       return await withExponentialRetry(async () => {
-        const response = await fetch(`${this.baseUrl}/user`, {
+        const response = await fetchWithTimeout(`${this.baseUrl}/user`, {
           headers: {
             Authorization: `Bearer ${this.token}`,
             'Content-Type': 'application/json',
@@ -119,7 +120,7 @@ export class GitLabComments {
     const url = `${this.baseUrl}${endpoint}`;
 
     const executePost = async () => {
-      const response = await fetch(url, {
+      const response = await fetchWithTimeout(url, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${this.token}`,

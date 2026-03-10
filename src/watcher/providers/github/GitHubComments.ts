@@ -1,5 +1,6 @@
 import { logger } from '../../utils/logger.js';
 import { withExponentialRetry } from '../../utils/retry.js';
+import { fetchWithTimeout } from '../../utils/fetchWithTimeout.js';
 
 export interface CommentInfo {
   author: string;
@@ -21,7 +22,7 @@ export class GitHubComments {
     }
 
     const fetchPage = async (url: string) => {
-      const response = await fetch(url, {
+      const response = await fetchWithTimeout(url, {
         headers: {
           Authorization: `Bearer ${this.token}`,
           Accept: 'application/vnd.github.v3+json',
@@ -99,7 +100,7 @@ export class GitHubComments {
 
     try {
       return await withExponentialRetry(async () => {
-        const response = await fetch(endpoint, {
+        const response = await fetchWithTimeout(endpoint, {
           headers: {
             Authorization: `Bearer ${this.token}`,
             Accept: 'application/vnd.github.v3+json',
@@ -143,7 +144,7 @@ export class GitHubComments {
 
     try {
       return await withExponentialRetry(async () => {
-        const response = await fetch(endpoint, {
+        const response = await fetchWithTimeout(endpoint, {
           headers: {
             Authorization: `Bearer ${this.token}`,
             Accept: 'application/vnd.github.v3+json',
@@ -180,7 +181,7 @@ export class GitHubComments {
   async getAuthenticatedUser(): Promise<string | null> {
     try {
       return await withExponentialRetry(async () => {
-        const response = await fetch('https://api.github.com/user', {
+        const response = await fetchWithTimeout('https://api.github.com/user', {
           headers: {
             Authorization: `Bearer ${this.token}`,
             Accept: 'application/vnd.github.v3+json',
@@ -207,7 +208,7 @@ export class GitHubComments {
   async getAccessibleRepositories(): Promise<string[]> {
     try {
       return await withExponentialRetry(async () => {
-        const response = await fetch(
+        const response = await fetchWithTimeout(
           'https://api.github.com/user/repos?per_page=100&sort=updated',
           {
             headers: {
@@ -246,7 +247,7 @@ export class GitHubComments {
     }
 
     await withExponentialRetry(async () => {
-      const response = await fetch(endpoint, {
+      const response = await fetchWithTimeout(endpoint, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${this.token}`,

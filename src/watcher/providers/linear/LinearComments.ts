@@ -1,5 +1,6 @@
 import { withExponentialRetry } from '../../utils/retry.js';
 import { logger } from '../../utils/logger.js';
+import { fetchWithTimeout } from '../../utils/fetchWithTimeout.js';
 
 interface LinearComment {
   id: string;
@@ -45,7 +46,7 @@ export class LinearComments {
     });
 
     const startTime = Date.now();
-    const response = await fetch(this.apiUrl, {
+    const response = await fetchWithTimeout(this.apiUrl, {
       method: 'POST',
       headers: {
         Authorization: this.apiKey,
@@ -89,7 +90,7 @@ export class LinearComments {
   async getAuthenticatedUser(): Promise<string | null> {
     const query = `{ viewer { name } }`;
     try {
-      const response = await fetch(this.apiUrl, {
+      const response = await fetchWithTimeout(this.apiUrl, {
         method: 'POST',
         headers: {
           Authorization: this.apiKey,
@@ -140,7 +141,7 @@ export class LinearComments {
 
     const executePost = async () => {
       const startTime = Date.now();
-      const response = await fetch(this.apiUrl, {
+      const response = await fetchWithTimeout(this.apiUrl, {
         method: 'POST',
         headers: {
           Authorization: this.apiKey,
