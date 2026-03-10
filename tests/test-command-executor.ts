@@ -4,7 +4,11 @@ import { writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { CommandExecutor } from '../src/watcher/utils/CommandExecutor.js';
-import type { Reactor, NormalizedEvent, CommandExecutorConfig } from '../src/watcher/types/index.js';
+import type {
+  Reactor,
+  NormalizedEvent,
+  CommandExecutorConfig,
+} from '../src/watcher/types/index.js';
 
 // --- Fixtures ---
 
@@ -57,7 +61,12 @@ function tmpTemplate(content: string): string {
 // by the subprocess as the PROMPT env var (follow-up comment text).
 async function renderViaPrompt(template: string, event: NormalizedEvent): Promise<string> {
   const executor = new CommandExecutor(
-    baseConfig({ command: 'echo "$PROMPT"', promptTemplate: template, useStdin: false, followUp: true })
+    baseConfig({
+      command: 'echo "$PROMPT"',
+      promptTemplate: template,
+      useStdin: false,
+      followUp: true,
+    })
   );
   const { reactor, comments } = makeReactor();
   await executor.execute('evt-1', 'display', event, reactor);
@@ -173,9 +182,7 @@ test('CommandExecutor execute() - resolves (swallows error) when command exits n
 // ============================================================
 
 test('CommandExecutor execute() - sets EVENT_ID env var', async () => {
-  const executor = new CommandExecutor(
-    baseConfig({ command: 'echo "$EVENT_ID"', followUp: true })
-  );
+  const executor = new CommandExecutor(baseConfig({ command: 'echo "$EVENT_ID"', followUp: true }));
   const { reactor, comments } = makeReactor();
   const event = makeEvent({ id: 'my-unique-event-id' });
   await executor.execute('evt-1', 'display', event, reactor);
@@ -305,7 +312,12 @@ test('CommandExecutor execute() - falls back to default template when provider h
 test('CommandExecutor execute() - renders template loaded from promptTemplateFile', async () => {
   const path = tmpTemplate('file: {{provider}}');
   const executor = new CommandExecutor(
-    baseConfig({ command: 'echo "$PROMPT"', promptTemplateFile: path, useStdin: false, followUp: true })
+    baseConfig({
+      command: 'echo "$PROMPT"',
+      promptTemplateFile: path,
+      useStdin: false,
+      followUp: true,
+    })
   );
   const { reactor, comments } = makeReactor();
   await executor.execute('evt-1', 'display', makeEvent({ provider: 'testprovider' }), reactor);
@@ -326,9 +338,7 @@ test('CommandExecutor execute() - uses empty prompt when no template configured'
 // ============================================================
 
 test('CommandExecutor execute() - posts follow-up comment when followUp=true and command has output', async () => {
-  const executor = new CommandExecutor(
-    baseConfig({ command: 'echo "job done"', followUp: true })
-  );
+  const executor = new CommandExecutor(baseConfig({ command: 'echo "job done"', followUp: true }));
   const { reactor, comments } = makeReactor();
   await executor.execute('evt-1', 'display', makeEvent(), reactor);
   assert.equal(comments.length, 2);
@@ -336,9 +346,7 @@ test('CommandExecutor execute() - posts follow-up comment when followUp=true and
 });
 
 test('CommandExecutor execute() - does not post follow-up when followUp=false', async () => {
-  const executor = new CommandExecutor(
-    baseConfig({ command: 'echo "output"', followUp: false })
-  );
+  const executor = new CommandExecutor(baseConfig({ command: 'echo "output"', followUp: false }));
   const { reactor, comments } = makeReactor();
   await executor.execute('evt-1', 'display', makeEvent(), reactor);
   assert.equal(comments.length, 1);
