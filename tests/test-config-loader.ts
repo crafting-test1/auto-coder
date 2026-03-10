@@ -19,10 +19,7 @@ function writeYaml(name: string, content: string): string {
 // --- ConfigLoader.load() ---
 
 test('ConfigLoader.load - loads a valid config file', () => {
-  const path = writeYaml(
-    'valid.yaml',
-    'providers:\n  github:\n    enabled: true\n'
-  );
+  const path = writeYaml('valid.yaml', 'providers:\n  github:\n    enabled: true\n');
   const config = ConfigLoader.load(path);
   assert.ok(config.providers['github']?.enabled === true);
 });
@@ -96,10 +93,7 @@ test('ConfigLoader.load - keeps placeholder when env var is not defined', () => 
 });
 
 test('ConfigLoader.load - succeeds for an enabled provider without auth (just warns)', () => {
-  const path = writeYaml(
-    'no-auth.yaml',
-    'providers:\n  github:\n    enabled: true\n'
-  );
+  const path = writeYaml('no-auth.yaml', 'providers:\n  github:\n    enabled: true\n');
   // Should not throw; missing auth is a warning, not an error
   const config = ConfigLoader.load(path);
   assert.equal(config.providers['github']?.auth, undefined);
@@ -136,10 +130,7 @@ test('ConfigLoader.resolveSecret - throws ConfigError when env var is not set', 
 test('ConfigLoader.resolveSecret - reads and trims content from a file', () => {
   const secretFile = join(tempDir, 'secret.txt');
   writeFileSync(secretFile, '  file-secret-value  \n');
-  assert.equal(
-    ConfigLoader.resolveSecret(undefined, undefined, secretFile),
-    'file-secret-value'
-  );
+  assert.equal(ConfigLoader.resolveSecret(undefined, undefined, secretFile), 'file-secret-value');
 });
 
 test('ConfigLoader.resolveSecret - throws ConfigError for a missing secret file', () => {

@@ -1,5 +1,6 @@
 import { withExponentialRetry } from '../../utils/retry.js';
 import { logger } from '../../utils/logger.js';
+import { fetchWithTimeout } from '../../utils/fetchWithTimeout.js';
 
 interface SlackSearchResult {
   ok: boolean;
@@ -43,14 +44,16 @@ export class SlackPoller {
    * Poll for missed mentions.
    * Searches for messages that mention the bot since the last poll.
    */
-  async poll(): Promise<Array<{
-    channel: string;
-    ts: string;
-    threadTs?: string;
-    text: string;
-    user: string;
-    permalink?: string;
-  }>> {
+  async poll(): Promise<
+    Array<{
+      channel: string;
+      ts: string;
+      threadTs?: string;
+      text: string;
+      user: string;
+      permalink?: string;
+    }>
+  > {
     return withExponentialRetry(async () => {
       const now = Date.now();
       const afterTimestamp = Math.floor(this.lastPollTimestamp / 1000);
@@ -69,16 +72,18 @@ export class SlackPoller {
         count: '100', // Max results per request
       });
 
-      const response = await fetch(`${endpoint}?${params}`, {
+      const response = await fetchWithTimeout(`${endpoint}?${params}`, {
         headers: {
-          'Authorization': `Bearer ${this.token}`,
+          Authorization: `Bearer ${this.token}`,
           'Content-Type': 'application/json',
         },
       });
 
       if (!response.ok) {
         const errorText = await response.text();
-        logger.warn(`Slack search API error: ${response.status} ${response.statusText} - ${errorText}`);
+        logger.warn(
+          `Slack search API error: ${response.status} ${response.statusText} - ${errorText}`
+        );
         return [];
       }
 

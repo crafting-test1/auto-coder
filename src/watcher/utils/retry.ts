@@ -15,12 +15,7 @@ const defaultOptions: Required<RetryOptions> = {
     if (error instanceof Response) {
       return error.status === 409;
     }
-    if (
-      error &&
-      typeof error === 'object' &&
-      'status' in error &&
-      error.status === 409
-    ) {
+    if (error && typeof error === 'object' && 'status' in error && error.status === 409) {
       return true;
     }
     return false;
@@ -48,10 +43,7 @@ export async function withExponentialRetry<T>(
         break;
       }
 
-      const delayMs = Math.min(
-        opts.baseDelayMs * Math.pow(2, attempt),
-        opts.maxDelayMs
-      );
+      const delayMs = Math.min(opts.baseDelayMs * Math.pow(2, attempt), opts.maxDelayMs);
 
       logger.debug(
         `Retrying after 409 error (attempt ${attempt + 1}/${opts.maxRetries}, waiting ${delayMs}ms)`

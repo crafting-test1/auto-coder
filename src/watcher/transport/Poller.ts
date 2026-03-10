@@ -16,9 +16,7 @@ export class Poller {
 
   start(): void {
     if (this.intervalId) {
-      logger.warn(
-        `Poller already running for provider ${this.provider.metadata.name}`
-      );
+      logger.warn(`Poller already running for provider ${this.provider.metadata.name}`);
       return;
     }
 
@@ -52,9 +50,7 @@ export class Poller {
     }
 
     if (this.errorCount >= this.maxErrorCount) {
-      logger.error(
-        `Poller for ${this.provider.metadata.name} disabled due to excessive errors`
-      );
+      logger.error(`Poller for ${this.provider.metadata.name} disabled due to excessive errors`);
       this.stop();
       return;
     }
@@ -67,10 +63,7 @@ export class Poller {
       this.errorCount = 0;
     } catch (error) {
       this.errorCount++;
-      const backoffMs = Math.min(
-        this.baseBackoff * Math.pow(2, this.errorCount - 1),
-        60000
-      );
+      const backoffMs = Math.min(this.baseBackoff * Math.pow(2, this.errorCount - 1), 60000);
 
       logger.error(
         `Poll failed for ${this.provider.metadata.name} (error ${this.errorCount}/${this.maxErrorCount}, backing off ${backoffMs}ms)`,

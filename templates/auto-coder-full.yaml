@@ -6,11 +6,11 @@
 # documented as a starting point.
 #
 # SETUP STEPS before creating this template:
-#   1. Create secrets for each provider you want:  see docs/setup/index.md
+#   1. Create secrets for each provider you want:  see docs/setup/README.md
 #   2. Fill in required env vars below (REPOSITORIES, TEAMS) — BOT_USERNAMEs are auto-detected
 #   3. Delete the env vars, endpoints, containers, and customizations for any
 #      providers you are NOT using — see DELETE comments throughout this file
-#   4. Create template:  cs template create auto-coder ./templates/auto-coder-full.example.yaml
+#   4. Create template:  cs template create auto-coder ./templates/auto-coder-full.yaml
 #   5. Create sandbox:   cs sandbox create auto-coder -t auto-coder
 #
 # After sandbox is created:
@@ -25,8 +25,8 @@ env:
   # DELETE this block if you are not using GitHub.
   #
   # Required secrets (create with cs secret create):
-  #   cs secret create github-pat --shared <fine-grained-token>
-  #   cs secret create github-webhook-secret --shared <openssl rand -hex 32>
+  #   echo "YOUR_TOKEN" | cs secret create github-pat --shared -f -
+  #   echo "$(openssl rand -hex 32)" | cs secret create github-webhook-secret --shared -f -
   #
   # RECOMMENDED mark both secrets as Admin Only + Not Mountable in the Web Console.
   # ---------------------------------------------------------------------------
@@ -49,8 +49,8 @@ env:
   # DELETE this block if you are not using Linear.
   #
   # Required secrets:
-  #   cs secret create linear-pat --shared <api-key-from-linear-settings>
-  #   cs secret create linear-webhook-secret --shared <openssl rand -hex 32>
+  #   echo "YOUR_API_KEY" | cs secret create linear-pat --shared -f -
+  #   echo "$(openssl rand -hex 32)" | cs secret create linear-webhook-secret --shared -f -
   # ---------------------------------------------------------------------------
   - LINEAR_API_TOKEN=${secret:linear-pat}
   - LINEAR_WEBHOOK_SECRET=${secret:linear-webhook-secret}
@@ -69,10 +69,10 @@ env:
   # DELETE this block if you are not using Slack.
   #
   # Required secrets:
-  #   cs secret create slack-bot-token --shared <xoxb-token-from-slack-app>
-  #   cs secret create slack-signing-secret --shared <signing-secret-from-slack-app>
+  #   echo "YOUR_BOT_TOKEN" | cs secret create slack-bot-token --shared -f -
+  #   echo "YOUR_SIGNING_SECRET" | cs secret create slack-signing-secret --shared -f -
   #
-  # See docs/setup/slack.md for Slack app creation and required OAuth scopes.
+  # See docs/setup/providers/slack.md for Slack app creation and required OAuth scopes.
   # ---------------------------------------------------------------------------
   - SLACK_BOT_TOKEN=${secret:slack-bot-token}
   - SLACK_SIGNING_SECRET=${secret:slack-signing-secret}
@@ -94,8 +94,12 @@ env:
 endpoints:
   # ---------------------------------------------------------------------------
   # Public webhook endpoint — receives events pushed from all providers.
-  # Use this base URL when configuring webhooks:
+  # The URL format below is the default for sandboxes.site-hosted orgs:
   #   https://webhook--<sandbox-name>-<org>.sandboxes.site/webhook/<provider>
+  #
+  # NOTE: The actual URL depends on your site and DNS configuration. Custom
+  # domains or self-hosted deployments will have a different URL format.
+  # Always verify the exact URL in: Web Console → Sandbox → Endpoints → "webhook"
   #
   # Provider-specific paths (appended to the base URL above):
   #   GitHub:  /webhook/github

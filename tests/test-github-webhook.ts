@@ -53,8 +53,7 @@ test('GitHubWebhook.validate - missing signature header when secret is configure
   const result = webhook.validate(baseHeaders(), 'body');
   assert.equal(result.valid, false);
   assert.ok(
-    result.error?.toLowerCase().includes('signature') ||
-    result.error?.includes('X-Hub-Signature')
+    result.error?.toLowerCase().includes('signature') || result.error?.includes('X-Hub-Signature')
   );
 });
 

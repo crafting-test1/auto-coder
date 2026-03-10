@@ -24,12 +24,12 @@ Providers create `Reactor` instances that encapsulate commenting operations for 
 
 ### Provider Differences
 
-| Provider | Auth method | Signature format | Comment ID type |
-|---|---|---|---|
-| GitHub | HMAC SHA-256 | `sha256=<hex>` | `""` (not returned) |
-| GitLab | Shared token | Plain string equality | Numeric (stringified) |
-| Linear | HMAC SHA-256 | Raw `<hex>` (no prefix) | String UUID |
-| Slack | HMAC SHA-256 | `v0=<hex>` over `v0:<ts>:<body>` | `<channel>:<ts>` |
+| Provider | Auth method  | Signature format                 | Comment ID type       |
+| -------- | ------------ | -------------------------------- | --------------------- |
+| GitHub   | HMAC SHA-256 | `sha256=<hex>`                   | `""` (not returned)   |
+| GitLab   | Shared token | Plain string equality            | Numeric (stringified) |
+| Linear   | HMAC SHA-256 | Raw `<hex>` (no prefix)          | String UUID           |
+| Slack    | HMAC SHA-256 | `v0=<hex>` over `v0:<ts>:<body>` | `<channel>:<ts>`      |
 
 ### Event Handlers
 

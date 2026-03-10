@@ -1,4 +1,5 @@
 import { logger } from '../../utils/logger.js';
+import { fetchWithTimeout } from '../../utils/fetchWithTimeout.js';
 
 interface LinearPollerConfig {
   apiKey: string;
@@ -28,14 +29,17 @@ export class LinearPoller {
     if (!since) {
       const lookbackHours = this.config.initialLookbackHours ?? 1;
       since = new Date(Date.now() - lookbackHours * 60 * 60 * 1000);
-      logger.info(`First poll for Linear, looking back ${lookbackHours} hour(s) (since ${since.toISOString()})`);
+      logger.info(
+        `First poll for Linear, looking back ${lookbackHours} hour(s) (since ${since.toISOString()})`
+      );
     } else {
       logger.debug(`Polling Linear for changes since ${since.toISOString()}`);
     }
 
-    const teamFilter = this.config.teams && this.config.teams.length > 0
-      ? `teams: [${this.config.teams.join(', ')}]`
-      : 'all teams';
+    const teamFilter =
+      this.config.teams && this.config.teams.length > 0
+        ? `teams: [${this.config.teams.join(', ')}]`
+        : 'all teams';
 
     logger.debug(`Polling Linear issues`, {
       since: since.toISOString(),
@@ -48,8 +52,8 @@ export class LinearPoller {
 
       if (issues.length > 0) {
         logger.info(`Found ${issues.length} issues from Linear`, {
-          teams: [...new Set(issues.map(i => i.team))],
-          numbers: issues.map(i => i.number),
+          teams: [...new Set(issues.map((i) => i.team))],
+          numbers: issues.map((i) => i.number),
         });
       } else {
         logger.debug('No new issues from Linear');
@@ -122,10 +126,10 @@ export class LinearPoller {
     });
 
     const startTime = Date.now();
-    const response = await fetch(this.apiUrl, {
+    const response = await fetchWithTimeout(this.apiUrl, {
       method: 'POST',
       headers: {
-        'Authorization': this.config.apiKey,
+        Authorization: this.config.apiKey,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ query }),

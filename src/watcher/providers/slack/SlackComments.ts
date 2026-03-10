@@ -1,5 +1,6 @@
 import { withExponentialRetry } from '../../utils/retry.js';
 import { logger } from '../../utils/logger.js';
+import { fetchWithTimeout } from '../../utils/fetchWithTimeout.js';
 
 interface SlackMessage {
   ts: string;
@@ -28,9 +29,9 @@ export class SlackComments {
         inclusive: 'true',
       });
 
-      const response = await fetch(`${endpoint}?${params}`, {
+      const response = await fetchWithTimeout(`${endpoint}?${params}`, {
         headers: {
-          'Authorization': `Bearer ${this.token}`,
+          Authorization: `Bearer ${this.token}`,
           'Content-Type': 'application/json',
         },
       });
@@ -40,7 +41,11 @@ export class SlackComments {
         return [];
       }
 
-      const data = await response.json() as { ok: boolean; messages?: SlackMessage[]; error?: string };
+      const data = (await response.json()) as {
+        ok: boolean;
+        messages?: SlackMessage[];
+        error?: string;
+      };
 
       if (!data.ok) {
         logger.warn(`Slack API returned error: ${data.error}`);
@@ -80,11 +85,7 @@ export class SlackComments {
    * Post a message to a Slack channel or thread.
    * Returns the message timestamp (ts) which can be used as a reference.
    */
-  async postMessage(
-    channel: string,
-    text: string,
-    threadTs?: string
-  ): Promise<string> {
+  async postMessage(channel: string, text: string, threadTs?: string): Promise<string> {
     return withExponentialRetry(async () => {
       const endpoint = `${this.baseUrl}/chat.postMessage`;
 
@@ -98,10 +99,10 @@ export class SlackComments {
         payload.thread_ts = threadTs;
       }
 
-      const response = await fetch(endpoint, {
+      const response = await fetchWithTimeout(endpoint, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${this.token}`,
+          Authorization: `Bearer ${this.token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(payload),
@@ -109,10 +110,12 @@ export class SlackComments {
 
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(`Slack API error: ${response.status} ${response.statusText} - ${errorText}`);
+        throw new Error(
+          `Slack API error: ${response.status} ${response.statusText} - ${errorText}`
+        );
       }
 
-      const data = await response.json() as { ok: boolean; ts?: string; error?: string };
+      const data = (await response.json()) as { ok: boolean; ts?: string; error?: string };
 
       if (!data.ok) {
         throw new Error(`Slack API returned error: ${data.error}`);
@@ -122,7 +125,9 @@ export class SlackComments {
         throw new Error('Slack API did not return message timestamp');
       }
 
-      logger.debug(`Posted message to Slack channel ${channel}${threadTs ? ` (thread: ${threadTs})` : ''}`);
+      logger.debug(
+        `Posted message to Slack channel ${channel}${threadTs ? ` (thread: ${threadTs})` : ''}`
+      );
 
       return data.ts;
     });
@@ -141,9 +146,9 @@ export class SlackComments {
 
       logger.debug('Calling Slack auth.test to get bot user ID');
 
-      const response = await fetch(endpoint, {
+      const response = await fetchWithTimeout(endpoint, {
         headers: {
-          'Authorization': `Bearer ${this.token}`,
+          Authorization: `Bearer ${this.token}`,
           'Content-Type': 'application/json',
         },
       });
@@ -158,7 +163,7 @@ export class SlackComments {
         throw new Error(`Slack API HTTP ${response.status}: ${response.statusText} - ${errorText}`);
       }
 
-      const data = await response.json() as {
+      const data = (await response.json()) as {
         ok: boolean;
         user_id?: string;
         error?: string;
@@ -193,18 +198,13 @@ export class SlackComments {
    * Get the full conversation history of a thread.
    * Returns formatted string: "@user: message"
    */
-  async getConversationHistory(
-    channel: string,
-    threadTs: string
-  ): Promise<string> {
+  async getConversationHistory(channel: string, threadTs: string): Promise<string> {
     const messages = await this.getReplies(channel, threadTs);
 
     if (messages.length === 0) {
       return '';
     }
 
-    return messages
-      .map((m) => `[${m.ts}] <@${m.user}>: ${m.text}`)
-      .join('\n\n');
+    return messages.map((m) => `[${m.ts}] <@${m.user}>: ${m.text}`).join('\n\n');
   }
 }

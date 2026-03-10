@@ -1,5 +1,6 @@
 import { logger } from '../../utils/logger.js';
 import { withExponentialRetry } from '../../utils/retry.js';
+import { fetchWithTimeout } from '../../utils/fetchWithTimeout.js';
 
 export interface CommentInfo {
   author: string;
@@ -21,7 +22,7 @@ export class GitHubComments {
     }
 
     const fetchPage = async (url: string) => {
-      const response = await fetch(url, {
+      const response = await fetchWithTimeout(url, {
         headers: {
           Authorization: `Bearer ${this.token}`,
           Accept: 'application/vnd.github.v3+json',
@@ -33,9 +34,7 @@ export class GitHubComments {
         if (response.status === 409) {
           throw response;
         }
-        logger.warn(
-          `GitHub API error getting comments: ${response.status} ${response.statusText}`
-        );
+        logger.warn(`GitHub API error getting comments: ${response.status} ${response.statusText}`);
         return null;
       }
 
@@ -50,13 +49,9 @@ export class GitHubComments {
         if (!firstResponse) return null;
 
         const linkHeader = firstResponse.headers.get('Link');
-        const lastPageUrl = linkHeader
-          ? linkHeader.match(/<([^>]+)>;\s*rel="last"/)?.at(1)
-          : null;
+        const lastPageUrl = linkHeader ? linkHeader.match(/<([^>]+)>;\s*rel="last"/)?.at(1) : null;
 
-        const finalResponse = lastPageUrl
-          ? await fetchPage(lastPageUrl)
-          : firstResponse;
+        const finalResponse = lastPageUrl ? await fetchPage(lastPageUrl) : firstResponse;
 
         if (!finalResponse) return null;
 
@@ -66,7 +61,10 @@ export class GitHubComments {
           created_at: string;
         }>;
 
-        logger.debug(`getLastComment: fetched ${comments.length} comment(s) for ${resourceType} #${resourceNumber} in ${repository}`, comments);
+        logger.debug(
+          `getLastComment: fetched ${comments.length} comment(s) for ${resourceType} #${resourceNumber} in ${repository}`,
+          comments
+        );
 
         if (comments.length === 0) {
           return null;
@@ -102,7 +100,7 @@ export class GitHubComments {
 
     try {
       return await withExponentialRetry(async () => {
-        const response = await fetch(endpoint, {
+        const response = await fetchWithTimeout(endpoint, {
           headers: {
             Authorization: `Bearer ${this.token}`,
             Accept: 'application/vnd.github.v3+json',
@@ -146,7 +144,7 @@ export class GitHubComments {
 
     try {
       return await withExponentialRetry(async () => {
-        const response = await fetch(endpoint, {
+        const response = await fetchWithTimeout(endpoint, {
           headers: {
             Authorization: `Bearer ${this.token}`,
             Accept: 'application/vnd.github.v3+json',
@@ -183,7 +181,7 @@ export class GitHubComments {
   async getAuthenticatedUser(): Promise<string | null> {
     try {
       return await withExponentialRetry(async () => {
-        const response = await fetch('https://api.github.com/user', {
+        const response = await fetchWithTimeout('https://api.github.com/user', {
           headers: {
             Authorization: `Bearer ${this.token}`,
             Accept: 'application/vnd.github.v3+json',
@@ -192,7 +190,9 @@ export class GitHubComments {
         });
 
         if (!response.ok) {
-          logger.warn(`GitHub API error getting authenticated user: ${response.status} ${response.statusText}`);
+          logger.warn(
+            `GitHub API error getting authenticated user: ${response.status} ${response.statusText}`
+          );
           return null;
         }
 
@@ -208,21 +208,26 @@ export class GitHubComments {
   async getAccessibleRepositories(): Promise<string[]> {
     try {
       return await withExponentialRetry(async () => {
-        const response = await fetch('https://api.github.com/user/repos?per_page=100&sort=updated', {
-          headers: {
-            Authorization: `Bearer ${this.token}`,
-            Accept: 'application/vnd.github.v3+json',
-            'User-Agent': 'auto-coder-watcher',
-          },
-        });
+        const response = await fetchWithTimeout(
+          'https://api.github.com/user/repos?per_page=100&sort=updated',
+          {
+            headers: {
+              Authorization: `Bearer ${this.token}`,
+              Accept: 'application/vnd.github.v3+json',
+              'User-Agent': 'auto-coder-watcher',
+            },
+          }
+        );
 
         if (!response.ok) {
-          logger.warn(`GitHub API error getting accessible repositories: ${response.status} ${response.statusText}`);
+          logger.warn(
+            `GitHub API error getting accessible repositories: ${response.status} ${response.statusText}`
+          );
           return [];
         }
 
         const repos = (await response.json()) as Array<{ full_name: string }>;
-        return repos.map(r => r.full_name);
+        return repos.map((r) => r.full_name);
       });
     } catch (error) {
       logger.error('Error fetching accessible GitHub repositories', error);
@@ -242,7 +247,7 @@ export class GitHubComments {
     }
 
     await withExponentialRetry(async () => {
-      const response = await fetch(endpoint, {
+      const response = await fetchWithTimeout(endpoint, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${this.token}`,
@@ -263,9 +268,7 @@ export class GitHubComments {
         );
       }
 
-      logger.debug(
-        `Posted comment to ${resourceType} #${resourceNumber} in ${repository}`
-      );
+      logger.debug(`Posted comment to ${resourceType} #${resourceNumber} in ${repository}`);
     });
   }
 

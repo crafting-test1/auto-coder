@@ -8,31 +8,19 @@ export interface WatcherEvents {
 }
 
 export class WatcherEventEmitter extends NodeEventEmitter {
-  on<K extends keyof WatcherEvents>(
-    event: K,
-    listener: WatcherEvents[K]
-  ): this {
+  on<K extends keyof WatcherEvents>(event: K, listener: WatcherEvents[K]): this {
     return super.on(event, listener);
   }
 
-  emit<K extends keyof WatcherEvents>(
-    event: K,
-    ...args: Parameters<WatcherEvents[K]>
-  ): boolean {
+  emit<K extends keyof WatcherEvents>(event: K, ...args: Parameters<WatcherEvents[K]>): boolean {
     return super.emit(event, ...args);
   }
 
-  once<K extends keyof WatcherEvents>(
-    event: K,
-    listener: WatcherEvents[K]
-  ): this {
+  once<K extends keyof WatcherEvents>(event: K, listener: WatcherEvents[K]): this {
     return super.once(event, listener);
   }
 
-  off<K extends keyof WatcherEvents>(
-    event: K,
-    listener: WatcherEvents[K]
-  ): this {
+  off<K extends keyof WatcherEvents>(event: K, listener: WatcherEvents[K]): this {
     return super.off(event, listener);
   }
 }

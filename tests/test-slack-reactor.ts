@@ -3,14 +3,16 @@ import assert from 'node:assert/strict';
 import { SlackReactor } from '../src/watcher/providers/slack/SlackReactor.js';
 import type { SlackComments } from '../src/watcher/providers/slack/SlackComments.js';
 
-function makeReactor(opts: {
-  botUsernames?: string[];
-  lastMessage?: { user: string; text: string } | null;
-  postShouldReturn?: string;
-  postShouldThrow?: Error;
-  channel?: string;
-  threadTs?: string;
-} = {}): SlackReactor {
+function makeReactor(
+  opts: {
+    botUsernames?: string[];
+    lastMessage?: { user: string; text: string } | null;
+    postShouldReturn?: string;
+    postShouldThrow?: Error;
+    channel?: string;
+    threadTs?: string;
+  } = {}
+): SlackReactor {
   const mockComments: Partial<InstanceType<typeof SlackComments>> = {
     getLastMessage: async () => opts.lastMessage ?? null,
     postMessage: async () => {
@@ -77,7 +79,9 @@ test('SlackReactor.getLastComment - maps Slack user and text to author and body'
 
 test('SlackReactor.getLastComment - propagates errors from Slack API', async () => {
   const mockComments = {
-    getLastMessage: async () => { throw new Error('channel_not_found'); },
+    getLastMessage: async () => {
+      throw new Error('channel_not_found');
+    },
   } as unknown as InstanceType<typeof SlackComments>;
   const reactor = new SlackReactor(mockComments, 'C999', undefined, []);
   await assert.rejects(() => reactor.getLastComment(), { message: 'channel_not_found' });

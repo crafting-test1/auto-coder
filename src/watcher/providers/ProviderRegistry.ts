@@ -7,10 +7,7 @@ export class ProviderRegistry {
 
   register(name: string, provider: IProvider): void {
     if (this.providers.has(name)) {
-      throw new ProviderError(
-        `Provider ${name} is already registered`,
-        name
-      );
+      throw new ProviderError(`Provider ${name} is already registered`, name);
     }
 
     logger.info(`Registering provider: ${name}`);
@@ -19,10 +16,7 @@ export class ProviderRegistry {
 
   unregister(name: string): void {
     if (!this.providers.has(name)) {
-      throw new ProviderError(
-        `Provider ${name} is not registered`,
-        name
-      );
+      throw new ProviderError(`Provider ${name} is not registered`, name);
     }
 
     logger.info(`Unregistering provider: ${name}`);

@@ -1,12 +1,13 @@
 import { logger } from '../../utils/logger.js';
 import { withExponentialRetry } from '../../utils/retry.js';
+import { fetchWithTimeout } from '../../utils/fetchWithTimeout.js';
 
 interface GitHubPollerConfig {
   token: string;
   repositories: string[];
   events?: string[];
-  initialLookbackHours?: number;  // How many hours to look back on first poll (default: 1)
-  maxItemsPerPoll?: number;       // Max items to process per poll (default: unlimited)
+  initialLookbackHours?: number; // How many hours to look back on first poll (default: 1)
+  maxItemsPerPoll?: number; // Max items to process per poll (default: unlimited)
 }
 
 interface GitHubItem {
@@ -33,8 +34,8 @@ export class GitHubPoller {
 
         if (repoItems.length > 0) {
           logger.info(`Found ${repoItems.length} items in ${repo}`, {
-            issues: repoItems.filter(i => i.type === 'issue').length,
-            pullRequests: repoItems.filter(i => i.type === 'pull_request').length,
+            issues: repoItems.filter((i) => i.type === 'issue').length,
+            pullRequests: repoItems.filter((i) => i.type === 'pull_request').length,
           });
         } else {
           logger.debug(`No new items in ${repo}`);
@@ -70,7 +71,9 @@ export class GitHubPoller {
     if (!since) {
       const lookbackHours = this.config.initialLookbackHours ?? 1; // Default: 1 hour
       since = new Date(Date.now() - lookbackHours * 60 * 60 * 1000);
-      logger.info(`First poll for ${repo}, looking back ${lookbackHours} hour(s) (since ${since.toISOString()})`);
+      logger.info(
+        `First poll for ${repo}, looking back ${lookbackHours} hour(s) (since ${since.toISOString()})`
+      );
     } else {
       logger.debug(`Polling ${repo} for changes since ${since.toISOString()}`);
     }
@@ -103,10 +106,7 @@ export class GitHubPoller {
     return this.config.events.includes(eventType);
   }
 
-  private async fetchIssues(
-    repo: string,
-    since?: Date
-  ): Promise<GitHubItem[]> {
+  private async fetchIssues(repo: string, since?: Date): Promise<GitHubItem[]> {
     const url = new URL(`https://api.github.com/repos/${repo}/issues`);
     url.searchParams.set('state', 'all');
     url.searchParams.set('sort', 'updated');
@@ -123,7 +123,7 @@ export class GitHubPoller {
     });
 
     const issues = await withExponentialRetry(async () => {
-      const response = await fetch(url.toString(), {
+      const response = await fetchWithTimeout(url.toString(), {
         headers: {
           Authorization: `Bearer ${this.config.token}`,
           Accept: 'application/vnd.github.v3+json',
@@ -135,7 +135,9 @@ export class GitHubPoller {
         if (response.status === 409) {
           throw response;
         }
-        logger.error(`GitHub API error for ${repo}/issues: ${response.status} ${response.statusText}`);
+        logger.error(
+          `GitHub API error for ${repo}/issues: ${response.status} ${response.statusText}`
+        );
         throw new Error(`GitHub API error: ${response.status} ${response.statusText}`);
       }
 
@@ -181,10 +183,7 @@ export class GitHubPoller {
     return items;
   }
 
-  private async fetchPullRequests(
-    repo: string,
-    since?: Date
-  ): Promise<GitHubItem[]> {
+  private async fetchPullRequests(repo: string, since?: Date): Promise<GitHubItem[]> {
     const url = new URL(`https://api.github.com/repos/${repo}/pulls`);
     url.searchParams.set('state', 'all');
     url.searchParams.set('sort', 'updated');
@@ -197,7 +196,7 @@ export class GitHubPoller {
     });
 
     const prs = await withExponentialRetry(async () => {
-      const response = await fetch(url.toString(), {
+      const response = await fetchWithTimeout(url.toString(), {
         headers: {
           Authorization: `Bearer ${this.config.token}`,
           Accept: 'application/vnd.github.v3+json',
@@ -209,7 +208,9 @@ export class GitHubPoller {
         if (response.status === 409) {
           throw response;
         }
-        logger.error(`GitHub API error for ${repo}/pulls: ${response.status} ${response.statusText}`);
+        logger.error(
+          `GitHub API error for ${repo}/pulls: ${response.status} ${response.statusText}`
+        );
         throw new Error(`GitHub API error: ${response.status} ${response.statusText}`);
       }
 

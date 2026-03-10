@@ -13,6 +13,7 @@ Create a dedicated GitHub account for the agent. This account will post comments
 **MUST:** Use a separate account, not your personal GitHub account. The watcher skips events where the last comment is from this account — using your personal account would suppress events you create yourself.
 
 After creating the account:
+
 - Note the **username** → you will use it as `GITHUB_BOT_USERNAME`
 - Add the bot account as a collaborator on the repositories it needs to write to (Settings → Collaborators → Add people)
 
@@ -25,6 +26,7 @@ Create a fine-grained token for the bot account. Sign in as the bot account to d
 **External docs:** [GitHub — Managing personal access tokens](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens)
 
 Steps:
+
 1. Go to **Settings → Developer settings → Personal access tokens → Fine-grained tokens**
 2. Click **Generate new token**
 3. Set:
@@ -33,6 +35,7 @@ Steps:
    - **Resource owner:** the org or user that owns the repositories
    - **Repository access:** select the specific repositories to monitor
    - **Repository permissions:**
+     - Contents: **Read and write**
      - Issues: **Read and write**
      - Pull requests: **Read and write**
      - Metadata: Read-only (auto-included)
@@ -60,6 +63,7 @@ openssl rand -hex 32
 The sandbox runs a GitHub MCP server that gives Crafting Coding Agents access to GitHub tools (read issues, create PRs, etc.). The sandbox template handles the container setup automatically — you do not need to configure it manually.
 
 How it works:
+
 - A `github-mcp` container runs the GitHub MCP server
 - An nginx `mcp-proxy` container sits in front of it and injects `GITHUB_PERSONAL_ACCESS_TOKEN` as a Bearer token on every request
 - The MCP endpoint is registered so all Crafting Coding Agent sessions inside the sandbox can use GitHub tools
@@ -78,7 +82,7 @@ Reference configuration:
 providers:
   github:
     enabled: true
-    pollingInterval: 60  # seconds between polls (default: 60)
+    pollingInterval: 60 # seconds between polls (default: 60)
 
     auth:
       type: token
@@ -86,20 +90,21 @@ providers:
 
     options:
       webhookSecretEnv: GITHUB_WEBHOOK_SECRET
-      botUsername: your-bot-github-username  # from Step 1
+      botUsername: your-bot-github-username # from Step 1
 
       # Repositories to monitor for polling (webhooks work without this)
       repositories:
         - owner/repo1
         - owner/repo2
 
-      initialLookbackHours: 1  # how far back to look on first poll
-      maxItemsPerPoll: 50      # cap items processed per poll cycle
+      initialLookbackHours: 1 # how far back to look on first poll
+      maxItemsPerPoll: 50 # cap items processed per poll cycle
 ```
 
 ### Event filtering
 
 **Default filtering:**
+
 - ✅ `issues` — all actions processed
 - ❌ `pull_request` — skips `opened`, `synchronize`, `edited`, `labeled`, `unlabeled`, `assigned`, `unassigned`, `locked`, `unlocked`
 - ✅ `issue_comment` — all actions processed
@@ -133,7 +138,7 @@ options:
 ```yaml
 # Only trigger when a PR is merged
 pull_request:
-  actions: ['closed']   # merged PRs arrive with action='closed'
+  actions: ['closed'] # merged PRs arrive with action='closed'
 
 # Watch PRs and issue_comment only (ignore issues entirely)
 eventFilter:
@@ -177,6 +182,7 @@ GitHub will send a ping event. The webhook should show a green checkmark in the 
 **Watcher fails to start — "No providers enabled"**
 
 The env vars are not reaching the watcher. Check:
+
 - Secrets exist: `cs secret list`
 - Template references the correct secret names (`${secret:github-pat}`, `${secret:github-webhook-secret}`)
 - Sandbox was created from the updated template: `cs sandbox info auto-coder`
@@ -198,6 +204,7 @@ The env vars are not reaching the watcher. Check:
 **Bot posts duplicate comments / responds to itself**
 
 `GITHUB_BOT_USERNAME` doesn't match the bot's actual GitHub username. Check the exact username at github.com and update the env var in the template, then re-deploy:
+
 ```bash
 cs template update auto-coder ./_local/auto-coder-quick-start.yaml
 cs sandbox restart auto-coder
@@ -214,7 +221,7 @@ Use `eventFilter` in `watcher.yaml` (or injected via the template's `files:` blo
 **Polling not working**
 
 - Verify `GITHUB_PERSONAL_ACCESS_TOKEN` is set correctly
-- Check token permissions (Issues + PRs read/write)
+- Check token permissions (Contents + Issues + PRs read/write)
 - Ensure `repositories` are configured in `options`
 - Check sandbox logs for authentication errors
 

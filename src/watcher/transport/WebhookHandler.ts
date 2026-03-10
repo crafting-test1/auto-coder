@@ -40,17 +40,10 @@ export class WebhookHandler {
       }
 
       const rawBody = (req as Request & { rawBody?: Buffer }).rawBody;
-      const isValid = await this.provider.validateWebhook(
-        req.headers,
-        body,
-        rawBody
-      );
+      const isValid = await this.provider.validateWebhook(req.headers, body, rawBody);
 
       if (!isValid) {
-        logger.warn(
-          'Webhook validation failed',
-          { provider: this.provider.metadata.name }
-        );
+        logger.warn('Webhook validation failed', { provider: this.provider.metadata.name });
         res.status(401).json({ error: 'Invalid webhook' });
         return;
       }

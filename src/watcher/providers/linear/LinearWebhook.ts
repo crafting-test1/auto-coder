@@ -44,19 +44,14 @@ export class LinearWebhook {
 
     // Timing-safe comparison to prevent timing attacks
     try {
-      return timingSafeEqual(
-        Buffer.from(signature, 'hex'),
-        Buffer.from(computedSignature, 'hex')
-      );
-    } catch (error) {
+      return timingSafeEqual(Buffer.from(signature, 'hex'), Buffer.from(computedSignature, 'hex'));
+    } catch {
       // timingSafeEqual throws if buffers have different lengths
       return false;
     }
   }
 
-  extractMetadata(
-    headers: Record<string, string | string[] | undefined>
-  ): { webhookId: string } {
+  extractMetadata(headers: Record<string, string | string[] | undefined>): { webhookId: string } {
     const webhookId = this.getHeader(headers, 'linear-delivery');
 
     if (!webhookId) {

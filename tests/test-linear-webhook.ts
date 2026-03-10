@@ -80,10 +80,7 @@ test('LinearWebhook.validate - valid with Buffer body', () => {
 
 test('LinearWebhook.validate - accepts array-valued headers', () => {
   const webhook = new LinearWebhook();
-  const result = webhook.validate(
-    { 'linear-delivery': ['delivery-1', 'delivery-2'] },
-    'body'
-  );
+  const result = webhook.validate({ 'linear-delivery': ['delivery-1', 'delivery-2'] }, 'body');
   assert.equal(result.valid, true);
 });
 

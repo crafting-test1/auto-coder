@@ -46,10 +46,7 @@ test('GitLabWebhook.validate - wrong token value returns invalid', () => {
 
 test('GitLabWebhook.validate - accepts array-valued headers (uses first value)', () => {
   const webhook = new GitLabWebhook();
-  const result = webhook.validate(
-    { 'x-gitlab-event': ['Issue Hook', 'Push Hook'] },
-    'body'
-  );
+  const result = webhook.validate({ 'x-gitlab-event': ['Issue Hook', 'Push Hook'] }, 'body');
   assert.equal(result.valid, true);
 });
 

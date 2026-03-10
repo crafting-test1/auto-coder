@@ -79,8 +79,7 @@ test('withExponentialRetry - honours custom shouldRetry predicate', async () => 
     {
       baseDelayMs: 1,
       maxRetries: 3,
-      shouldRetry: (err) =>
-        err instanceof Error && err.message === 'custom retryable',
+      shouldRetry: (err) => err instanceof Error && err.message === 'custom retryable',
     }
   );
   assert.equal(result, 'done');

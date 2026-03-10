@@ -14,7 +14,7 @@ function escapeRegex(str: string): string {
  */
 export function isBotMentionedInText(text: string, botUsernames: string[]): boolean {
   if (!text || botUsernames.length === 0) return false;
-  return botUsernames.some(username => {
+  return botUsernames.some((username) => {
     const pattern = new RegExp(
       '(?<![a-zA-Z0-9_-])@' + escapeRegex(username) + '(?![a-zA-Z0-9_-])',
       'i'
@@ -37,9 +37,11 @@ export function isBotAssignedInList(
   getUsernameFrom: (a: unknown) => string | undefined
 ): boolean {
   if (!assignees || assignees.length === 0 || botUsernames.length === 0) return false;
-  return assignees.some(a => {
+  return assignees.some((a) => {
     const username = getUsernameFrom(a);
-    return username !== undefined &&
-      botUsernames.some(bot => bot.toLowerCase() === username.toLowerCase());
+    return (
+      username !== undefined &&
+      botUsernames.some((bot) => bot.toLowerCase() === username.toLowerCase())
+    );
   });
 }

@@ -71,7 +71,9 @@ test('WatcherEventEmitter - "once" listener fires exactly once', () => {
 test('WatcherEventEmitter - "off" removes a registered listener', () => {
   const emitter = new WatcherEventEmitter();
   let count = 0;
-  const listener = () => { count++; };
+  const listener = () => {
+    count++;
+  };
 
   emitter.on('started', listener);
   emitter.emit('started');

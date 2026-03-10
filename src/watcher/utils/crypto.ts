@@ -18,19 +18,14 @@ export function verifyHmacSignature(
   prefix?: string
 ): boolean {
   const expectedSignature = computeHmacSignature(payload, secret, algorithm);
-  const fullExpectedSignature = prefix
-    ? `${prefix}${expectedSignature}`
-    : expectedSignature;
+  const fullExpectedSignature = prefix ? `${prefix}${expectedSignature}` : expectedSignature;
 
   if (signature.length !== fullExpectedSignature.length) {
     return false;
   }
 
   try {
-    return timingSafeEqual(
-      Buffer.from(signature),
-      Buffer.from(fullExpectedSignature)
-    );
+    return timingSafeEqual(Buffer.from(signature), Buffer.from(fullExpectedSignature));
   } catch {
     return false;
   }

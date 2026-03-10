@@ -11,7 +11,11 @@ import { GitLabWebhook } from './GitLabWebhook.js';
 import { GitLabPoller } from './GitLabPoller.js';
 import { GitLabComments } from './GitLabComments.js';
 import { GitLabReactor } from './GitLabReactor.js';
-import { normalizeWebhookEvent, normalizePolledEvent, type GitLabWebhookPayload } from './GitLabNormalizer.js';
+import {
+  normalizeWebhookEvent,
+  normalizePolledEvent,
+  type GitLabWebhookPayload,
+} from './GitLabNormalizer.js';
 import { isBotMentionedInText, isBotAssignedInList } from '../../utils/eventFilter.js';
 import { ProviderError } from '../../utils/errors.js';
 import { logger } from '../../utils/logger.js';
@@ -27,13 +31,14 @@ export class GitLabProvider extends BaseProvider {
   private baseUrl: string | undefined;
 
   private static readonly DEFAULT_WEBHOOK_EVENTS: Record<string, GitLabEventConfig> = {
-    issue:         { actions: ['all'], skipActions: ['open'] },
+    issue: { actions: ['all'], skipActions: ['open'] },
     merge_request: { actions: ['all'], skipActions: ['open', 'update'] },
-    note:          { actions: ['all'], skipActions: [] },
+    note: { actions: ['all'], skipActions: [] },
   };
 
-  private eventFilter: Record<string, GitLabEventConfig> =
-    { ...GitLabProvider.DEFAULT_WEBHOOK_EVENTS };
+  private eventFilter: Record<string, GitLabEventConfig> = {
+    ...GitLabProvider.DEFAULT_WEBHOOK_EVENTS,
+  };
 
   get metadata(): ProviderMetadata {
     return {
@@ -55,26 +60,30 @@ export class GitLabProvider extends BaseProvider {
       );
 
       if (this.token) {
-        const options = config.options as {
-          baseUrl?: string;
-        } | undefined;
+        const options = config.options as
+          | {
+              baseUrl?: string;
+            }
+          | undefined;
 
         this.baseUrl = options?.baseUrl;
         this.comments = new GitLabComments(this.token, this.baseUrl);
       }
     }
 
-    const options = config.options as {
-      webhookToken?: string;
-      webhookTokenEnv?: string;
-      webhookTokenFile?: string;
-      baseUrl?: string;
-      projects?: string[];
-      initialLookbackHours?: number;
-      maxItemsPerPoll?: number;
-      botUsername?: string | string[];
-      eventFilter?: Record<string, { actions?: string[]; skipActions?: string[] }>;
-    } | undefined;
+    const options = config.options as
+      | {
+          webhookToken?: string;
+          webhookTokenEnv?: string;
+          webhookTokenFile?: string;
+          baseUrl?: string;
+          projects?: string[];
+          initialLookbackHours?: number;
+          maxItemsPerPoll?: number;
+          botUsername?: string | string[];
+          eventFilter?: Record<string, { actions?: string[]; skipActions?: string[] }>;
+        }
+      | undefined;
 
     // Read bot username(s) for deduplication — auto-detect from token if not configured
     if (options?.botUsername) {
@@ -88,7 +97,9 @@ export class GitLabProvider extends BaseProvider {
         this.botUsernames = [detected];
         logger.info(`GitLab bot username auto-detected from token: ${detected}`);
       } else {
-        logger.warn('GitLab: botUsername not configured and auto-detection failed - deduplication will not work');
+        logger.warn(
+          'GitLab: botUsername not configured and auto-detection failed - deduplication will not work'
+        );
       }
     } else {
       logger.warn('GitLab: No botUsername configured - deduplication will not work');
@@ -109,7 +120,7 @@ export class GitLabProvider extends BaseProvider {
       for (const [eventType, eventConfig] of Object.entries(options.eventFilter)) {
         const defaults = GitLabProvider.DEFAULT_WEBHOOK_EVENTS[eventType];
         configured[eventType] = {
-          actions:     eventConfig?.actions     ?? defaults?.actions     ?? ['all'],
+          actions: eventConfig?.actions ?? defaults?.actions ?? ['all'],
           skipActions: eventConfig?.skipActions ?? defaults?.skipActions ?? [],
         };
       }
@@ -117,8 +128,7 @@ export class GitLabProvider extends BaseProvider {
     }
     logger.info(`GitLab event filter: ${Object.keys(this.eventFilter).join(', ')}`);
 
-    const hasPollingConfig =
-      this.token && options?.projects && options.projects.length > 0;
+    const hasPollingConfig = this.token && options?.projects && options.projects.length > 0;
 
     if (hasPollingConfig) {
       const pollerConfig: {
@@ -176,10 +186,7 @@ export class GitLabProvider extends BaseProvider {
     }
 
     if (!this.comments) {
-      throw new ProviderError(
-        'GitLab comments not initialized (token required)',
-        'gitlab'
-      );
+      throw new ProviderError('GitLab comments not initialized (token required)', 'gitlab');
     }
 
     const { event } = this.webhook.extractMetadata(headers);
@@ -228,7 +235,14 @@ export class GitLabProvider extends BaseProvider {
     const normalizedEvent = normalizeWebhookEvent(payload);
 
     // Apply shared filtering logic
-    if (!this.shouldProcessEvent(normalizedEvent, undefined, eventConfig.actions, eventConfig.skipActions)) {
+    if (
+      !this.shouldProcessEvent(
+        normalizedEvent,
+        undefined,
+        eventConfig.actions,
+        eventConfig.skipActions
+      )
+    ) {
       return; // Event filtered out (already logged in shouldProcessEvent)
     }
 
@@ -254,7 +268,9 @@ export class GitLabProvider extends BaseProvider {
 
     // Allowlist check
     if (!actions.includes('all') && !actions.includes(action)) {
-      logger.debug(`Skipping ${type} !${resource.number} ${action} event - not in actions allowlist`);
+      logger.debug(
+        `Skipping ${type} !${resource.number} ${action} event - not in actions allowlist`
+      );
       return false;
     }
 
@@ -275,7 +291,7 @@ export class GitLabProvider extends BaseProvider {
         return false;
       }
     } else {
-      if (!isBotAssignedInList(resource.assignees, this.botUsernames, a => (a as any).username)) {
+      if (!isBotAssignedInList(resource.assignees, this.botUsernames, (a) => (a as any).username)) {
         logger.debug(`Skipping ${type} !${resource.number} - bot not assigned`);
         return false;
       }
@@ -283,7 +299,9 @@ export class GitLabProvider extends BaseProvider {
 
     // For polled events, skip if no recent human interaction
     if (type === 'merge_request' && action === 'poll' && hasRecentNotes === false) {
-      logger.debug(`Skipping polled MR !${resource.number} - only updated due to commits, no new notes`);
+      logger.debug(
+        `Skipping polled MR !${resource.number} - only updated due to commits, no new notes`
+      );
       return false;
     }
 
@@ -331,10 +349,7 @@ export class GitLabProvider extends BaseProvider {
     }
 
     if (!this.comments) {
-      throw new ProviderError(
-        'GitLab comments not initialized (token required)',
-        'gitlab'
-      );
+      throw new ProviderError('GitLab comments not initialized (token required)', 'gitlab');
     }
 
     const items = await this.poller.poll();
@@ -363,7 +378,14 @@ export class GitLabProvider extends BaseProvider {
       const normalizedEvent = normalizePolledEvent(item);
 
       // Apply shared filtering logic (same as webhooks)
-      if (!this.shouldProcessEvent(normalizedEvent, hasRecentNotes, pollEventConfig.actions, pollEventConfig.skipActions)) {
+      if (
+        !this.shouldProcessEvent(
+          normalizedEvent,
+          hasRecentNotes,
+          pollEventConfig.actions,
+          pollEventConfig.skipActions
+        )
+      ) {
         continue; // Event filtered out (already logged in shouldProcessEvent)
       }
 

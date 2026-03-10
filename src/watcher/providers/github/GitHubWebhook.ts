@@ -60,15 +60,16 @@ export class GitHubWebhook {
         Buffer.from(expectedSignature, 'hex'),
         Buffer.from(computedSignature, 'hex')
       );
-    } catch (error) {
+    } catch {
       // timingSafeEqual throws if buffers have different lengths
       return false;
     }
   }
 
-  extractMetadata(
-    headers: Record<string, string | string[] | undefined>
-  ): { event: string; deliveryId: string } {
+  extractMetadata(headers: Record<string, string | string[] | undefined>): {
+    event: string;
+    deliveryId: string;
+  } {
     const event = this.getHeader(headers, 'x-github-event');
     const deliveryId = this.getHeader(headers, 'x-github-delivery');
 

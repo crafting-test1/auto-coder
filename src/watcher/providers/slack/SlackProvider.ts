@@ -1,15 +1,15 @@
 import { BaseProvider } from '../BaseProvider.js';
-import type {
-  ProviderConfig,
-  ProviderMetadata,
-  EventHandler,
-} from '../../types/index.js';
+import type { ProviderConfig, ProviderMetadata, EventHandler } from '../../types/index.js';
 import { ConfigLoader } from '../../core/ConfigLoader.js';
 import { SlackWebhook } from './SlackWebhook.js';
 import { SlackComments } from './SlackComments.js';
 import { SlackReactor } from './SlackReactor.js';
 import { SlackPoller } from './SlackPoller.js';
-import { normalizeWebhookEvent, normalizePolledMention, type SlackEventPayload } from './SlackNormalizer.js';
+import {
+  normalizeWebhookEvent,
+  normalizePolledMention,
+  type SlackEventPayload,
+} from './SlackNormalizer.js';
 import { ProviderError } from '../../utils/errors.js';
 import { logger } from '../../utils/logger.js';
 
@@ -132,7 +132,9 @@ export class SlackProvider extends BaseProvider {
       this.poller = new SlackPoller(this.token, botUserId, initialLookbackHours);
       logger.info('Slack polling enabled (fallback for missed mentions)');
     } else if (config.pollingInterval && !pollingEnabled) {
-      logger.info('Slack polling disabled (pollingEnabled=false). Set pollingEnabled=true to enable polling fallback.');
+      logger.info(
+        'Slack polling disabled (pollingEnabled=false). Set pollingEnabled=true to enable polling fallback.'
+      );
     }
 
     const eventFilterConfig = config.options?.eventFilter as Record<string, unknown> | undefined;
@@ -217,12 +219,7 @@ export class SlackProvider extends BaseProvider {
       logger.warn('Failed to fetch Slack thread history', error);
     }
 
-    const reactor = new SlackReactor(
-      this.comments,
-      event.channel,
-      threadTs,
-      this.botUsernames
-    );
+    const reactor = new SlackReactor(this.comments, event.channel, threadTs, this.botUsernames);
 
     // Normalize Slack event for template rendering
     const normalizedEvent = normalizeWebhookEvent(payload, history);

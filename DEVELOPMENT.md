@@ -100,10 +100,10 @@ Example configuration:
 ```yaml
 commandExecutor:
   enabled: true
-  command: "cs llm session run --approval=auto --name=$EVENT_SHORT_ID --task"
+  command: 'cs llm session run --approval=auto --name=$EVENT_SHORT_ID --task'
   promptTemplateFile: ./config/event-prompt.hbs
-  useStdin: true      # Pass prompt to stdin
-  followUp: true      # Update comment with output
+  useStdin: true # Pass prompt to stdin
+  followUp: true # Update comment with output
 ```
 
 ### Deduplication
@@ -116,6 +116,7 @@ The watcher uses **comment-based deduplication** to prevent processing the same 
 - Self-documenting (visible in issue/PR history)
 
 **Requirements:**
+
 - Provider must support comment operations
 - Bot account needs write access
 - `botUsername` must match the posting account
@@ -138,9 +139,9 @@ const watcher = new Watcher({
         webhookSecretEnv: 'GITHUB_WEBHOOK_SECRET',
         botUsername: 'auto-coder-bot',
         repositories: ['owner/repo'],
-        initialLookbackHours: 1
-      }
-    }
+        initialLookbackHours: 1,
+      },
+    },
   },
   deduplication: {
     enabled: true,
@@ -148,8 +149,8 @@ const watcher = new Watcher({
   commandExecutor: {
     enabled: true,
     command: 'your-command',
-    promptTemplateFile: './prompt.hbs'
-  }
+    promptTemplateFile: './prompt.hbs',
+  },
 });
 
 watcher.registerProvider('github', new GitHubProvider());
@@ -182,7 +183,7 @@ export class CustomProvider extends BaseProvider {
   get metadata() {
     return {
       name: 'custom',
-      version: '1.0.0'
+      version: '1.0.0',
     };
   }
 
@@ -207,9 +208,15 @@ export class CustomProvider extends BaseProvider {
   ): Promise<void> {
     // Create reactor for commenting
     const reactor: Reactor = {
-      async getLastComment() { /* ... */ },
-      async postComment(comment: string) { /* ... */ },
-      isBotAuthor(author: string) { /* ... */ return false; }
+      async getLastComment() {
+        /* ... */
+      },
+      async postComment(comment: string) {
+        /* ... */
+      },
+      isBotAuthor(author: string) {
+        /* ... */ return false;
+      },
     };
 
     // Normalize event internally (for templates)
@@ -269,7 +276,7 @@ The watcher uses colored console logging with different levels:
 Set log level in configuration:
 
 ```yaml
-logLevel: info  # debug | info | warn | error
+logLevel: info # debug | info | warn | error
 ```
 
 ## Error Handling

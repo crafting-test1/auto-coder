@@ -10,12 +10,14 @@ interface MockLinearComment {
   createdAt: string;
 }
 
-function makeReactor(opts: {
-  botUsernames?: string[];
-  comments?: MockLinearComment[];
-  postShouldReturn?: string;
-  postShouldThrow?: Error;
-} = {}): LinearReactor {
+function makeReactor(
+  opts: {
+    botUsernames?: string[];
+    comments?: MockLinearComment[];
+    postShouldReturn?: string;
+    postShouldThrow?: Error;
+  } = {}
+): LinearReactor {
   const mockComments: Partial<InstanceType<typeof LinearComments>> = {
     getComments: async () => opts.comments ?? [],
     postComment: async () => {
@@ -88,13 +90,15 @@ test('LinearReactor.getLastComment - uses user.name (not displayName) as author'
   });
   const result = await reactor.getLastComment();
   assert.ok(result !== null);
-  assert.equal(result.author, 'bob');   // name, not 'Bob Jones'
+  assert.equal(result.author, 'bob'); // name, not 'Bob Jones'
   assert.equal(result.body, 'Last comment');
 });
 
 test('LinearReactor.getLastComment - propagates errors from comments API', async () => {
   const mockComments = {
-    getComments: async () => { throw new Error('Linear API unavailable'); },
+    getComments: async () => {
+      throw new Error('Linear API unavailable');
+    },
   } as unknown as InstanceType<typeof LinearComments>;
   const reactor = new LinearReactor(mockComments, 'issue-id', []);
   await assert.rejects(() => reactor.getLastComment(), { message: 'Linear API unavailable' });
