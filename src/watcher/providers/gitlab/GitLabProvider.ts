@@ -12,6 +12,7 @@ import { GitLabPoller } from './GitLabPoller.js';
 import { GitLabComments } from './GitLabComments.js';
 import { GitLabReactor } from './GitLabReactor.js';
 import { normalizeWebhookEvent, normalizePolledEvent, type GitLabWebhookPayload } from './GitLabNormalizer.js';
+import { isBotMentionedInText, isBotAssignedInList } from '../../utils/eventFilter.js';
 import { ProviderError } from '../../utils/errors.js';
 import { logger } from '../../utils/logger.js';
 
@@ -253,6 +254,23 @@ export class GitLabProvider extends BaseProvider {
     if (skipActions.includes(action)) {
       logger.debug(`Skipping ${type} !${resource.number} ${action} event`);
       return false;
+    }
+
+    // Assignment/mention filter: only process if bot is involved
+    if (this.botUsernames.length === 0) {
+      logger.error(`Skipping ${type} !${resource.number} - botUsername not configured`);
+      return false;
+    }
+    if (resource.comment) {
+      if (!isBotMentionedInText(resource.comment.body, this.botUsernames)) {
+        logger.debug(`Skipping ${type} !${resource.number} comment - bot not mentioned`);
+        return false;
+      }
+    } else {
+      if (!isBotAssignedInList(resource.assignees, this.botUsernames, a => (a as any).username)) {
+        logger.debug(`Skipping ${type} !${resource.number} - bot not assigned`);
+        return false;
+      }
     }
 
     // For polled events, skip if no recent human interaction

@@ -11,6 +11,7 @@ import { GitHubPoller } from './GitHubPoller.js';
 import { GitHubComments } from './GitHubComments.js';
 import { GitHubReactor } from './GitHubReactor.js';
 import { normalizeWebhookEvent, normalizePolledEvent, type GitHubWebhookPayload } from './GitHubNormalizer.js';
+import { isBotMentionedInText, isBotAssignedInList } from '../../utils/eventFilter.js';
 import { ProviderError } from '../../utils/errors.js';
 import { logger } from '../../utils/logger.js';
 
@@ -257,6 +258,23 @@ export class GitHubProvider extends BaseProvider {
     if (skipActions.includes(action)) {
       logger.debug(`Skipping ${type} #${resource.number} ${action} event`);
       return false;
+    }
+
+    // Assignment/mention filter: only process if bot is involved
+    if (this.botUsernames.length === 0) {
+      logger.error(`Skipping ${type} #${resource.number} - botUsername not configured`);
+      return false;
+    }
+    if (resource.comment) {
+      if (!isBotMentionedInText(resource.comment.body, this.botUsernames)) {
+        logger.debug(`Skipping ${type} #${resource.number} comment - bot not mentioned`);
+        return false;
+      }
+    } else {
+      if (!isBotAssignedInList(resource.assignees, this.botUsernames, a => (a as any).login)) {
+        logger.debug(`Skipping ${type} #${resource.number} - bot not assigned`);
+        return false;
+      }
     }
 
     // For polled events, skip if no recent human interaction

@@ -9,7 +9,8 @@ import { LinearWebhook } from './LinearWebhook.js';
 import { LinearPoller } from './LinearPoller.js';
 import { LinearComments } from './LinearComments.js';
 import { LinearReactor } from './LinearReactor.js';
-import { normalizeWebhookEvent, normalizePolledEvent, type LinearWebhookPayload } from './LinearNormalizer.js';
+import { normalizeWebhookEvent, normalizePolledEvent, normalizeCommentEvent, type LinearWebhookPayload, type LinearCommentPayload } from './LinearNormalizer.js';
+import { isBotMentionedInText, isBotAssignedInList } from '../../utils/eventFilter.js';
 import { ProviderError } from '../../utils/errors.js';
 import { logger } from '../../utils/logger.js';
 
@@ -23,7 +24,8 @@ export class LinearProvider extends BaseProvider {
   private botUsernames: string[] = [];
 
   private static readonly DEFAULT_WEBHOOK_EVENTS: Record<string, LinearEventConfig> = {
-    Issue: { states: ['all'], skipStates: ['done', 'cancelled', 'canceled'] },
+    Issue:   { states: ['all'], skipStates: ['done', 'cancelled', 'canceled'] },
+    Comment: { states: ['all'], skipStates: ['done', 'cancelled', 'canceled'] },
   };
 
   private eventFilter: Record<string, LinearEventConfig> =
@@ -168,6 +170,30 @@ export class LinearProvider extends BaseProvider {
       return;
     }
 
+    // Comment events: check parent issue state + bot mention
+    if (payload.type === 'Comment') {
+      const commentPayload = payload as unknown as LinearCommentPayload;
+      const issueState = commentPayload.data.issue?.state?.name;
+      if (issueState && this.shouldSkipByState(issueState, eventConfig.states, eventConfig.skipStates)) {
+        logger.debug(`Skipping comment on completed/cancelled Linear issue`);
+        return;
+      }
+      if (this.botUsernames.length === 0) {
+        logger.error(`Skipping Linear comment - botUsername not configured`);
+        return;
+      }
+      if (!isBotMentionedInText(commentPayload.data.body, this.botUsernames)) {
+        logger.debug(`Skipping Linear comment - bot not mentioned`);
+        return;
+      }
+      const issueId = commentPayload.data.issue.id;
+      const reactor = new LinearReactor(this.comments, issueId, this.botUsernames);
+      const normalizedEvent = normalizeCommentEvent(commentPayload, webhookId);
+      await eventHandler(normalizedEvent, reactor);
+      return;
+    }
+
+    // Issue events (default path): check state + bot assignment
     const issueId = payload.data.id;
 
     if (this.shouldSkipClosedItem(payload, eventConfig.states, eventConfig.skipStates)) {
@@ -175,11 +201,19 @@ export class LinearProvider extends BaseProvider {
       return;
     }
 
-    const reactor = new LinearReactor(this.comments, issueId, this.botUsernames);
-
-    // Normalize Linear event for template rendering
+    // Normalize first so we can inspect the assignees list
     const normalizedEvent = normalizeWebhookEvent(payload, webhookId);
 
+    if (this.botUsernames.length === 0) {
+      logger.error(`Skipping Linear issue ${payload.data.identifier} - botUsername not configured`);
+      return;
+    }
+    if (!isBotAssignedInList(normalizedEvent.resource.assignees, this.botUsernames, a => (a as any).name)) {
+      logger.debug(`Skipping Linear issue ${payload.data.identifier} - bot not assigned`);
+      return;
+    }
+
+    const reactor = new LinearReactor(this.comments, issueId, this.botUsernames);
     await eventHandler(normalizedEvent, reactor);
   }
 
@@ -234,12 +268,21 @@ export class LinearProvider extends BaseProvider {
         continue;
       }
 
+      // Normalize first so we can inspect the assignees list
+      const normalizedEvent = normalizePolledEvent(item);
+
+      if (this.botUsernames.length === 0) {
+        logger.error(`Skipping polled Linear issue ${item.data.identifier} - botUsername not configured`);
+        continue;
+      }
+      if (!isBotAssignedInList(normalizedEvent.resource.assignees, this.botUsernames, a => (a as any).name)) {
+        logger.debug(`Skipping polled Linear issue ${item.data.identifier} - bot not assigned`);
+        continue;
+      }
+
       logger.debug(`Creating reactor for issue ${item.data.identifier}`);
 
       const reactor = new LinearReactor(this.comments, issueId, this.botUsernames);
-
-      // Normalize Linear API response for template rendering
-      const normalizedEvent = normalizePolledEvent(item);
 
       logger.debug(`Calling event handler for issue ${item.data.identifier}`);
       await eventHandler(normalizedEvent, reactor);
