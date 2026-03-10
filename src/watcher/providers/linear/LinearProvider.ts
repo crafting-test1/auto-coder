@@ -3,48 +3,15 @@ import type {
   ProviderConfig,
   ProviderMetadata,
   EventHandler,
-  NormalizedEvent,
 } from '../../types/index.js';
 import { ConfigLoader } from '../../core/ConfigLoader.js';
 import { LinearWebhook } from './LinearWebhook.js';
 import { LinearPoller } from './LinearPoller.js';
 import { LinearComments } from './LinearComments.js';
 import { LinearReactor } from './LinearReactor.js';
+import { normalizeWebhookEvent, normalizePolledEvent, type LinearWebhookPayload } from './LinearNormalizer.js';
 import { ProviderError } from '../../utils/errors.js';
 import { logger } from '../../utils/logger.js';
-
-interface LinearWebhookPayload {
-  action: string;
-  type: string;
-  createdAt: string;
-  data: {
-    id: string;
-    identifier: string;
-    number: number;
-    title: string;
-    description?: string;
-    url: string;
-    state: {
-      name: string;
-    };
-    team: {
-      key: string;
-      name: string;
-    };
-    assignee?: {
-      name: string;
-    };
-    creator?: {
-      name: string;
-    };
-    labels?: Array<{ name: string }>;
-    updatedAt: string;
-    createdAt: string;
-  };
-  updatedFrom?: {
-    [key: string]: unknown;
-  };
-}
 
 type LinearEventConfig = { states: string[]; skipStates: string[] };
 
@@ -211,7 +178,7 @@ export class LinearProvider extends BaseProvider {
     const reactor = new LinearReactor(this.comments, issueId, this.botUsernames);
 
     // Normalize Linear event for template rendering
-    const normalizedEvent = this.normalizeEvent(payload, webhookId);
+    const normalizedEvent = normalizeWebhookEvent(payload, webhookId);
 
     await eventHandler(normalizedEvent, reactor);
   }
@@ -272,92 +239,13 @@ export class LinearProvider extends BaseProvider {
       const reactor = new LinearReactor(this.comments, issueId, this.botUsernames);
 
       // Normalize Linear API response for template rendering
-      const normalizedEvent = this.normalizePolledEvent(item);
+      const normalizedEvent = normalizePolledEvent(item);
 
       logger.debug(`Calling event handler for issue ${item.data.identifier}`);
       await eventHandler(normalizedEvent, reactor);
     }
 
     logger.debug(`Finished processing ${items.length} items from Linear poll`);
-  }
-
-  private normalizeEvent(payload: LinearWebhookPayload, webhookId: string): NormalizedEvent {
-    const data = payload.data;
-    const eventId = `linear:${data.team.key}:${payload.action}:${data.id}:${webhookId}`;
-
-    // Build resource object with only defined optional properties
-    const resource: NormalizedEvent['resource'] = {
-      number: data.number,
-      title: data.title,
-      description: data.description || '',
-      url: data.url,
-      state: data.state.name,
-      repository: data.team.key,
-    };
-
-    const author = data.creator?.name;
-    const assignees = data.assignee ? [data.assignee] : undefined;
-    const labels = data.labels?.map((l) => l.name);
-
-    if (author) resource.author = author;
-    if (assignees) resource.assignees = assignees;
-    if (labels && labels.length > 0) resource.labels = labels;
-
-    return {
-      id: eventId,
-      provider: 'linear',
-      type: 'issue',
-      action: payload.action,
-      resource,
-      actor: {
-        username: data.creator?.name || 'unknown',
-        id: data.id,
-      },
-      metadata: {
-        timestamp: payload.createdAt,
-      },
-      raw: payload,
-    };
-  }
-
-  private normalizePolledEvent(item: any): NormalizedEvent {
-    const data = item.data;
-    const eventId = `linear:${item.team}:poll:${data.number}:${Date.now()}`;
-
-    // Build resource object with only defined optional properties
-    const resource: NormalizedEvent['resource'] = {
-      number: data.number,
-      title: data.title,
-      description: data.description || '',
-      url: data.url,
-      state: data.state.name,
-      repository: data.team.key,
-    };
-
-    const author = data.creator?.name;
-    const assignees = data.assignee ? [data.assignee] : undefined;
-    const labels = data.labels?.nodes?.map((l: any) => l.name);
-
-    if (author) resource.author = author;
-    if (assignees) resource.assignees = assignees;
-    if (labels && labels.length > 0) resource.labels = labels;
-
-    return {
-      id: eventId,
-      provider: 'linear',
-      type: 'issue',
-      action: 'poll',
-      resource,
-      actor: {
-        username: data.creator?.name || 'unknown',
-        id: data.id,
-      },
-      metadata: {
-        timestamp: new Date().toISOString(),
-        polled: true,
-      },
-      raw: data,
-    };
   }
 
   async shutdown(): Promise<void> {

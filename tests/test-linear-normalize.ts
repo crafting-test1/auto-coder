@@ -1,0 +1,180 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import {
+  normalizeWebhookEvent,
+  normalizePolledEvent,
+} from '../src/watcher/providers/linear/LinearNormalizer.js';
+
+// Fixtures
+
+const issueCreatedPayload = {
+  action: 'create',
+  type: 'Issue',
+  createdAt: '2024-01-15T10:00:00.000Z',
+  data: {
+    id: 'issue-abc',
+    identifier: 'ENG-42',
+    number: 42,
+    title: 'Fix auth bug',
+    description: 'OAuth fails on mobile.',
+    url: 'https://linear.app/org/issue/ENG-42',
+    state: { name: 'In Progress' },
+    team: { key: 'ENG', name: 'Engineering' },
+    creator: { name: 'Alice' },
+    updatedAt: '2024-01-15T10:00:00.000Z',
+    createdAt: '2024-01-15T10:00:00.000Z',
+  },
+};
+
+const issueWithMetaPayload = {
+  action: 'update',
+  type: 'Issue',
+  createdAt: '2024-01-15T11:00:00.000Z',
+  data: {
+    id: 'issue-def',
+    identifier: 'ENG-43',
+    number: 43,
+    title: 'Improve search',
+    description: 'Search should be faster.',
+    url: 'https://linear.app/org/issue/ENG-43',
+    state: { name: 'Todo' },
+    team: { key: 'ENG', name: 'Engineering' },
+    assignee: { name: 'Bob' },
+    creator: { name: 'Carol' },
+    labels: [{ name: 'performance' }, { name: 'backend' }],
+    updatedAt: '2024-01-15T11:00:00.000Z',
+    createdAt: '2024-01-14T09:00:00.000Z',
+  },
+};
+
+// --- normalizeWebhookEvent ---
+
+test('normalizeWebhookEvent - issue create event', () => {
+  const event = normalizeWebhookEvent(issueCreatedPayload as any, 'webhook-id-1');
+
+  assert.equal(event.provider, 'linear');
+  assert.equal(event.type, 'issue');
+  assert.equal(event.action, 'create');
+  assert.equal(event.resource.number, 42);
+  assert.equal(event.resource.title, 'Fix auth bug');
+  assert.equal(event.resource.description, 'OAuth fails on mobile.');
+  assert.equal(event.resource.state, 'In Progress');
+  assert.equal(event.resource.repository, 'ENG');
+  assert.equal(event.resource.author, 'Alice');
+  assert.equal(event.actor.username, 'Alice');
+  assert.equal(event.actor.id, 'issue-abc');
+  assert.equal(event.id, 'linear:ENG:create:issue-abc:webhook-id-1');
+  assert.equal(event.metadata.timestamp, '2024-01-15T10:00:00.000Z');
+});
+
+test('normalizeWebhookEvent - issue with assignee and labels', () => {
+  const event = normalizeWebhookEvent(issueWithMetaPayload as any, 'webhook-id-2');
+
+  assert.equal(event.action, 'update');
+  assert.deepEqual(event.resource.assignees, [{ name: 'Bob' }]);
+  assert.deepEqual(event.resource.labels, ['performance', 'backend']);
+  assert.equal(event.resource.author, 'Carol');
+});
+
+test('normalizeWebhookEvent - issue with no description uses empty string', () => {
+  const payload = {
+    ...issueCreatedPayload,
+    data: { ...issueCreatedPayload.data, description: undefined },
+  };
+  const event = normalizeWebhookEvent(payload as any, 'webhook-id-3');
+  assert.equal(event.resource.description, '');
+});
+
+test('normalizeWebhookEvent - issue with no creator uses unknown actor', () => {
+  const payload = {
+    ...issueCreatedPayload,
+    data: { ...issueCreatedPayload.data, creator: undefined },
+  };
+  const event = normalizeWebhookEvent(payload as any, 'webhook-id-4');
+  assert.equal(event.actor.username, 'unknown');
+  assert.equal(event.resource.author, undefined);
+});
+
+test('normalizeWebhookEvent - issue with no assignee has no assignees field', () => {
+  const event = normalizeWebhookEvent(issueCreatedPayload as any, 'webhook-id-5');
+  assert.equal(event.resource.assignees, undefined);
+});
+
+test('normalizeWebhookEvent - issue with empty labels array has no labels field', () => {
+  const payload = {
+    ...issueCreatedPayload,
+    data: { ...issueCreatedPayload.data, labels: [] },
+  };
+  const event = normalizeWebhookEvent(payload as any, 'webhook-id-6');
+  assert.equal(event.resource.labels, undefined);
+});
+
+// --- normalizePolledEvent ---
+
+test('normalizePolledEvent - polled issue', () => {
+  const item = {
+    team: 'ENG',
+    data: {
+      id: 'issue-abc',
+      identifier: 'ENG-42',
+      number: 42,
+      title: 'Fix auth bug',
+      description: 'OAuth fails on mobile.',
+      url: 'https://linear.app/org/issue/ENG-42',
+      state: { name: 'In Progress' },
+      team: { key: 'ENG', name: 'Engineering' },
+      creator: { name: 'Alice' },
+      labels: { nodes: [{ name: 'bug' }] },
+    },
+  };
+
+  const event = normalizePolledEvent(item);
+
+  assert.equal(event.provider, 'linear');
+  assert.equal(event.type, 'issue');
+  assert.equal(event.action, 'poll');
+  assert.equal(event.resource.number, 42);
+  assert.equal(event.resource.repository, 'ENG');
+  assert.deepEqual(event.resource.labels, ['bug']);
+  assert.equal(event.metadata.polled, true);
+  assert.ok(event.id.startsWith('linear:ENG:poll:42:'));
+  assert.equal(event.actor.username, 'Alice');
+});
+
+test('normalizePolledEvent - polled issue without labels', () => {
+  const item = {
+    team: 'ENG',
+    data: {
+      id: 'issue-xyz',
+      identifier: 'ENG-99',
+      number: 99,
+      title: 'Other task',
+      url: 'https://linear.app/org/issue/ENG-99',
+      state: { name: 'Todo' },
+      team: { key: 'ENG', name: 'Engineering' },
+      labels: { nodes: [] },
+    },
+  };
+
+  const event = normalizePolledEvent(item);
+  assert.equal(event.resource.labels, undefined);
+});
+
+test('normalizePolledEvent - raw data is the data object not the wrapper', () => {
+  const item = {
+    team: 'ENG',
+    data: {
+      id: 'issue-abc',
+      identifier: 'ENG-42',
+      number: 42,
+      title: 'Fix auth bug',
+      url: 'https://linear.app/org/issue/ENG-42',
+      state: { name: 'In Progress' },
+      team: { key: 'ENG', name: 'Engineering' },
+      labels: { nodes: [] },
+    },
+  };
+
+  const event = normalizePolledEvent(item);
+  assert.deepEqual(event.raw, item.data);
+});
