@@ -5,42 +5,15 @@ import type {
   EventHandler,
   NormalizedEvent,
 } from '../../types/index.js';
+// NormalizedEvent used in shouldProcessEvent signature
 import { ConfigLoader } from '../../core/ConfigLoader.js';
 import { GitLabWebhook } from './GitLabWebhook.js';
 import { GitLabPoller } from './GitLabPoller.js';
 import { GitLabComments } from './GitLabComments.js';
 import { GitLabReactor } from './GitLabReactor.js';
+import { normalizeWebhookEvent, normalizePolledEvent, type GitLabWebhookPayload } from './GitLabNormalizer.js';
 import { ProviderError } from '../../utils/errors.js';
 import { logger } from '../../utils/logger.js';
-
-interface GitLabWebhookPayload {
-  object_kind: string;
-  event_type?: string;
-  project: {
-    path_with_namespace: string;
-    id: number;
-  };
-  object_attributes: {
-    id: number;
-    iid: number;
-    title: string;
-    description?: string;
-    url: string;
-    state: string;
-    action?: string;
-    updated_at: string;
-    source_branch?: string;
-    target_branch?: string;
-    assignees?: any[];
-    labels?: any[];
-  };
-  user?: {
-    username: string;
-    id: number;
-  };
-  assignees?: any[];
-  labels?: any[];
-}
 
 type GitLabEventConfig = { actions: string[]; skipActions: string[] };
 
@@ -217,10 +190,10 @@ export class GitLabProvider extends BaseProvider {
 
     if (payload.object_kind === 'issue') {
       resourceType = 'issue';
-      resourceNumber = payload.object_attributes.iid;
+      resourceNumber = (payload.object_attributes as { iid: number }).iid;
     } else if (payload.object_kind === 'merge_request') {
       resourceType = 'merge_request';
-      resourceNumber = payload.object_attributes.iid;
+      resourceNumber = (payload.object_attributes as { iid: number }).iid;
     } else if (payload.object_kind === 'note') {
       // Note events are comments - these should be processed
       // Determine if it's on an issue or MR
@@ -243,7 +216,7 @@ export class GitLabProvider extends BaseProvider {
     const projectId = payload.project.path_with_namespace;
 
     // Normalize event first to apply shared filtering logic
-    const normalizedEvent = this.normalizeEvent(payload);
+    const normalizedEvent = normalizeWebhookEvent(payload);
 
     // Apply shared filtering logic
     if (!this.shouldProcessEvent(normalizedEvent, undefined, eventConfig.actions, eventConfig.skipActions)) {
@@ -361,7 +334,7 @@ export class GitLabProvider extends BaseProvider {
       }
 
       // Normalize event first to apply shared filtering logic
-      const normalizedEvent = this.normalizePolledEvent(item);
+      const normalizedEvent = normalizePolledEvent(item);
 
       // Apply shared filtering logic (same as webhooks)
       if (!this.shouldProcessEvent(normalizedEvent, hasRecentNotes, pollEventConfig.actions, pollEventConfig.skipActions)) {
@@ -383,104 +356,6 @@ export class GitLabProvider extends BaseProvider {
     }
 
     logger.debug(`Finished processing ${items.length} items from GitLab poll`);
-  }
-
-  private normalizeEvent(payload: GitLabWebhookPayload): NormalizedEvent {
-    let type = 'issue';
-    let eventId = '';
-    const attrs = payload.object_attributes;
-    const projectId = payload.project.path_with_namespace;
-
-    if (payload.object_kind === 'merge_request') {
-      type = 'merge_request';
-      eventId = `gitlab:${projectId}:${attrs.action || 'update'}:${attrs.id}:${Date.now()}`;
-    } else if (payload.object_kind === 'issue') {
-      type = 'issue';
-      eventId = `gitlab:${projectId}:${attrs.action || 'update'}:${attrs.id}:${Date.now()}`;
-    }
-
-    // Build resource object with only defined optional properties
-    const resource: NormalizedEvent['resource'] = {
-      number: attrs.iid,
-      title: attrs.title,
-      description: attrs.description || '',
-      url: attrs.url,
-      state: attrs.state,
-      repository: projectId,
-    };
-
-    const author = payload.user?.username;
-    const assignees = payload.assignees || attrs.assignees;
-    const labels = payload.labels?.map((l: any) => l.title) || attrs.labels?.map((l: any) => l.title);
-    const branch = attrs.source_branch;
-    const mergeTo = attrs.target_branch;
-
-    if (author) resource.author = author;
-    if (assignees && assignees.length > 0) resource.assignees = assignees;
-    if (labels && labels.length > 0) resource.labels = labels;
-    if (branch) resource.branch = branch;
-    if (mergeTo) resource.mergeTo = mergeTo;
-
-    return {
-      id: eventId,
-      provider: 'gitlab',
-      type,
-      action: attrs.action || 'update',
-      resource,
-      actor: {
-        username: payload.user?.username || 'unknown',
-        id: payload.user?.id || 0,
-      },
-      metadata: {
-        timestamp: new Date().toISOString(),
-      },
-      raw: payload,
-    };
-  }
-
-  private normalizePolledEvent(item: any): NormalizedEvent {
-    const data = item.data;
-    const type = item.type;
-    const eventId = `gitlab:${item.project}:poll:${data.iid}:${Date.now()}`;
-
-    // Build resource object with only defined optional properties
-    const resource: NormalizedEvent['resource'] = {
-      number: data.iid,
-      title: data.title,
-      description: data.description || '',
-      url: data.web_url,
-      state: data.state,
-      repository: item.project,
-    };
-
-    const author = data.author?.username;
-    const assignees = data.assignees;
-    const labels = data.labels?.map((l: string) => l);
-    const branch = type === 'merge_request' && data.source_branch ? data.source_branch : undefined;
-    const mergeTo = type === 'merge_request' && data.target_branch ? data.target_branch : undefined;
-
-    if (author) resource.author = author;
-    if (assignees && assignees.length > 0) resource.assignees = assignees;
-    if (labels && labels.length > 0) resource.labels = labels;
-    if (branch) resource.branch = branch;
-    if (mergeTo) resource.mergeTo = mergeTo;
-
-    return {
-      id: eventId,
-      provider: 'gitlab',
-      type,
-      action: 'poll',
-      resource,
-      actor: {
-        username: data.author?.username || 'unknown',
-        id: data.author?.id || 0,
-      },
-      metadata: {
-        timestamp: new Date().toISOString(),
-        polled: true,
-      },
-      raw: data,
-    };
   }
 
   async shutdown(): Promise<void> {
