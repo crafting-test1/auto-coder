@@ -28,7 +28,7 @@ env:
   #   cs secret create github-pat --shared <fine-grained-token>
   #   cs secret create github-webhook-secret --shared <openssl rand -hex 32>
   #
-  # MUST mark both secrets as Admin Only + Not Mountable in the Web Console.
+  # RECOMMENDED mark both secrets as Admin Only + Not Mountable in the Web Console.
   # ---------------------------------------------------------------------------
   - GITHUB_PERSONAL_ACCESS_TOKEN=${secret:github-pat}
   - GITHUB_WEBHOOK_SECRET=${secret:github-webhook-secret}
