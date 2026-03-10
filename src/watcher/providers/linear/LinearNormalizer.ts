@@ -4,6 +4,16 @@ export interface LinearWebhookPayload {
   action: string;
   type: string;
   createdAt: string;
+  url?: string;
+  organizationId?: string;
+  webhookTimestamp?: number;
+  actor?: {
+    id: string;
+    type: string;
+    name: string;
+    email?: string;
+    url?: string;
+  };
   data: {
     id: string;
     identifier: string;
@@ -13,18 +23,22 @@ export interface LinearWebhookPayload {
     url: string;
     state: {
       name: string;
+      type?: string;
+      color?: string;
     };
     team: {
       key: string;
       name: string;
     };
     assignee?: {
+      id?: string;
       name: string;
     };
     creator?: {
+      id?: string;
       name: string;
     };
-    labels?: Array<{ name: string }>;
+    labels?: { nodes: Array<{ id?: string; name: string }> };
     updatedAt: string;
     createdAt: string;
   };
@@ -51,7 +65,7 @@ export function normalizeWebhookEvent(
 
   const author = data.creator?.name;
   const assignees = data.assignee ? [data.assignee] : undefined;
-  const labels = data.labels?.map((l) => l.name);
+  const labels = data.labels?.nodes?.map((l) => l.name);
 
   if (author) resource.author = author;
   if (assignees) resource.assignees = assignees;

@@ -5,12 +5,35 @@ import {
   normalizePolledEvent,
 } from '../src/watcher/providers/linear/LinearNormalizer.js';
 
-// Fixtures
+// Fixtures — structures match real Linear webhook payloads as documented at
+// https://linear.app/developers/webhooks#webhook-payload
+//
+// Canonical outer payload fields (data-change events):
+//   action, type, createdAt, url, organizationId, webhookTimestamp, webhookId,
+//   actor (who triggered the event), data (serialized entity), updatedFrom
+//
+// Linear docs: "The format of the webhook payload body reflects that of the
+// corresponding GraphQL entity." Labels therefore use the { nodes: [...] }
+// connection structure, matching the GraphQL API shape.
+//
+// actor (outer) is the user who triggered the event (may differ from data.creator
+// for update events). The normalizer currently derives actor from data.creator —
+// a future improvement could use the outer actor for update events.
 
 const issueCreatedPayload = {
   action: 'create',
   type: 'Issue',
   createdAt: '2024-01-15T10:00:00.000Z',
+  url: 'https://linear.app/org/issue/ENG-42/fix-auth-bug',
+  organizationId: 'org-abc-123',
+  webhookTimestamp: 1705312800000,
+  actor: {
+    id: 'user-alice-id',
+    type: 'user',
+    name: 'Alice',
+    email: 'alice@example.com',
+    url: 'https://linear.app/org/profiles/alice',
+  },
   data: {
     id: 'issue-abc',
     identifier: 'ENG-42',
@@ -18,9 +41,9 @@ const issueCreatedPayload = {
     title: 'Fix auth bug',
     description: 'OAuth fails on mobile.',
     url: 'https://linear.app/org/issue/ENG-42',
-    state: { name: 'In Progress' },
+    state: { name: 'In Progress', type: 'started', color: '#f2c94c' },
     team: { key: 'ENG', name: 'Engineering' },
-    creator: { name: 'Alice' },
+    creator: { id: 'user-alice-id', name: 'Alice' },
     updatedAt: '2024-01-15T10:00:00.000Z',
     createdAt: '2024-01-15T10:00:00.000Z',
   },
@@ -30,6 +53,20 @@ const issueWithMetaPayload = {
   action: 'update',
   type: 'Issue',
   createdAt: '2024-01-15T11:00:00.000Z',
+  url: 'https://linear.app/org/issue/ENG-43/improve-search',
+  organizationId: 'org-abc-123',
+  webhookTimestamp: 1705316400000,
+  actor: {
+    id: 'user-bob-id',
+    type: 'user',
+    name: 'Bob',
+    email: 'bob@example.com',
+    url: 'https://linear.app/org/profiles/bob',
+  },
+  updatedFrom: {
+    title: 'Old title',
+    updatedAt: '2024-01-14T09:00:00.000Z',
+  },
   data: {
     id: 'issue-def',
     identifier: 'ENG-43',
@@ -37,11 +74,16 @@ const issueWithMetaPayload = {
     title: 'Improve search',
     description: 'Search should be faster.',
     url: 'https://linear.app/org/issue/ENG-43',
-    state: { name: 'Todo' },
+    state: { name: 'Todo', type: 'unstarted', color: '#e2e2e2' },
     team: { key: 'ENG', name: 'Engineering' },
-    assignee: { name: 'Bob' },
-    creator: { name: 'Carol' },
-    labels: [{ name: 'performance' }, { name: 'backend' }],
+    assignee: { id: 'user-bob-id', name: 'Bob' },
+    creator: { id: 'user-carol-id', name: 'Carol' },
+    labels: {
+      nodes: [
+        { id: 'label-perf-id', name: 'performance' },
+        { id: 'label-be-id', name: 'backend' },
+      ],
+    },
     updatedAt: '2024-01-15T11:00:00.000Z',
     createdAt: '2024-01-14T09:00:00.000Z',
   },
@@ -60,18 +102,24 @@ test('normalizeWebhookEvent - issue create event', () => {
   assert.equal(event.resource.description, 'OAuth fails on mobile.');
   assert.equal(event.resource.state, 'In Progress');
   assert.equal(event.resource.repository, 'ENG');
+  // url is used by {{resourceLink}} in the prompt template
+  assert.equal(event.resource.url, 'https://linear.app/org/issue/ENG-42');
   assert.equal(event.resource.author, 'Alice');
   assert.equal(event.actor.username, 'Alice');
   assert.equal(event.actor.id, 'issue-abc');
   assert.equal(event.id, 'linear:ENG:create:issue-abc:webhook-id-1');
+  // metadata.timestamp is used by {{metadata.timestamp}} in the prompt template
   assert.equal(event.metadata.timestamp, '2024-01-15T10:00:00.000Z');
+  // raw preserves full payload for debugging and future template use
+  assert.deepEqual(event.raw, issueCreatedPayload);
 });
 
 test('normalizeWebhookEvent - issue with assignee and labels', () => {
   const event = normalizeWebhookEvent(issueWithMetaPayload as any, 'webhook-id-2');
 
   assert.equal(event.action, 'update');
-  assert.deepEqual(event.resource.assignees, [{ name: 'Bob' }]);
+  assert.deepEqual(event.resource.assignees, [{ id: 'user-bob-id', name: 'Bob' }]);
+  // labels extracted from nodes structure (mirrors GraphQL entity format)
   assert.deepEqual(event.resource.labels, ['performance', 'backend']);
   assert.equal(event.resource.author, 'Carol');
 });
@@ -100,10 +148,10 @@ test('normalizeWebhookEvent - issue with no assignee has no assignees field', ()
   assert.equal(event.resource.assignees, undefined);
 });
 
-test('normalizeWebhookEvent - issue with empty labels array has no labels field', () => {
+test('normalizeWebhookEvent - issue with empty labels nodes has no labels field', () => {
   const payload = {
     ...issueCreatedPayload,
-    data: { ...issueCreatedPayload.data, labels: [] },
+    data: { ...issueCreatedPayload.data, labels: { nodes: [] } },
   };
   const event = normalizeWebhookEvent(payload as any, 'webhook-id-6');
   assert.equal(event.resource.labels, undefined);
@@ -121,10 +169,10 @@ test('normalizePolledEvent - polled issue', () => {
       title: 'Fix auth bug',
       description: 'OAuth fails on mobile.',
       url: 'https://linear.app/org/issue/ENG-42',
-      state: { name: 'In Progress' },
+      state: { name: 'In Progress', type: 'started', color: '#f2c94c' },
       team: { key: 'ENG', name: 'Engineering' },
-      creator: { name: 'Alice' },
-      labels: { nodes: [{ name: 'bug' }] },
+      creator: { id: 'user-alice-id', name: 'Alice' },
+      labels: { nodes: [{ id: 'label-bug-id', name: 'bug' }] },
     },
   };
 
@@ -135,10 +183,18 @@ test('normalizePolledEvent - polled issue', () => {
   assert.equal(event.action, 'poll');
   assert.equal(event.resource.number, 42);
   assert.equal(event.resource.repository, 'ENG');
+  // url is used by {{resourceLink}} in the prompt template
+  assert.equal(event.resource.url, 'https://linear.app/org/issue/ENG-42');
+  assert.equal(event.resource.state, 'In Progress');
   assert.deepEqual(event.resource.labels, ['bug']);
   assert.equal(event.metadata.polled, true);
+  // metadata.timestamp is set to now() for polled events
+  assert.ok(typeof event.metadata.timestamp === 'string');
+  assert.ok(!isNaN(new Date(event.metadata.timestamp as string).getTime()));
   assert.ok(event.id.startsWith('linear:ENG:poll:42:'));
   assert.equal(event.actor.username, 'Alice');
+  assert.equal(event.actor.id, 'issue-abc');
+  assert.equal(event.resource.author, 'Alice');
 });
 
 test('normalizePolledEvent - polled issue without labels', () => {
@@ -150,7 +206,7 @@ test('normalizePolledEvent - polled issue without labels', () => {
       number: 99,
       title: 'Other task',
       url: 'https://linear.app/org/issue/ENG-99',
-      state: { name: 'Todo' },
+      state: { name: 'Todo', type: 'unstarted', color: '#e2e2e2' },
       team: { key: 'ENG', name: 'Engineering' },
       labels: { nodes: [] },
     },
@@ -169,7 +225,7 @@ test('normalizePolledEvent - raw data is the data object not the wrapper', () =>
       number: 42,
       title: 'Fix auth bug',
       url: 'https://linear.app/org/issue/ENG-42',
-      state: { name: 'In Progress' },
+      state: { name: 'In Progress', type: 'started', color: '#f2c94c' },
       team: { key: 'ENG', name: 'Engineering' },
       labels: { nodes: [] },
     },
