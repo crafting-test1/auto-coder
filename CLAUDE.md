@@ -21,7 +21,7 @@ Automated coding assistant that monitors GitHub, Linear, and Slack for events, t
 - `templates/auto-coder-full.yaml` — Full sandbox template (GitHub + Linear + Slack)
 - `docs/examples/templates/auto-coder-quick-start.yaml` — GitHub-only sandbox template (start here)
 - `docs/examples/templates/auto-coder-slack-2-github-pr.example.yaml` — Slack + GitHub template
-- `config/event-prompt.example.hbs` — Handlebars prompt template for code platform events
+- `config/event-prompt.hbs` — Handlebars prompt template for code platform events
 
 ## Development
 

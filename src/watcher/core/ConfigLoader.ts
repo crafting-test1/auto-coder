@@ -12,7 +12,7 @@ export class ConfigLoader {
     'cs llm session run --approval=auto --name=$EVENT_SHORT_ID --task';
 
   private static readonly DEFAULT_PROMPT_TEMPLATE =
-    './config/event-prompt.example.hbs';
+    './config/event-prompt.hbs';
 
   /**
    * Primary entry point. Loads config from file (optional) then overlays env vars.

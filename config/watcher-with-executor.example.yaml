@@ -43,12 +43,12 @@ commandExecutor:
 
   # Load prompt template from file (recommended)
   # The template receives the normalized event data from any provider
-  promptTemplateFile: ./config/event-prompt.example.hbs
+  promptTemplateFile: ./config/event-prompt.hbs
 
   # For future multi-provider setups with different platform types:
   # prompts:
-  #   slack: ./config/event-prompt-slack.example.hbs  # Different workflow for conversational platforms
-  # promptTemplateFile: ./config/event-prompt.example.hbs  # Fallback for code platforms
+  #   slack: ./config/event-prompt-slack.hbs  # Different workflow for conversational platforms
+  # promptTemplateFile: ./config/event-prompt.hbs  # Fallback for code platforms
 
   # Pass prompt via stdin (recommended for large prompts)
   useStdin: true

@@ -8,8 +8,8 @@ The prompt template controls what the agent is told when an event fires. Customi
 
 | Template | Used for |
 |---|---|
-| `config/event-prompt.example.hbs` | GitHub, Linear |
-| `config/event-prompt-slack.example.hbs` | Slack |
+| `config/event-prompt.hbs` | GitHub, Linear |
+| `config/event-prompt-slack.hbs` | Slack |
 
 These are the starting point. Copy one and edit it rather than writing from scratch.
 
@@ -92,7 +92,7 @@ For the complete field-by-field reference including provider-specific quirks, se
 **1. Copy the default:**
 
 ```bash
-cp config/event-prompt.example.hbs config/event-prompt.hbs
+cp config/event-prompt.hbs config/event-prompt.hbs
 ```
 
 **2. Edit it.** The template produces a plain-text prompt — write it the way you would write instructions to a developer. The `## Instructions` section is the most important part to customize.

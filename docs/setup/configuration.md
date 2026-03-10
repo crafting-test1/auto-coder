@@ -74,7 +74,7 @@ deduplication:
 commandExecutor:
   enabled: true
   command: "cs llm session run --approval=auto --name=$EVENT_SHORT_ID --task"
-  promptTemplateFile: ./config/event-prompt.example.hbs
+  promptTemplateFile: ./config/event-prompt.hbs
   useStdin: true        # true = prompt via stdin; false = via $PROMPT env var
   followUp: true        # post command stdout as a follow-up comment
   dryRun: false         # log command without executing (useful for testing)
@@ -141,7 +141,7 @@ deduplication:
 commandExecutor:
   enabled: true
   command: "cs llm session run --approval=auto --name=$EVENT_SHORT_ID --task"
-  promptTemplateFile: ./config/event-prompt.example.hbs
+  promptTemplateFile: ./config/event-prompt.hbs
   useStdin: true
   followUp: true
 ```

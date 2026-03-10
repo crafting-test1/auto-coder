@@ -281,7 +281,7 @@ server:
 commandExecutor:
   enabled: true
   command: "cs llm session run --approval=auto --name=$EVENT_SHORT_ID --task"
-  promptTemplateFile: ./config/event-prompt.example.hbs
+  promptTemplateFile: ./config/event-prompt.hbs
   useStdin: true
   followUp: true
 deduplication:

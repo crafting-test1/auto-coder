@@ -100,8 +100,8 @@ Templates are standard [Handlebars](https://handlebarsjs.com/) files. Key syntax
 
 The full variable reference (with per-provider notes) is documented at the top of each example template:
 
-- [`config/event-prompt.example.hbs`](../config/event-prompt.example.hbs) — GitHub, Linear
-- [`config/event-prompt-slack.example.hbs`](../config/event-prompt-slack.example.hbs) — Slack
+- [`config/event-prompt.hbs`](../config/event-prompt.hbs) — GitHub, Linear
+- [`config/event-prompt-slack.hbs`](../config/event-prompt-slack.hbs) — Slack
 
 The normalization itself happens in each provider's `normalizeEvent` / `normalizePolledEvent` private methods:
 

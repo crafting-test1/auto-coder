@@ -22,12 +22,12 @@ commandExecutor:
 
   # Single template works for all current providers (GitHub, Linear)
   # Both are code platforms with similar PR-based workflows
-  promptTemplateFile: ./config/event-prompt.example.hbs
+  promptTemplateFile: ./config/event-prompt.hbs
 
   # Provider-specific templates (for future use with different platform types)
   # Uncomment when you need different workflows for different providers:
   # prompts:
-  #   slack: ./config/event-prompt-slack.example.hbs  # When Slack provider is added
+  #   slack: ./config/event-prompt-slack.hbs  # When Slack provider is added
   #   # github, linear will fall back to promptTemplateFile above
 
   useStdin: true

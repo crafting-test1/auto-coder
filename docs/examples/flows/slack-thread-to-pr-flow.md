@@ -235,7 +235,7 @@ commandExecutor:
   enabled: true
   command: "cs llm session run --approval=auto --name=$EVENT_SHORT_ID --task"
   prompts:
-    slack: ./config/event-prompt-slack.example.hbs  # Slack-specific template with thread history
+    slack: ./config/event-prompt-slack.hbs  # Slack-specific template with thread history
   useStdin: true              # Pipe rendered prompt to command's stdin
   followUp: true              # Post results back to Slack thread
 ```

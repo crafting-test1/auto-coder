@@ -218,7 +218,7 @@ providers:
 commandExecutor:
   enabled: true
   command: "cs llm session run --approval=auto --name=$EVENT_SHORT_ID --task"
-  promptTemplateFile: ./config/event-prompt.example.hbs
+  promptTemplateFile: ./config/event-prompt.hbs
   useStdin: true
   followUp: true              # Post result back to issue
 ```
@@ -261,4 +261,4 @@ commandExecutor:
 
 - See [Slack Thread to PR Flow](./slack-thread-to-pr-flow.md) for Slack integration
 - Review [GitHub Provider Setup](../../setup/providers/github.md) for configuration details
-- Explore [Event Prompt Templates](../../config/event-prompt.example.hbs) for customization
+- Explore [Event Prompt Templates](../../config/event-prompt.hbs) for customization
