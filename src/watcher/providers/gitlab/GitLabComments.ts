@@ -1,4 +1,5 @@
 import { withExponentialRetry } from '../../utils/retry.js';
+import { logger } from '../../utils/logger.js';
 
 interface GitLabComment {
   id: number;
@@ -71,6 +72,30 @@ export class GitLabComments {
     } catch (error) {
       // Return empty array on error to allow graceful degradation
       return [];
+    }
+  }
+
+  async getAuthenticatedUser(): Promise<string | null> {
+    try {
+      return await withExponentialRetry(async () => {
+        const response = await fetch(`${this.baseUrl}/user`, {
+          headers: {
+            'Authorization': `Bearer ${this.token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!response.ok) {
+          logger.warn(`GitLab API error getting authenticated user: ${response.status} ${response.statusText}`);
+          return null;
+        }
+
+        const user = (await response.json()) as { username: string };
+        return user.username;
+      });
+    } catch (error) {
+      logger.error('Error fetching authenticated GitLab user', error);
+      return null;
     }
   }
 

@@ -63,12 +63,19 @@ export class SlackProvider extends BaseProvider {
     // Initialize Slack API client
     this.comments = new SlackComments(this.token);
 
-    // Get bot user ID for mention detection and deduplication
+    // Get bot user ID for mention detection and deduplication.
+    // Token detection runs first; an explicit botUsername in config/env overrides it.
     try {
       const botUserId = await this.comments.getBotUserId();
       this.botUsernames = [botUserId];
-      logger.info(`Slack bot user ID: ${botUserId}`);
+      logger.info(`Slack bot user ID auto-detected from token: ${botUserId}`);
       logger.info('Slack authentication successful');
+
+      const override = config.options?.botUsername as string | undefined;
+      if (override) {
+        this.botUsernames = [override];
+        logger.info(`Slack bot user ID overridden from config: ${override}`);
+      }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       logger.error('Failed to authenticate with Slack API', { error: errorMessage });

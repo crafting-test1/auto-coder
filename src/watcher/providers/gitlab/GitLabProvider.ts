@@ -76,12 +76,20 @@ export class GitLabProvider extends BaseProvider {
       eventFilter?: Record<string, { actions?: string[]; skipActions?: string[] }>;
     } | undefined;
 
-    // Read bot username(s) for deduplication
+    // Read bot username(s) for deduplication — auto-detect from token if not configured
     if (options?.botUsername) {
       this.botUsernames = Array.isArray(options.botUsername)
         ? options.botUsername
         : [options.botUsername];
       logger.debug(`GitLab bot usernames configured: ${this.botUsernames.join(', ')}`);
+    } else if (this.comments) {
+      const detected = await this.comments.getAuthenticatedUser();
+      if (detected) {
+        this.botUsernames = [detected];
+        logger.info(`GitLab bot username auto-detected from token: ${detected}`);
+      } else {
+        logger.warn('GitLab: botUsername not configured and auto-detection failed - deduplication will not work');
+      }
     } else {
       logger.warn('GitLab: No botUsername configured - deduplication will not work');
     }
