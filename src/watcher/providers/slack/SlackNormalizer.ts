@@ -31,6 +31,7 @@ export function normalizeWebhookEvent(
     url: '',
     state: 'open',
     repository: channelId,
+    author: event.user,
     comment: {
       body: event.text || '',
       author: event.user,
@@ -86,6 +87,7 @@ export function normalizePolledMention(
     url: mention.permalink || '',
     state: 'open',
     repository: mention.channel,
+    author: mention.user,
     comment: commentObj,
   };
 
