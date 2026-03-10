@@ -62,10 +62,10 @@ commandExecutor:
   # GitHub and Linear are code platforms with similar workflows:
   # promptTemplateFile: ./config/event-prompt.hbs
 
-  # Option 2: Provider-specific templates (for future multi-platform setups)
+  # Option 2: Provider-specific templates (for setups with different platform workflows)
   # Use this when you have providers with fundamentally different workflows:
   # prompts:
-  #   slack: ./config/event-prompt-slack.hbs  # When Slack provider is added
+  #   slack: ./config/event-prompt-slack.hbs  # Slack's conversational workflow
   # promptTemplateFile: ./config/event-prompt.hbs  # Fallback for GitHub/Linear
 
   # Option 3: Inline template (not recommended, use files instead)
@@ -110,7 +110,7 @@ providers:
       # token: ghp_your_token_here
 
       # Option 2: From environment variable (recommended)
-      tokenEnv: GITHUB_TOKEN
+      tokenEnv: GITHUB_PERSONAL_ACCESS_TOKEN
 
       # Option 3: From file
       # tokenFile: /path/to/token.txt
@@ -177,7 +177,7 @@ providers:
 
     auth:
       type: token
-      tokenEnv: LINEAR_API_KEY  # API key from Linear settings
+      tokenEnv: LINEAR_API_TOKEN  # API key from Linear settings
 
     options:
       # Webhook secret for signature verification (optional but recommended)

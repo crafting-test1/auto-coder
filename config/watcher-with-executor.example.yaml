@@ -45,16 +45,16 @@ commandExecutor:
   # The template receives the normalized event data from any provider
   promptTemplateFile: ./config/event-prompt.hbs
 
-  # For future multi-provider setups with different platform types:
+  # For multi-provider setups with different platform types:
   # prompts:
-  #   slack: ./config/event-prompt-slack.hbs  # Different workflow for conversational platforms
+  #   slack: ./config/event-prompt-slack.hbs  # Slack's conversational workflow
   # promptTemplateFile: ./config/event-prompt.hbs  # Fallback for code platforms
 
   # Pass prompt via stdin (recommended for large prompts)
   useStdin: true
 
   # Post command output as follow-up comment
-  # If true: Updates the "Agent is working" comment with command output
+  # If true: Posts a new comment with the command output after execution
   # If false: Only posts the initial comment
   followUp: true
 
@@ -65,7 +65,7 @@ providers:
 
     auth:
       type: token
-      tokenEnv: GITHUB_TOKEN
+      tokenEnv: GITHUB_PERSONAL_ACCESS_TOKEN
 
     options:
       # Webhook secret for signature verification (recommended for production)

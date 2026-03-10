@@ -18,8 +18,8 @@
 env:
   # ---------------------------------------------------------------------------
   # Secrets — create these before applying the template:
-  #   cs secret create github-pat --shared <your-token>
-  #   cs secret create github-webhook-secret --shared <random-string>
+  #   echo "YOUR_TOKEN" | cs secret create github-pat --shared -f -
+  #   echo "$(openssl rand -hex 32)" | cs secret create github-webhook-secret --shared -f -
   #
   # MUST set both secrets as "Admin Only" + "Not Mountable" in the Crafting
   # Web Console (Secrets → Edit) so they are never written to the filesystem.

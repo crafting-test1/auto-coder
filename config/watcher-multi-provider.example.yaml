@@ -24,10 +24,10 @@ commandExecutor:
   # Both are code platforms with similar PR-based workflows
   promptTemplateFile: ./config/event-prompt.hbs
 
-  # Provider-specific templates (for future use with different platform types)
+  # Provider-specific templates (for setups with different platform workflows)
   # Uncomment when you need different workflows for different providers:
   # prompts:
-  #   slack: ./config/event-prompt-slack.hbs  # When Slack provider is added
+  #   slack: ./config/event-prompt-slack.hbs  # Slack's conversational workflow
   #   # github, linear will fall back to promptTemplateFile above
 
   useStdin: true
@@ -42,7 +42,7 @@ providers:
 
     auth:
       type: token
-      tokenEnv: GITHUB_TOKEN
+      tokenEnv: GITHUB_PERSONAL_ACCESS_TOKEN
 
     options:
       webhookSecretEnv: GITHUB_WEBHOOK_SECRET
@@ -64,7 +64,7 @@ providers:
 
     auth:
       type: token
-      tokenEnv: LINEAR_API_KEY
+      tokenEnv: LINEAR_API_TOKEN
 
     options:
       webhookSecretEnv: LINEAR_WEBHOOK_SECRET
