@@ -10,37 +10,37 @@ Set env vars in the sandbox template's `env:` block. The watcher reads them at s
 
 ### GitHub
 
-| Variable | Required | Description |
-|---|---|---|
-| `GITHUB_PERSONAL_ACCESS_TOKEN` | Yes — enables GitHub | Fine-grained PAT for the bot account |
-| `GITHUB_BOT_USERNAME` | Recommended | Bot account username used for deduplication; events where the bot's comment is last are skipped |
-| `GITHUB_REPOSITORIES` | Polling only | Comma-separated repos to poll: `owner/repo1,owner/repo2` |
-| `GITHUB_WEBHOOK_SECRET` | Recommended | Shared secret used to verify webhook signatures |
-| `GITHUB_POLLING_INTERVAL` | Optional | Polling interval in seconds (default: `60`) |
+| Variable                       | Required             | Description                                                                                     |
+| ------------------------------ | -------------------- | ----------------------------------------------------------------------------------------------- |
+| `GITHUB_PERSONAL_ACCESS_TOKEN` | Yes — enables GitHub | Fine-grained PAT for the bot account                                                            |
+| `GITHUB_BOT_USERNAME`          | Recommended          | Bot account username used for deduplication; events where the bot's comment is last are skipped |
+| `GITHUB_REPOSITORIES`          | Polling only         | Comma-separated repos to poll: `owner/repo1,owner/repo2`                                        |
+| `GITHUB_WEBHOOK_SECRET`        | Recommended          | Shared secret used to verify webhook signatures                                                 |
+| `GITHUB_POLLING_INTERVAL`      | Optional             | Polling interval in seconds (default: `60`)                                                     |
 
 ### Linear
 
-| Variable | Required | Description |
-|---|---|---|
-| `LINEAR_API_TOKEN` | Yes — enables Linear | API key from Linear settings |
-| `LINEAR_BOT_USERNAME` | Recommended | Linear display name of the bot user; used for deduplication |
-| `LINEAR_TEAMS` | Optional | Comma-separated team keys to monitor, e.g. `ENG,DESIGN` (default: all teams) |
-| `LINEAR_WEBHOOK_SECRET` | Recommended | Shared secret used to verify webhook signatures |
-| `LINEAR_POLLING_INTERVAL` | Optional | Polling interval in seconds (default: `60`) |
+| Variable                  | Required             | Description                                                                  |
+| ------------------------- | -------------------- | ---------------------------------------------------------------------------- |
+| `LINEAR_API_TOKEN`        | Yes — enables Linear | API key from Linear settings                                                 |
+| `LINEAR_BOT_USERNAME`     | Recommended          | Linear display name of the bot user; used for deduplication                  |
+| `LINEAR_TEAMS`            | Optional             | Comma-separated team keys to monitor, e.g. `ENG,DESIGN` (default: all teams) |
+| `LINEAR_WEBHOOK_SECRET`   | Recommended          | Shared secret used to verify webhook signatures                              |
+| `LINEAR_POLLING_INTERVAL` | Optional             | Polling interval in seconds (default: `60`)                                  |
 
 ### Slack
 
-| Variable | Required | Description |
-|---|---|---|
-| `SLACK_BOT_TOKEN` | Yes — enables Slack | Bot User OAuth Token (`xoxb-...`) from the Slack app |
-| `SLACK_SIGNING_SECRET` | Recommended | Signing secret used to verify webhook requests |
+| Variable               | Required            | Description                                          |
+| ---------------------- | ------------------- | ---------------------------------------------------- |
+| `SLACK_BOT_TOKEN`      | Yes — enables Slack | Bot User OAuth Token (`xoxb-...`) from the Slack app |
+| `SLACK_SIGNING_SECRET` | Recommended         | Signing secret used to verify webhook requests       |
 
 ### General
 
-| Variable | Description |
-|---|---|
-| `WATCHER_COMMAND` | Override the command executed per event (default: `cs llm session run --approval=auto --name=$EVENT_SHORT_ID --task`) |
-| `WATCHER_LOG_LEVEL` | Log verbosity: `debug` \| `info` \| `warn` \| `error` (default: `info`) |
+| Variable            | Description                                                                                                           |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `WATCHER_COMMAND`   | Override the command executed per event (default: `cs llm session run --approval=auto --name=$EVENT_SHORT_ID --task`) |
+| `WATCHER_LOG_LEVEL` | Log verbosity: `debug` \| `info` \| `warn` \| `error` (default: `info`)                                               |
 
 ---
 
@@ -63,22 +63,22 @@ The file is loaded from `config/watcher.yaml` by default. In the sandbox templat
 server:
   host: 0.0.0.0
   port: 3000
-  basePath: /          # optional URL prefix for all webhook paths
+  basePath: / # optional URL prefix for all webhook paths
 
-logLevel: info         # debug | info | warn | error
+logLevel: info # debug | info | warn | error
 
 deduplication:
   enabled: true
-  commentTemplate: "Agent is working on {id}"   # {id} = e.g. "owner/repo#123"
+  commentTemplate: 'Agent is working on {id}' # {id} = e.g. "owner/repo#123"
 
 commandExecutor:
   enabled: true
-  command: "cs llm session run --approval=auto --name=$EVENT_SHORT_ID --task"
+  command: 'cs llm session run --approval=auto --name=$EVENT_SHORT_ID --task'
   promptTemplateFile: ./config/event-prompt.hbs
-  useStdin: true        # true = prompt via stdin; false = via $PROMPT env var
-  followUp: true        # post command stdout as a follow-up comment
-  dryRun: false         # log command without executing (useful for testing)
-  followUpTemplate: "Session started: {output}"  # optional; raw output used if absent
+  useStdin: true # true = prompt via stdin; false = via $PROMPT env var
+  followUp: true # post command stdout as a follow-up comment
+  dryRun: false # log command without executing (useful for testing)
+  followUpTemplate: 'Session started: {output}' # optional; raw output used if absent
 
 providers:
   github:
@@ -119,11 +119,11 @@ options:
 
 Provider defaults:
 
-| Provider | Default behaviour |
-|---|---|
-| GitHub | Issues and comments processed; most PR lifecycle events (open, sync, label, etc.) skipped |
-| Linear | Issue events only; done/cancelled states skipped |
-| Slack | `app_mention` events only |
+| Provider | Default behaviour                                                                         |
+| -------- | ----------------------------------------------------------------------------------------- |
+| GitHub   | Issues and comments processed; most PR lifecycle events (open, sync, label, etc.) skipped |
+| Linear   | Issue events only; done/cancelled states skipped                                          |
+| Slack    | `app_mention` events only                                                                 |
 
 ---
 
@@ -137,10 +137,10 @@ server:
   port: 3000
 deduplication:
   enabled: true
-  commentTemplate: "Agent is working on {id}"
+  commentTemplate: 'Agent is working on {id}'
 commandExecutor:
   enabled: true
-  command: "cs llm session run --approval=auto --name=$EVENT_SHORT_ID --task"
+  command: 'cs llm session run --approval=auto --name=$EVENT_SHORT_ID --task'
   promptTemplateFile: ./config/event-prompt.hbs
   useStdin: true
   followUp: true
@@ -150,14 +150,14 @@ commandExecutor:
 
 ## Which approach to use
 
-| Need | Use |
-|---|---|
-| Get started quickly | Env vars only — set token, bot username, repos in the template |
-| Override the agent command | `WATCHER_COMMAND` env var |
-| Filter specific event types or actions | `watcher.yaml` — `providers.<name>.options.eventFilter` |
-| Tune polling intervals or lookback windows | `watcher.yaml` — `pollingInterval`, `initialLookbackHours` |
-| Per-provider prompt templates | `watcher.yaml` — `commandExecutor.prompts` — see [prompt-templates.md](prompt-templates.md) |
-| Dry-run / debug mode | `watcher.yaml` — `commandExecutor.dryRun: true` |
+| Need                                       | Use                                                                                         |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------- |
+| Get started quickly                        | Env vars only — set token, bot username, repos in the template                              |
+| Override the agent command                 | `WATCHER_COMMAND` env var                                                                   |
+| Filter specific event types or actions     | `watcher.yaml` — `providers.<name>.options.eventFilter`                                     |
+| Tune polling intervals or lookback windows | `watcher.yaml` — `pollingInterval`, `initialLookbackHours`                                  |
+| Per-provider prompt templates              | `watcher.yaml` — `commandExecutor.prompts` — see [prompt-templates.md](prompt-templates.md) |
+| Dry-run / debug mode                       | `watcher.yaml` — `commandExecutor.dryRun: true`                                             |
 
 ---
 

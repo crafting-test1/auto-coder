@@ -1,15 +1,17 @@
 import { BaseProvider } from '../BaseProvider.js';
-import type {
-  ProviderConfig,
-  ProviderMetadata,
-  EventHandler,
-} from '../../types/index.js';
+import type { ProviderConfig, ProviderMetadata, EventHandler } from '../../types/index.js';
 import { ConfigLoader } from '../../core/ConfigLoader.js';
 import { LinearWebhook } from './LinearWebhook.js';
 import { LinearPoller } from './LinearPoller.js';
 import { LinearComments } from './LinearComments.js';
 import { LinearReactor } from './LinearReactor.js';
-import { normalizeWebhookEvent, normalizePolledEvent, normalizeCommentEvent, type LinearWebhookPayload, type LinearCommentPayload } from './LinearNormalizer.js';
+import {
+  normalizeWebhookEvent,
+  normalizePolledEvent,
+  normalizeCommentEvent,
+  type LinearWebhookPayload,
+  type LinearCommentPayload,
+} from './LinearNormalizer.js';
 import { isBotMentionedInText, isBotAssignedInList } from '../../utils/eventFilter.js';
 import { ProviderError } from '../../utils/errors.js';
 import { logger } from '../../utils/logger.js';
@@ -24,12 +26,13 @@ export class LinearProvider extends BaseProvider {
   private botUsernames: string[] = [];
 
   private static readonly DEFAULT_WEBHOOK_EVENTS: Record<string, LinearEventConfig> = {
-    Issue:   { states: ['all'], skipStates: ['done', 'cancelled', 'canceled'] },
+    Issue: { states: ['all'], skipStates: ['done', 'cancelled', 'canceled'] },
     Comment: { states: ['all'], skipStates: ['done', 'cancelled', 'canceled'] },
   };
 
-  private eventFilter: Record<string, LinearEventConfig> =
-    { ...LinearProvider.DEFAULT_WEBHOOK_EVENTS };
+  private eventFilter: Record<string, LinearEventConfig> = {
+    ...LinearProvider.DEFAULT_WEBHOOK_EVENTS,
+  };
 
   get metadata(): ProviderMetadata {
     return {
@@ -55,16 +58,18 @@ export class LinearProvider extends BaseProvider {
       }
     }
 
-    const options = config.options as {
-      webhookSecret?: string;
-      webhookSecretEnv?: string;
-      webhookSecretFile?: string;
-      teams?: string[];
-      initialLookbackHours?: number;
-      maxItemsPerPoll?: number;
-      botUsername?: string | string[];
-      eventFilter?: Record<string, { states?: string[]; skipStates?: string[] }>;
-    } | undefined;
+    const options = config.options as
+      | {
+          webhookSecret?: string;
+          webhookSecretEnv?: string;
+          webhookSecretFile?: string;
+          teams?: string[];
+          initialLookbackHours?: number;
+          maxItemsPerPoll?: number;
+          botUsername?: string | string[];
+          eventFilter?: Record<string, { states?: string[]; skipStates?: string[] }>;
+        }
+      | undefined;
 
     // Read bot username(s) for deduplication — auto-detect from token if not configured
     if (options?.botUsername) {
@@ -78,7 +83,9 @@ export class LinearProvider extends BaseProvider {
         this.botUsernames = [detected];
         logger.info(`Linear bot username auto-detected from API key: ${detected}`);
       } else {
-        logger.warn('Linear: botUsername not configured and auto-detection failed - deduplication will not work');
+        logger.warn(
+          'Linear: botUsername not configured and auto-detection failed - deduplication will not work'
+        );
       }
     } else {
       logger.warn('Linear: No botUsername configured - deduplication will not work');
@@ -127,7 +134,7 @@ export class LinearProvider extends BaseProvider {
       for (const [eventType, eventConfig] of Object.entries(options.eventFilter)) {
         const defaults = LinearProvider.DEFAULT_WEBHOOK_EVENTS[eventType];
         configured[eventType] = {
-          states:     eventConfig?.states     ?? defaults?.states     ?? ['all'],
+          states: eventConfig?.states ?? defaults?.states ?? ['all'],
           skipStates: eventConfig?.skipStates ?? defaults?.skipStates ?? [],
         };
       }
@@ -161,10 +168,7 @@ export class LinearProvider extends BaseProvider {
     }
 
     if (!this.comments) {
-      throw new ProviderError(
-        'Linear comments not initialized (API key required)',
-        'linear'
-      );
+      throw new ProviderError('Linear comments not initialized (API key required)', 'linear');
     }
 
     const { webhookId } = this.webhook.extractMetadata(headers);
@@ -182,7 +186,10 @@ export class LinearProvider extends BaseProvider {
     if (payload.type === 'Comment') {
       const commentPayload = payload as unknown as LinearCommentPayload;
       const issueState = commentPayload.data.issue?.state?.name;
-      if (issueState && this.shouldSkipByState(issueState, eventConfig.states, eventConfig.skipStates)) {
+      if (
+        issueState &&
+        this.shouldSkipByState(issueState, eventConfig.states, eventConfig.skipStates)
+      ) {
         logger.debug(`Skipping comment on completed/cancelled Linear issue`);
         return;
       }
@@ -216,7 +223,13 @@ export class LinearProvider extends BaseProvider {
       logger.error(`Skipping Linear issue ${payload.data.identifier} - botUsername not configured`);
       return;
     }
-    if (!isBotAssignedInList(normalizedEvent.resource.assignees, this.botUsernames, a => (a as any).name)) {
+    if (
+      !isBotAssignedInList(
+        normalizedEvent.resource.assignees,
+        this.botUsernames,
+        (a) => (a as any).name
+      )
+    ) {
       logger.debug(`Skipping Linear issue ${payload.data.identifier} - bot not assigned`);
       return;
     }
@@ -238,7 +251,11 @@ export class LinearProvider extends BaseProvider {
     return false;
   }
 
-  private shouldSkipClosedItem(payload: LinearWebhookPayload, states: string[], skipStates: string[]): boolean {
+  private shouldSkipClosedItem(
+    payload: LinearWebhookPayload,
+    states: string[],
+    skipStates: string[]
+  ): boolean {
     return this.shouldSkipByState(payload.data.state.name, states, skipStates);
   }
 
@@ -252,10 +269,7 @@ export class LinearProvider extends BaseProvider {
     }
 
     if (!this.comments) {
-      throw new ProviderError(
-        'Linear comments not initialized (API key required)',
-        'linear'
-      );
+      throw new ProviderError('Linear comments not initialized (API key required)', 'linear');
     }
 
     const items = await this.poller.poll();
@@ -271,7 +285,9 @@ export class LinearProvider extends BaseProvider {
         continue;
       }
 
-      if (this.shouldSkipClosedPolledItem(item, pollEventConfig.states, pollEventConfig.skipStates)) {
+      if (
+        this.shouldSkipClosedPolledItem(item, pollEventConfig.states, pollEventConfig.skipStates)
+      ) {
         logger.debug(`Skipping completed/cancelled issue ${item.data.identifier}`);
         continue;
       }
@@ -280,10 +296,18 @@ export class LinearProvider extends BaseProvider {
       const normalizedEvent = normalizePolledEvent(item);
 
       if (this.botUsernames.length === 0) {
-        logger.error(`Skipping polled Linear issue ${item.data.identifier} - botUsername not configured`);
+        logger.error(
+          `Skipping polled Linear issue ${item.data.identifier} - botUsername not configured`
+        );
         continue;
       }
-      if (!isBotAssignedInList(normalizedEvent.resource.assignees, this.botUsernames, a => (a as any).name)) {
+      if (
+        !isBotAssignedInList(
+          normalizedEvent.resource.assignees,
+          this.botUsernames,
+          (a) => (a as any).name
+        )
+      ) {
         logger.debug(`Skipping polled Linear issue ${item.data.identifier} - bot not assigned`);
         continue;
       }

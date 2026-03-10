@@ -294,7 +294,12 @@ const noteOnMRPayload = {
         group_id: null,
       },
     ],
-    assignee: { id: 28, name: 'User1', username: 'user1', avatar_url: 'http://www.gravatar.com/avatar/...' },
+    assignee: {
+      id: 28,
+      name: 'User1',
+      username: 'user1',
+      avatar_url: 'http://www.gravatar.com/avatar/...',
+    },
     last_commit: {
       id: '562e173be03b8ff2efb05345d12df18815438a4b',
       message: "Merge branch 'another-branch' into 'master'",
@@ -396,10 +401,7 @@ test('normalizeWebhookEvent - note on issue: type is issue, comment fields popul
   assert.equal(event.resource.title, 'test');
   assert.equal(event.resource.description, 'test issue body');
   // resource.url is the issue URL (fragment stripped from note URL)
-  assert.equal(
-    event.resource.url,
-    'http://example.com/gitlab-org/gitlab-test/issues/17'
-  );
+  assert.equal(event.resource.url, 'http://example.com/gitlab-org/gitlab-test/issues/17');
   assert.equal(event.resource.state, 'closed');
   assert.equal(event.resource.repository, 'gitlab-org/gitlab-test');
   // comment fields are used by {{resource.comment.body}} and {{resource.comment.author}}
@@ -425,10 +427,7 @@ test('normalizeWebhookEvent - note on MR: type is merge_request, branches popula
   assert.equal(event.resource.number, 1);
   assert.equal(event.resource.title, 'Tempora et eos debitis quae laborum et.');
   // resource.url is the MR URL (fragment stripped)
-  assert.equal(
-    event.resource.url,
-    'http://example.com/gitlab-org/gitlab-test/merge_requests/1'
-  );
+  assert.equal(event.resource.url, 'http://example.com/gitlab-org/gitlab-test/merge_requests/1');
   assert.equal(event.resource.state, 'opened');
   // branch fields from the sibling merge_request object
   assert.equal(event.resource.branch, 'master');
@@ -458,9 +457,7 @@ test('normalizePolledEvent - polled issue', () => {
       web_url: 'http://example.com/gitlab-org/gitlab-test/-/issues/17',
       state: 'opened',
       author: { id: 1, name: 'Administrator', username: 'root', avatar_url: '...' },
-      assignees: [
-        { id: 51, name: 'User1', username: 'user1', avatar_url: '...' },
-      ],
+      assignees: [{ id: 51, name: 'User1', username: 'user1', avatar_url: '...' }],
       labels: ['bug', 'priority'],
       created_at: '2015-04-12T14:53:17Z',
       updated_at: '2015-05-17T17:06:40Z',

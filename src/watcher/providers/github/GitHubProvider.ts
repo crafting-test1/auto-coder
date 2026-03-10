@@ -10,7 +10,11 @@ import { GitHubWebhook } from './GitHubWebhook.js';
 import { GitHubPoller } from './GitHubPoller.js';
 import { GitHubComments } from './GitHubComments.js';
 import { GitHubReactor } from './GitHubReactor.js';
-import { normalizeWebhookEvent, normalizePolledEvent, type GitHubWebhookPayload } from './GitHubNormalizer.js';
+import {
+  normalizeWebhookEvent,
+  normalizePolledEvent,
+  type GitHubWebhookPayload,
+} from './GitHubNormalizer.js';
 import { isBotMentionedInText, isBotAssignedInList } from '../../utils/eventFilter.js';
 import { ProviderError } from '../../utils/errors.js';
 import { logger } from '../../utils/logger.js';
@@ -25,13 +29,28 @@ export class GitHubProvider extends BaseProvider {
   private botUsernames: string[] = [];
 
   private static readonly DEFAULT_WEBHOOK_EVENTS: Record<string, GitHubEventConfig> = {
-    issues:        { actions: ['all'], skipActions: [] },
-    pull_request:  { actions: ['all'], skipActions: ['opened', 'synchronize', 'edited', 'labeled', 'unlabeled', 'assigned', 'unassigned', 'locked', 'unlocked', 'review_requested'] },
+    issues: { actions: ['all'], skipActions: [] },
+    pull_request: {
+      actions: ['all'],
+      skipActions: [
+        'opened',
+        'synchronize',
+        'edited',
+        'labeled',
+        'unlabeled',
+        'assigned',
+        'unassigned',
+        'locked',
+        'unlocked',
+        'review_requested',
+      ],
+    },
     issue_comment: { actions: ['all'], skipActions: [] },
   };
 
-  private eventFilter: Record<string, GitHubEventConfig> =
-    { ...GitHubProvider.DEFAULT_WEBHOOK_EVENTS };
+  private eventFilter: Record<string, GitHubEventConfig> = {
+    ...GitHubProvider.DEFAULT_WEBHOOK_EVENTS,
+  };
 
   get metadata(): ProviderMetadata {
     return {
@@ -57,16 +76,18 @@ export class GitHubProvider extends BaseProvider {
       }
     }
 
-    const options = config.options as {
-      webhookSecret?: string;
-      webhookSecretEnv?: string;
-      webhookSecretFile?: string;
-      repositories?: string[];
-      initialLookbackHours?: number;
-      maxItemsPerPoll?: number;
-      botUsername?: string | string[];
-      eventFilter?: Record<string, { actions?: string[]; skipActions?: string[] }>;
-    } | undefined;
+    const options = config.options as
+      | {
+          webhookSecret?: string;
+          webhookSecretEnv?: string;
+          webhookSecretFile?: string;
+          repositories?: string[];
+          initialLookbackHours?: number;
+          maxItemsPerPoll?: number;
+          botUsername?: string | string[];
+          eventFilter?: Record<string, { actions?: string[]; skipActions?: string[] }>;
+        }
+      | undefined;
 
     // Read bot username(s) for deduplication — auto-detect from PAT if not configured
     if (options?.botUsername) {
@@ -80,7 +101,9 @@ export class GitHubProvider extends BaseProvider {
         this.botUsernames = [detected];
         logger.info(`GitHub bot username auto-detected from PAT: ${detected}`);
       } else {
-        logger.warn('GitHub: botUsername not configured and auto-detection failed - deduplication will not work');
+        logger.warn(
+          'GitHub: botUsername not configured and auto-detection failed - deduplication will not work'
+        );
       }
     } else {
       logger.warn('GitHub: No botUsername configured - deduplication will not work');
@@ -101,7 +124,7 @@ export class GitHubProvider extends BaseProvider {
       for (const [eventType, eventConfig] of Object.entries(options.eventFilter)) {
         const defaults = GitHubProvider.DEFAULT_WEBHOOK_EVENTS[eventType];
         configured[eventType] = {
-          actions:     eventConfig?.actions     ?? defaults?.actions     ?? ['all'],
+          actions: eventConfig?.actions ?? defaults?.actions ?? ['all'],
           skipActions: eventConfig?.skipActions ?? defaults?.skipActions ?? [],
         };
       }
@@ -171,10 +194,7 @@ export class GitHubProvider extends BaseProvider {
     }
 
     if (!this.comments) {
-      throw new ProviderError(
-        'GitHub comments not initialized (token required)',
-        'github'
-      );
+      throw new ProviderError('GitHub comments not initialized (token required)', 'github');
     }
 
     const { event, deliveryId } = this.webhook.extractMetadata(headers);
@@ -210,7 +230,14 @@ export class GitHubProvider extends BaseProvider {
     const normalizedEvent = normalizeWebhookEvent(payload, deliveryId);
 
     // Apply shared filtering logic
-    if (!this.shouldProcessEvent(normalizedEvent, undefined, eventConfig.actions, eventConfig.skipActions)) {
+    if (
+      !this.shouldProcessEvent(
+        normalizedEvent,
+        undefined,
+        eventConfig.actions,
+        eventConfig.skipActions
+      )
+    ) {
       return; // Event filtered out (already logged in shouldProcessEvent)
     }
 
@@ -250,7 +277,9 @@ export class GitHubProvider extends BaseProvider {
 
     // Allowlist check: skip if action not in allowlist (unless 'all' is present)
     if (!actions.includes('all') && !actions.includes(action)) {
-      logger.debug(`Skipping ${type} #${resource.number} ${action} event - not in actions allowlist`);
+      logger.debug(
+        `Skipping ${type} #${resource.number} ${action} event - not in actions allowlist`
+      );
       return false;
     }
 
@@ -271,7 +300,7 @@ export class GitHubProvider extends BaseProvider {
         return false;
       }
     } else {
-      if (!isBotAssignedInList(resource.assignees, this.botUsernames, a => (a as any).login)) {
+      if (!isBotAssignedInList(resource.assignees, this.botUsernames, (a) => (a as any).login)) {
         logger.debug(`Skipping ${type} #${resource.number} - bot not assigned`);
         return false;
       }
@@ -279,7 +308,9 @@ export class GitHubProvider extends BaseProvider {
 
     // For polled events, skip if no recent human interaction
     if (type === 'pull_request' && action === 'poll' && hasRecentComments === false) {
-      logger.debug(`Skipping polled PR #${resource.number} - only updated due to commits, no new comments`);
+      logger.debug(
+        `Skipping polled PR #${resource.number} - only updated due to commits, no new comments`
+      );
       return false;
     }
 
@@ -343,10 +374,7 @@ export class GitHubProvider extends BaseProvider {
     }
 
     if (!this.comments) {
-      throw new ProviderError(
-        'GitHub comments not initialized (token required)',
-        'github'
-      );
+      throw new ProviderError('GitHub comments not initialized (token required)', 'github');
     }
 
     const items = await this.poller.poll();
@@ -376,7 +404,14 @@ export class GitHubProvider extends BaseProvider {
       const normalizedEvent = normalizePolledEvent(item);
 
       // Apply shared filtering logic (same as webhooks)
-      if (!this.shouldProcessEvent(normalizedEvent, hasRecentComments, pollEventConfig.actions, pollEventConfig.skipActions)) {
+      if (
+        !this.shouldProcessEvent(
+          normalizedEvent,
+          hasRecentComments,
+          pollEventConfig.actions,
+          pollEventConfig.skipActions
+        )
+      ) {
         continue; // Event filtered out (already logged in shouldProcessEvent)
       }
 

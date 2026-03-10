@@ -1,4 +1,10 @@
-import type { WatcherConfig, IProvider, EventHandler, Reactor, NormalizedEvent } from './types/index.js';
+import type {
+  WatcherConfig,
+  IProvider,
+  EventHandler,
+  Reactor,
+  NormalizedEvent,
+} from './types/index.js';
 import { WatcherEventEmitter } from './core/EventEmitter.js';
 import { ProviderRegistry } from './providers/ProviderRegistry.js';
 import { WebhookServer } from './transport/WebhookServer.js';
@@ -31,8 +37,7 @@ export class Watcher extends WatcherEventEmitter {
     }
 
     this.commentTemplate =
-      config.deduplication.commentTemplate ||
-      'Agent is working on session {id}';
+      config.deduplication.commentTemplate || 'Agent is working on session {id}';
 
     if (config.commandExecutor?.enabled) {
       this.commandExecutor = new CommandExecutor(config.commandExecutor);
@@ -114,10 +119,7 @@ export class Watcher extends WatcherEventEmitter {
       const providerConfig = this.config.providers[name];
 
       if (!providerConfig) {
-        throw new ProviderError(
-          `No configuration found for registered provider: ${name}`,
-          name
-        );
+        throw new ProviderError(`No configuration found for registered provider: ${name}`, name);
       }
 
       if (!providerConfig.enabled) {
@@ -246,12 +248,10 @@ export class Watcher extends WatcherEventEmitter {
   }
 
   private async startWebhookServer(): Promise<void> {
-    const needsWebhook = Array.from(this.registry.getAll().entries()).some(
-      ([name]) => {
-        const config = this.config.providers[name];
-        return config?.enabled;
-      }
-    );
+    const needsWebhook = Array.from(this.registry.getAll().entries()).some(([name]) => {
+      const config = this.config.providers[name];
+      return config?.enabled;
+    });
 
     if (!needsWebhook) {
       logger.info('No webhook providers configured, skipping server startup');
@@ -303,17 +303,19 @@ export class Watcher extends WatcherEventEmitter {
       }
 
       // Provider-specific checks for polling configuration
-      const options = config.options as {
-        repositories?: string[];
-        projects?: string[];
-        teams?: string[];
-      } | undefined;
+      const options = config.options as
+        | {
+            repositories?: string[];
+            projects?: string[];
+            teams?: string[];
+          }
+        | undefined;
 
       const hasPollingConfig =
-        (options?.repositories && options.repositories.length > 0) ||  // GitHub/GitLab
-        (options?.projects && options.projects.length > 0) ||          // GitLab
-        (options?.teams && options.teams.length > 0) ||                // Linear
-        (name === 'linear' && hasAuth);                                 // Linear can poll all teams
+        (options?.repositories && options.repositories.length > 0) || // GitHub/GitLab
+        (options?.projects && options.projects.length > 0) || // GitLab
+        (options?.teams && options.teams.length > 0) || // Linear
+        (name === 'linear' && hasAuth); // Linear can poll all teams
 
       if (!hasPollingConfig) {
         logger.debug(`Skipping poller for ${name}: no repositories/projects/teams configured`);

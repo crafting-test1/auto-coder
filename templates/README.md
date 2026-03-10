@@ -7,6 +7,7 @@ This folder contains Crafting Sandbox templates for the auto-coder agent. Each t
 Secrets are injected as environment variables at runtime. You configure them once in the Crafting Sandbox UI and reference them in templates as `${secret:<secret-name>}`.
 
 To add a secret:
+
 1. Open your Crafting Sandbox dashboard
 2. Navigate to **Settings → Secrets**
 3. Click **Add Secret**, enter the name and value, and save
@@ -24,6 +25,7 @@ The secret name must exactly match what is referenced in the template (e.g., `gi
 A GitHub Personal Access Token (classic) used to authenticate the GitHub MCP server and webhook handler.
 
 **How to create:**
+
 1. Go to [github.com → Settings → Developer settings → Personal access tokens → Tokens (classic)](https://github.com/settings/tokens)
 2. Click **Generate new token (classic)**
 3. Set an expiration and select the following scopes:
@@ -43,6 +45,7 @@ A GitHub Personal Access Token (classic) used to authenticate the GitHub MCP ser
 A Linear Personal API Key used to authenticate the Linear MCP server.
 
 **How to create:**
+
 1. Go to [linear.app → Settings → API → Personal API keys](https://linear.app/settings/api)
 2. Click **Create key**, give it a label (e.g., `auto-coder`)
 3. Copy the generated key
@@ -57,6 +60,7 @@ A Linear Personal API Key used to authenticate the Linear MCP server.
 A shared secret used to verify that incoming webhook payloads are genuinely from Linear.
 
 **How to create:**
+
 1. Go to [linear.app → Settings → API → Webhooks](https://linear.app/settings/api)
 2. Click **Create webhook**
 3. Set the **URL** to your sandbox's webhook endpoint (e.g. `https://<sandbox-id>.sandbox.crafting.app/`)
@@ -74,6 +78,7 @@ A shared secret used to verify that incoming webhook payloads are genuinely from
 A Slack Bot User OAuth Token (`xoxb-...`) used by both the webhook handler and the Slack MCP server.
 
 **How to create:**
+
 1. Go to [api.slack.com/apps](https://api.slack.com/apps) and click **Create New App → From scratch**
 2. Choose a name (e.g., `auto-coder`) and select your workspace
 3. Under **OAuth & Permissions → Scopes → Bot Token Scopes**, add:
@@ -101,6 +106,7 @@ A Slack Bot User OAuth Token (`xoxb-...`) used by both the webhook handler and t
 Used by the webhook handler to verify that incoming requests are from Slack.
 
 **How to create:**
+
 1. In your Slack app settings ([api.slack.com/apps](https://api.slack.com/apps)), select your app
 2. Go to **Basic Information → App Credentials**
 3. Copy the **Signing Secret**

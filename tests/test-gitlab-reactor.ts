@@ -10,12 +10,14 @@ interface MockComment {
   created_at: string;
 }
 
-function makeReactor(opts: {
-  botUsernames?: string[];
-  comments?: MockComment[];
-  postShouldReturn?: number;
-  postShouldThrow?: Error;
-} = {}): GitLabReactor {
+function makeReactor(
+  opts: {
+    botUsernames?: string[];
+    comments?: MockComment[];
+    postShouldReturn?: number;
+    postShouldThrow?: Error;
+  } = {}
+): GitLabReactor {
   const mockComments: Partial<InstanceType<typeof GitLabComments>> = {
     getComments: async () => opts.comments ?? [],
     postComment: async () => {
@@ -86,7 +88,9 @@ test('GitLabReactor.getLastComment - returns the last comment author and body', 
 
 test('GitLabReactor.getLastComment - propagates errors from comments API', async () => {
   const mockComments = {
-    getComments: async () => { throw new Error('GitLab API down'); },
+    getComments: async () => {
+      throw new Error('GitLab API down');
+    },
   } as unknown as InstanceType<typeof GitLabComments>;
   const reactor = new GitLabReactor(mockComments, 'g/p', 'issue', 1, []);
   await assert.rejects(() => reactor.getLastComment(), { message: 'GitLab API down' });

@@ -30,6 +30,7 @@ SQL syntax error: You have an error in your SQL syntax near 'Brien'
 ## What Happens Next
 
 ### 1. **auto-coder detects your @mention** (instantly)
+
 The auto-coder pinned Crafting Sandbox receives the Slack webhook and validates you've mentioned the bot.
 
 ---
@@ -46,6 +47,7 @@ AutoCoder BOT [9:15 AM]
 ### 3. **Crafting Sandbox Coding Agent analyzes the bug**
 
 The agent receives the full thread context and gets to work:
+
 - Reads the error message and identifies it as a SQL injection vulnerability
 - Determines this is in the backend repository
 - Plans the investigation and fix
@@ -55,6 +57,7 @@ The agent receives the full thread context and gets to work:
 ### 4. **Agent investigates and fixes the bug**
 
 The Crafting Sandbox Coding Agent:
+
 - ✅ Searches the codebase for vulnerable SQL queries
 - ✅ Finds the issue in `src/api/users/profile.ts`
 - ✅ Identifies unsafe string interpolation: `SELECT * FROM users WHERE name = '${name}'`
@@ -233,14 +236,15 @@ providers:
 
 commandExecutor:
   enabled: true
-  command: "cs llm session run --approval=auto --name=$EVENT_SHORT_ID --task"
+  command: 'cs llm session run --approval=auto --name=$EVENT_SHORT_ID --task'
   prompts:
-    slack: ./config/event-prompt-slack.hbs  # Slack-specific template with thread history
-  useStdin: true              # Pipe rendered prompt to command's stdin
-  followUp: true              # Post results back to Slack thread
+    slack: ./config/event-prompt-slack.hbs # Slack-specific template with thread history
+  useStdin: true # Pipe rendered prompt to command's stdin
+  followUp: true # Post results back to Slack thread
 ```
 
 **Required Slack App Scopes:**
+
 - `app_mentions:read` - Detect @mentions
 - `chat:write` - Post messages
 - `channels:history` - Read public channel thread history (for context + deduplication)
@@ -248,21 +252,24 @@ commandExecutor:
 - `im:history` - Read direct message thread history
 - `search:read` - Search for missed mentions (polling mode)
 
-
 **Event Subscription:**
+
 - Subscribe to `app_mention` events
 - Set webhook URL: `https://webhook--<sandbox-name>-<your-org>.sandboxes.site/webhook/slack`
 
 ## Advanced Use Cases
 
 ### Multi-Repository Context
+
 ```
 @AutoCoder I'm seeing auth errors in the mobile app. The backend shows
 "Invalid token format" errors. Can you check both repos?
 ```
+
 → Agent searches both repositories, creates PRs for each, reports back
 
 ### Iterative Development
+
 ```
 alice: @AutoCoder add a feature flag for the new dashboard
 Bot: ✅ Created PR #200
@@ -271,12 +278,15 @@ Bot: ✅ Updated PR #200 with mobile changes
 bob: @AutoCoder add documentation
 Bot: ✅ Updated PR #200 with docs
 ```
+
 → Single PR evolves through conversation
 
 ### Code Review Requests
+
 ```
 @AutoCoder review PR #150 and let me know if you spot issues
 ```
+
 → Agent analyzes the PR and posts findings in thread + PR comments
 
 ---
@@ -295,12 +305,12 @@ Bot: ✅ Updated PR #200 with docs
 
 ## Quick Troubleshooting
 
-| Problem | Solution |
-|---------|----------|
-| Bot doesn't respond | Check Slack app has `app_mention` event subscribed |
-| Can't read thread history | Add `channels:history` and `groups:history` scopes |
-| Signature validation fails | Verify `SLACK_SIGNING_SECRET` matches Slack app |
-| Bot not in channel | Invite bot to channel or make it public |
+| Problem                    | Solution                                           |
+| -------------------------- | -------------------------------------------------- |
+| Bot doesn't respond        | Check Slack app has `app_mention` event subscribed |
+| Can't read thread history  | Add `channels:history` and `groups:history` scopes |
+| Signature validation fails | Verify `SLACK_SIGNING_SECRET` matches Slack app    |
+| Bot not in channel         | Invite bot to channel or make it public            |
 
 ---
 

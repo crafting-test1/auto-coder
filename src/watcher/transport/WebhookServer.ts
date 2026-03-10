@@ -15,7 +15,7 @@ export class WebhookServer {
     // Support both JSON and form-encoded webhooks
     this.app.use(
       express.json({
-        verify: (req, res, buf) => {
+        verify: (req, _res, buf) => {
           (req as Request & { rawBody?: Buffer }).rawBody = buf;
         },
       })
@@ -24,13 +24,13 @@ export class WebhookServer {
     this.app.use(
       express.urlencoded({
         extended: true,
-        verify: (req, res, buf) => {
+        verify: (req, _res, buf) => {
           (req as Request & { rawBody?: Buffer }).rawBody = buf;
         },
       })
     );
 
-    this.app.use((req, res, next) => {
+    this.app.use((_req, res, next) => {
       if (this.shuttingDown) {
         res.status(503).json({ error: 'Server is shutting down' });
         return;
@@ -42,15 +42,12 @@ export class WebhookServer {
       next();
     });
 
-    this.app.get('/health', (req, res) => {
+    this.app.get('/health', (_req, res) => {
       res.json({ status: 'ok' });
     });
   }
 
-  registerWebhook(
-    provider: string,
-    handler: (req: Request, res: Response) => Promise<void>
-  ): void {
+  registerWebhook(provider: string, handler: (req: Request, res: Response) => Promise<void>): void {
     const basePath = this.config.basePath || '';
     const path = `${basePath}/webhook/${provider}`;
 
@@ -70,9 +67,7 @@ export class WebhookServer {
     return new Promise((resolve, reject) => {
       try {
         this.server = this.app.listen(this.config.port, this.config.host, () => {
-          logger.info(
-            `Webhook server listening on ${this.config.host}:${this.config.port}`
-          );
+          logger.info(`Webhook server listening on ${this.config.host}:${this.config.port}`);
           resolve();
         });
 
@@ -103,9 +98,7 @@ export class WebhookServer {
     }
 
     if (this.activeRequests > 0) {
-      logger.warn(
-        `Forcing shutdown with ${this.activeRequests} active requests`
-      );
+      logger.warn(`Forcing shutdown with ${this.activeRequests} active requests`);
     }
 
     return new Promise((resolve, reject) => {

@@ -68,6 +68,7 @@ Errors fetching comments are treated as "not a duplicate" to avoid silently drop
 Prompts are rendered using [Handlebars](https://handlebarsjs.com/) templates (`.hbs` files). The full `NormalizedEvent` object is passed as context, so templates have access to all event fields.
 
 Template selection order:
+
 1. Provider-specific template (if configured under `prompts.{provider}`)
 2. Default `promptTemplateFile`
 3. Inline `promptTemplate` string
@@ -76,25 +77,25 @@ Template selection order:
 
 Templates are standard [Handlebars](https://handlebarsjs.com/) files. Key syntax:
 
-| Syntax | Description |
-|---|---|
-| `{{variable}}` | Interpolate a value (e.g. `{{provider}}`, `{{resource.title}}`) |
-| `{{#if variable}}...{{/if}}` | Conditional block — renders when `variable` is truthy |
-| `{{#if variable}}...{{else}}...{{/if}}` | If/else block |
-| `{{#each array}}{{this}}{{/each}}` | Iterate over an array |
-| `{{!-- comment --}}` | Template comment (not included in output) |
+| Syntax                                  | Description                                                     |
+| --------------------------------------- | --------------------------------------------------------------- |
+| `{{variable}}`                          | Interpolate a value (e.g. `{{provider}}`, `{{resource.title}}`) |
+| `{{#if variable}}...{{/if}}`            | Conditional block — renders when `variable` is truthy           |
+| `{{#if variable}}...{{else}}...{{/if}}` | If/else block                                                   |
+| `{{#each array}}{{this}}{{/each}}`      | Iterate over an array                                           |
+| `{{!-- comment --}}`                    | Template comment (not included in output)                       |
 
 **Built-in custom helpers:**
 
-| Helper | Description |
-|---|---|
-| `{{#eq a b}}...{{/eq}}` | Renders block if `a === b` |
-| `{{#ne a b}}...{{/ne}}` | Renders block if `a !== b` |
-| `{{#and a b}}...{{/and}}` | Renders block if both `a` and `b` are truthy |
-| `{{#or a b}}...{{/or}}` | Renders block if either `a` or `b` is truthy |
-| `{{resourceLink}}` | Formatted link to the issue/PR (`resource.url` + `resource.number`) |
-| `{{commentLink}}` | Formatted link to the comment (`resource.comment.url`) |
-| `{{link text url provider}}` | Renders a formatted hyperlink for the given provider |
+| Helper                       | Description                                                         |
+| ---------------------------- | ------------------------------------------------------------------- |
+| `{{#eq a b}}...{{/eq}}`      | Renders block if `a === b`                                          |
+| `{{#ne a b}}...{{/ne}}`      | Renders block if `a !== b`                                          |
+| `{{#and a b}}...{{/and}}`    | Renders block if both `a` and `b` are truthy                        |
+| `{{#or a b}}...{{/or}}`      | Renders block if either `a` or `b` is truthy                        |
+| `{{resourceLink}}`           | Formatted link to the issue/PR (`resource.url` + `resource.number`) |
+| `{{commentLink}}`            | Formatted link to the comment (`resource.comment.url`)              |
+| `{{link text url provider}}` | Renders a formatted hyperlink for the given provider                |
 
 ### NormalizedEvent — Field Reference
 
@@ -105,11 +106,11 @@ The full variable reference (with per-provider notes) is documented at the top o
 
 The normalization itself happens in each provider's `normalizeEvent` / `normalizePolledEvent` private methods:
 
-| Provider | File |
-|---|---|
-| GitHub | `src/watcher/providers/github/GitHubProvider.ts` |
-| Linear | `src/watcher/providers/linear/LinearProvider.ts` |
-| Slack | `src/watcher/providers/slack/SlackProvider.ts` |
+| Provider | File                                             |
+| -------- | ------------------------------------------------ |
+| GitHub   | `src/watcher/providers/github/GitHubProvider.ts` |
+| Linear   | `src/watcher/providers/linear/LinearProvider.ts` |
+| Slack    | `src/watcher/providers/slack/SlackProvider.ts`   |
 
 A few provider-specific quirks worth knowing when writing templates:
 
@@ -133,12 +134,12 @@ Once a prompt is rendered, Watcher:
 
 The command receives:
 
-| Variable | Description |
-|---|---|
+| Variable         | Description                                                                |
+| ---------------- | -------------------------------------------------------------------------- |
 | `EVENT_SHORT_ID` | Clean, unique ID for naming sessions (e.g. `github-owner-repo-123-a1b2c3`) |
-| `EVENT_ID` | Full event identifier |
-| `EVENT_SAFE_ID` | Shell-safe version of `EVENT_ID` (special chars → `_`) |
-| `PROMPT` | Rendered prompt (if `useStdin: false`) |
+| `EVENT_ID`       | Full event identifier                                                      |
+| `EVENT_SAFE_ID`  | Shell-safe version of `EVENT_ID` (special chars → `_`)                     |
+| `PROMPT`         | Rendered prompt (if `useStdin: false`)                                     |
 
 If `useStdin: true`, the prompt is piped to the command's stdin instead of `$PROMPT`.
 
@@ -154,19 +155,19 @@ All behavior is controlled by a single YAML file. Key sections:
 
 ```yaml
 server:
-  host: 0.0.0.0        # optional, defaults to 0.0.0.0
+  host: 0.0.0.0 # optional, defaults to 0.0.0.0
   port: 3000
-  basePath: /          # optional URL prefix for all webhook endpoints
+  basePath: / # optional URL prefix for all webhook endpoints
 
-logLevel: info         # optional: debug | info | warn | error
+logLevel: info # optional: debug | info | warn | error
 
 deduplication:
   enabled: true
-  commentTemplate: "Agent is working on {id}"
+  commentTemplate: 'Agent is working on {id}'
 
 commandExecutor:
   enabled: true
-  command: "cs llm session run --name=$EVENT_SHORT_ID --task"
+  command: 'cs llm session run --name=$EVENT_SHORT_ID --task'
   promptTemplateFile: ./config/event-prompt.hbs
   useStdin: false
   followUp: false

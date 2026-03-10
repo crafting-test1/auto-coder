@@ -48,7 +48,7 @@ export class LinearComments {
     const response = await fetch(this.apiUrl, {
       method: 'POST',
       headers: {
-        'Authorization': this.apiKey,
+        Authorization: this.apiKey,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -66,7 +66,9 @@ export class LinearComments {
 
     if (!response.ok) {
       const errorText = await response.text();
-      logger.error(`Failed to fetch comments from Linear: ${response.status} ${response.statusText} - ${errorText}`);
+      logger.error(
+        `Failed to fetch comments from Linear: ${response.status} ${response.statusText} - ${errorText}`
+      );
       throw new Error(`Failed to fetch comments: ${response.status} ${response.statusText}`);
     }
 
@@ -90,14 +92,16 @@ export class LinearComments {
       const response = await fetch(this.apiUrl, {
         method: 'POST',
         headers: {
-          'Authorization': this.apiKey,
+          Authorization: this.apiKey,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ query }),
       });
 
       if (!response.ok) {
-        logger.warn(`Linear API error getting authenticated user: ${response.status} ${response.statusText}`);
+        logger.warn(
+          `Linear API error getting authenticated user: ${response.status} ${response.statusText}`
+        );
         return null;
       }
 
@@ -139,7 +143,7 @@ export class LinearComments {
       const response = await fetch(this.apiUrl, {
         method: 'POST',
         headers: {
-          'Authorization': this.apiKey,
+          Authorization: this.apiKey,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -157,8 +161,12 @@ export class LinearComments {
 
       if (!response.ok) {
         const errorText = await response.text();
-        logger.error(`Failed to post comment to Linear: ${response.status} ${response.statusText} - ${errorText}`);
-        throw new Error(`Failed to post comment: ${response.status} ${response.statusText} - ${errorText}`);
+        logger.error(
+          `Failed to post comment to Linear: ${response.status} ${response.statusText} - ${errorText}`
+        );
+        throw new Error(
+          `Failed to post comment: ${response.status} ${response.statusText} - ${errorText}`
+        );
       }
 
       const result = await response.json();

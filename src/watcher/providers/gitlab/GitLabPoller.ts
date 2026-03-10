@@ -84,7 +84,7 @@ export class GitLabPoller {
 
     const response = await fetch(url, {
       headers: {
-        'Authorization': `Bearer ${this.config.token}`,
+        Authorization: `Bearer ${this.config.token}`,
       },
     });
 
@@ -122,7 +122,7 @@ export class GitLabPoller {
 
     const response = await fetch(url, {
       headers: {
-        'Authorization': `Bearer ${this.config.token}`,
+        Authorization: `Bearer ${this.config.token}`,
       },
     });
 

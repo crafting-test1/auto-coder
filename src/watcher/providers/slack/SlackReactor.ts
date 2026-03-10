@@ -50,6 +50,6 @@ export class SlackReactor implements Reactor {
   }
 
   isBotAuthor(author: string): boolean {
-    return this.botUsernames.some(name => name.toLowerCase() === author.toLowerCase());
+    return this.botUsernames.some((name) => name.toLowerCase() === author.toLowerCase());
   }
 }

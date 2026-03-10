@@ -27,9 +27,7 @@ export class GitLabWebhook {
     return { valid: true };
   }
 
-  extractMetadata(
-    headers: Record<string, string | string[] | undefined>
-  ): { event: string } {
+  extractMetadata(headers: Record<string, string | string[] | undefined>): { event: string } {
     const event = this.getHeader(headers, 'x-gitlab-event');
 
     if (!event) {

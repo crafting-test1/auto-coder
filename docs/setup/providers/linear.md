@@ -42,6 +42,7 @@ Set up auto-coder to monitor Linear issues and automatically dispatch a Crafting
 The sandbox uses the Linear remote MCP server at `https://mcp.linear.app/mcp`, which gives Crafting Coding Agents access to Linear tools (read issues, create comments, update status, etc.).
 
 How it works:
+
 - The sandbox nginx proxy runs on port 8080 and injects `LINEAR_API_TOKEN` as a Bearer token on every MCP request
 - The sandbox template handles the proxy setup automatically — you do not need to configure it manually
 
@@ -59,7 +60,7 @@ Reference configuration:
 providers:
   linear:
     enabled: true
-    pollingInterval: 60  # seconds between polls (default: 60)
+    pollingInterval: 60 # seconds between polls (default: 60)
 
     auth:
       type: token
@@ -67,7 +68,7 @@ providers:
 
     options:
       webhookSecretEnv: LINEAR_WEBHOOK_SECRET
-      botUsername: your-linear-username  # Linear display name or username, for deduplication
+      botUsername: your-linear-username # Linear display name or username, for deduplication
 
       # Teams to monitor (for polling). Team keys are short IDs like "ENG", "DESIGN".
       # Omit to monitor all teams in your workspace.
@@ -75,8 +76,8 @@ providers:
         - ENG
         - PRODUCT
 
-      initialLookbackHours: 1  # how far back to look on first poll
-      maxItemsPerPoll: 50      # cap items processed per poll cycle
+      initialLookbackHours: 1 # how far back to look on first poll
+      maxItemsPerPoll: 50 # cap items processed per poll cycle
 ```
 
 **Finding your team keys:** Go to Linear → Settings → Teams. The key is the short identifier shown next to each team name (e.g., "ENG", "DES"). Team keys also appear in issue IDs (e.g., "ENG-123" → team key is "ENG").
@@ -86,6 +87,7 @@ providers:
 ### Event filtering
 
 **Default filtering:**
+
 - ✅ `Issue` events are processed
 - ❌ Issues in `done`, `cancelled`, or `canceled` state are skipped
 - ❌ `Comment` events are ignored unless explicitly configured
@@ -133,6 +135,7 @@ eventFilter:
 **Watcher fails to start — "No providers enabled"**
 
 The env vars are not reaching the watcher. Check:
+
 - Secrets exist: `cs secret list`
 - Template references the correct secret names (`${secret:linear-pat}`, `${secret:linear-webhook-secret}`)
 - Sandbox was created from the updated template: `cs sandbox info auto-coder`

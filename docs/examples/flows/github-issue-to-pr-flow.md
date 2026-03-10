@@ -30,6 +30,7 @@ Acceptance criteria:
 ## What Happens Next
 
 ### 1. **auto-coder detects the issue** (within seconds)
+
 The auto-coder pinned Crafting Sandbox receives the GitHub webhook and validates it's a new issue that needs work.
 
 ---
@@ -37,6 +38,7 @@ The auto-coder pinned Crafting Sandbox receives the GitHub webhook and validates
 ### 2. **Bot posts a status comment**
 
 On your issue, you'll see:
+
 ```
 🤖 Crafting Sandbox Coding Agent is working on this issue
 ```
@@ -48,6 +50,7 @@ This lets you know the agent has started working, and prevents duplicate process
 ### 3. **Crafting Sandbox Coding Agent analyzes your request**
 
 The agent receives a prompt with your issue details and gets to work:
+
 - Reads and understands your requirements
 - Explores your codebase to understand the architecture
 - Plans the implementation approach
@@ -57,6 +60,7 @@ The agent receives a prompt with your issue details and gets to work:
 ### 4. **Agent implements the feature**
 
 The Crafting Sandbox Coding Agent:
+
 - ✅ Finds the relevant files (`Settings.tsx`, `ThemeContext.tsx`)
 - ✅ Adds a dark mode toggle component
 - ✅ Implements localStorage persistence
@@ -182,11 +186,13 @@ The PR is ready for your review. The Crafting Sandbox Coding Agent has done all 
 ### You can keep adding requirements!
 
 **You comment on the issue:**
+
 ```
 @auto-coder-bot Can you also add keyboard shortcut Ctrl+D to toggle dark mode?
 ```
 
 **The Crafting Sandbox Coding Agent:**
+
 1. Detects your new comment
 2. Posts "Working on the update..."
 3. Updates the existing PR with the keyboard shortcut
@@ -195,6 +201,7 @@ The PR is ready for your review. The Crafting Sandbox Coding Agent has done all 
 ### Deduplication protection
 
 If the webhook is accidentally triggered multiple times, auto-coder is smart enough to avoid duplicate work:
+
 - ✅ Checks the last comment on the issue
 - ✅ If it's from the bot, skips processing
 - ✅ Only processes when there's new human input
@@ -217,10 +224,10 @@ providers:
 
 commandExecutor:
   enabled: true
-  command: "cs llm session run --approval=auto --name=$EVENT_SHORT_ID --task"
+  command: 'cs llm session run --approval=auto --name=$EVENT_SHORT_ID --task'
   promptTemplateFile: ./config/event-prompt.hbs
   useStdin: true
-  followUp: true              # Post result back to issue
+  followUp: true # Post result back to issue
 ```
 
 ## Architecture
@@ -249,11 +256,11 @@ commandExecutor:
 
 ## Quick Troubleshooting
 
-| Problem | Solution |
-|---------|----------|
-| Bot doesn't respond | Check webhook configuration and bot permissions |
+| Problem              | Solution                                                   |
+| -------------------- | ---------------------------------------------------------- |
+| Bot doesn't respond  | Check webhook configuration and bot permissions            |
 | Duplicate processing | Ensure deduplication is enabled with correct `botUsername` |
-| No follow-up comment | Verify `followUp: true` and bot has write access |
+| No follow-up comment | Verify `followUp: true` and bot has write access           |
 
 ---
 

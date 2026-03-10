@@ -25,6 +25,7 @@ The entire flow is configurable — event sources, filtering rules, and prompt t
 ```
 
 **[Watcher](./watcher.md)** handles:
+
 - Receiving events via webhooks or polling
 - Deduplication (skips if the bot already responded)
 - Prompt construction from configurable Handlebars templates

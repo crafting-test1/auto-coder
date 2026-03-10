@@ -22,10 +22,6 @@ export type {
   EventHandler,
 } from './types/index.js';
 
-export {
-  WatcherError,
-  ProviderError,
-  ConfigError,
-} from './utils/errors.js';
+export { WatcherError, ProviderError, ConfigError } from './utils/errors.js';
 
 export { logger } from './utils/logger.js';

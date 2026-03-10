@@ -35,11 +35,7 @@
     "isolatedModules": true,
     "noUncheckedSideEffectImports": true,
     "moduleDetection": "force",
-    "skipLibCheck": true,
+    "skipLibCheck": true
   },
-  "exclude": [
-    "tests/**/*",
-    "**/*.test.ts",
-    "**/*.spec.ts"
-  ]
+  "exclude": ["tests/**/*", "**/*.test.ts", "**/*.spec.ts"]
 }

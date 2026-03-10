@@ -64,49 +64,82 @@ test('isBotMentionedInText - @bot followed by comma', () => {
 
 test('isBotAssignedInList - matching login returns true', () => {
   const assignees = [{ login: 'bot-user', id: 1 }];
-  assert.equal(isBotAssignedInList(assignees, ['bot-user'], a => (a as any).login), true);
+  assert.equal(
+    isBotAssignedInList(assignees, ['bot-user'], (a) => (a as any).login),
+    true
+  );
 });
 
 test('isBotAssignedInList - no assignees (undefined) returns false', () => {
-  assert.equal(isBotAssignedInList(undefined, ['bot-user'], a => (a as any).login), false);
+  assert.equal(
+    isBotAssignedInList(undefined, ['bot-user'], (a) => (a as any).login),
+    false
+  );
 });
 
 test('isBotAssignedInList - empty assignees array returns false', () => {
-  assert.equal(isBotAssignedInList([], ['bot-user'], a => (a as any).login), false);
+  assert.equal(
+    isBotAssignedInList([], ['bot-user'], (a) => (a as any).login),
+    false
+  );
 });
 
 test('isBotAssignedInList - non-matching login returns false', () => {
   const assignees = [{ login: 'alice', id: 1 }];
-  assert.equal(isBotAssignedInList(assignees, ['bot-user'], a => (a as any).login), false);
+  assert.equal(
+    isBotAssignedInList(assignees, ['bot-user'], (a) => (a as any).login),
+    false
+  );
 });
 
 test('isBotAssignedInList - empty botUsernames returns false', () => {
   const assignees = [{ login: 'bot-user', id: 1 }];
-  assert.equal(isBotAssignedInList(assignees, [], a => (a as any).login), false);
+  assert.equal(
+    isBotAssignedInList(assignees, [], (a) => (a as any).login),
+    false
+  );
 });
 
 test('isBotAssignedInList - case-insensitive match', () => {
   const assignees = [{ login: 'Bot-User', id: 1 }];
-  assert.equal(isBotAssignedInList(assignees, ['bot-user'], a => (a as any).login), true);
+  assert.equal(
+    isBotAssignedInList(assignees, ['bot-user'], (a) => (a as any).login),
+    true
+  );
 });
 
 test('isBotAssignedInList - multiple assignees, one matching', () => {
-  const assignees = [{ login: 'alice', id: 1 }, { login: 'bot-user', id: 2 }];
-  assert.equal(isBotAssignedInList(assignees, ['bot-user'], a => (a as any).login), true);
+  const assignees = [
+    { login: 'alice', id: 1 },
+    { login: 'bot-user', id: 2 },
+  ];
+  assert.equal(
+    isBotAssignedInList(assignees, ['bot-user'], (a) => (a as any).login),
+    true
+  );
 });
 
 test('isBotAssignedInList - getUsernameFrom returns undefined for absent field', () => {
   // Assignee has no 'login' property — extractor returns undefined
   const assignees = [{ name: 'bot-user' }];
-  assert.equal(isBotAssignedInList(assignees, ['bot-user'], a => (a as any).login), false);
+  assert.equal(
+    isBotAssignedInList(assignees, ['bot-user'], (a) => (a as any).login),
+    false
+  );
 });
 
 test('isBotAssignedInList - works with username field (GitLab style)', () => {
   const assignees = [{ username: 'auto-coder', id: 51 }];
-  assert.equal(isBotAssignedInList(assignees, ['auto-coder'], a => (a as any).username), true);
+  assert.equal(
+    isBotAssignedInList(assignees, ['auto-coder'], (a) => (a as any).username),
+    true
+  );
 });
 
 test('isBotAssignedInList - works with name field (Linear style)', () => {
   const assignees = [{ name: 'Auto Coder Bot', id: 'user-1' }];
-  assert.equal(isBotAssignedInList(assignees, ['Auto Coder Bot'], a => (a as any).name), true);
+  assert.equal(
+    isBotAssignedInList(assignees, ['Auto Coder Bot'], (a) => (a as any).name),
+    true
+  );
 });

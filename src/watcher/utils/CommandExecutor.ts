@@ -48,40 +48,52 @@ export class CommandExecutor {
 
   private registerHelpers(): void {
     // Register 'eq' helper for equality comparisons
-    Handlebars.registerHelper('eq', function (this: unknown, a: unknown, b: unknown, options: Handlebars.HelperOptions) {
-      if (a === b) {
-        return options.fn(this);
-      } else {
-        return options.inverse(this);
+    Handlebars.registerHelper(
+      'eq',
+      function (this: unknown, a: unknown, b: unknown, options: Handlebars.HelperOptions) {
+        if (a === b) {
+          return options.fn(this);
+        } else {
+          return options.inverse(this);
+        }
       }
-    });
+    );
 
     // Register 'ne' helper for inequality comparisons
-    Handlebars.registerHelper('ne', function (this: unknown, a: unknown, b: unknown, options: Handlebars.HelperOptions) {
-      if (a !== b) {
-        return options.fn(this);
-      } else {
-        return options.inverse(this);
+    Handlebars.registerHelper(
+      'ne',
+      function (this: unknown, a: unknown, b: unknown, options: Handlebars.HelperOptions) {
+        if (a !== b) {
+          return options.fn(this);
+        } else {
+          return options.inverse(this);
+        }
       }
-    });
+    );
 
     // Register 'and' helper for logical AND
-    Handlebars.registerHelper('and', function (this: unknown, a: unknown, b: unknown, options: Handlebars.HelperOptions) {
-      if (a && b) {
-        return options.fn(this);
-      } else {
-        return options.inverse(this);
+    Handlebars.registerHelper(
+      'and',
+      function (this: unknown, a: unknown, b: unknown, options: Handlebars.HelperOptions) {
+        if (a && b) {
+          return options.fn(this);
+        } else {
+          return options.inverse(this);
+        }
       }
-    });
+    );
 
     // Register 'or' helper for logical OR
-    Handlebars.registerHelper('or', function (this: unknown, a: unknown, b: unknown, options: Handlebars.HelperOptions) {
-      if (a || b) {
-        return options.fn(this);
-      } else {
-        return options.inverse(this);
+    Handlebars.registerHelper(
+      'or',
+      function (this: unknown, a: unknown, b: unknown, options: Handlebars.HelperOptions) {
+        if (a || b) {
+          return options.fn(this);
+        } else {
+          return options.inverse(this);
+        }
       }
-    });
+    );
 
     // Register 'link' helper for formatting links
     Handlebars.registerHelper('link', function (text: string, url: string, provider: string) {
@@ -150,7 +162,12 @@ export class CommandExecutor {
     return cleaned.slice(-6).toLowerCase();
   }
 
-  async execute(eventId: string, displayString: string, event: NormalizedEvent, reactor: Reactor): Promise<void> {
+  async execute(
+    eventId: string,
+    displayString: string,
+    event: NormalizedEvent,
+    reactor: Reactor
+  ): Promise<void> {
     if (!this.config.enabled) {
       return;
     }
@@ -165,12 +182,14 @@ export class CommandExecutor {
 
       if (template) {
         prompt = template(event);
-        logger.debug(`Rendered prompt using ${this.providerTemplates.has(event.provider) ? 'provider-specific' : 'default'} template for ${event.provider}`);
+        logger.debug(
+          `Rendered prompt using ${this.providerTemplates.has(event.provider) ? 'provider-specific' : 'default'} template for ${event.provider}`
+        );
       }
 
       // Post initial comment with user-friendly display string (always, even in dry-run)
       logger.info(`Executing command for event ${eventId}`);
-      const commentRef = await reactor.postComment(`Agent is working on ${displayString}`);
+      const _commentRef = await reactor.postComment(`Agent is working on ${displayString}`);
 
       // Dry-run mode: print command details without executing
       if (this.config.dryRun) {
@@ -224,12 +243,16 @@ export class CommandExecutor {
     }
   }
 
-  private async runCommand(eventId: string, prompt: string, event: NormalizedEvent): Promise<string> {
+  private async runCommand(
+    eventId: string,
+    prompt: string,
+    event: NormalizedEvent
+  ): Promise<string> {
     return new Promise((resolve, reject) => {
       // Minimal environment variables - just IDs and prompt
       // All event details should be in the prompt (rendered from template)
       const env: Record<string, string> = {
-        ...process.env as Record<string, string>,
+        ...(process.env as Record<string, string>),
         // Full event ID for internal tracking/logging
         EVENT_ID: event.id,
         // Sanitized ID safe for shell commands (colons/slashes → underscores)
@@ -281,10 +304,7 @@ export class CommandExecutor {
           }
           resolve(stdout);
         } else {
-          logger.error(
-            `Command failed for event ${eventId} with code ${code}`,
-            { stderr }
-          );
+          logger.error(`Command failed for event ${eventId} with code ${code}`, { stderr });
           reject(new Error(`Command exited with code ${code}: ${stderr}`));
         }
       });

@@ -11,8 +11,7 @@ export class ConfigLoader {
   private static readonly DEFAULT_COMMAND =
     'cs llm session run --approval=auto --name=$EVENT_SHORT_ID --task';
 
-  private static readonly DEFAULT_PROMPT_TEMPLATE =
-    './config/event-prompt.hbs';
+  private static readonly DEFAULT_PROMPT_TEMPLATE = './config/event-prompt.hbs';
 
   /**
    * Primary entry point. Loads config from file (optional) then overlays env vars.
@@ -100,9 +99,8 @@ export class ConfigLoader {
         options.botUsername = process.env.GITHUB_BOT_USERNAME;
       }
       if (process.env.GITHUB_REPOSITORIES) {
-        options.repositories = process.env.GITHUB_REPOSITORIES
-          .split(',')
-          .map(r => r.trim())
+        options.repositories = process.env.GITHUB_REPOSITORIES.split(',')
+          .map((r) => r.trim())
           .filter(Boolean);
       }
       if (process.env.GITHUB_WEBHOOK_SECRET) {
@@ -128,9 +126,8 @@ export class ConfigLoader {
         options.botUsername = process.env.LINEAR_BOT_USERNAME;
       }
       if (process.env.LINEAR_TEAMS) {
-        options.teams = process.env.LINEAR_TEAMS
-          .split(',')
-          .map(t => t.trim())
+        options.teams = process.env.LINEAR_TEAMS.split(',')
+          .map((t) => t.trim())
           .filter(Boolean);
       }
       if (process.env.LINEAR_WEBHOOK_SECRET) {
@@ -235,7 +232,8 @@ export class ConfigLoader {
       } else {
         const base = result.providers[name];
         if (envProvider.enabled !== undefined) base.enabled = envProvider.enabled;
-        if (envProvider.pollingInterval !== undefined) base.pollingInterval = envProvider.pollingInterval;
+        if (envProvider.pollingInterval !== undefined)
+          base.pollingInterval = envProvider.pollingInterval;
         if (envProvider.auth) {
           base.auth = { ...base.auth, ...envProvider.auth };
         }
@@ -294,7 +292,7 @@ export class ConfigLoader {
     if (!config.providers || typeof config.providers !== 'object') {
       throw new ConfigError(
         'No providers configured. Set GITHUB_PERSONAL_ACCESS_TOKEN (or LINEAR_API_TOKEN / ' +
-        'SLACK_BOT_TOKEN) to configure a provider, or create config/watcher.yaml.'
+          'SLACK_BOT_TOKEN) to configure a provider, or create config/watcher.yaml.'
       );
     }
 
@@ -302,8 +300,8 @@ export class ConfigLoader {
     if (enabledProviders.length === 0) {
       throw new ConfigError(
         'No providers enabled. Set GITHUB_PERSONAL_ACCESS_TOKEN to enable GitHub, ' +
-        'LINEAR_API_TOKEN for Linear, or SLACK_BOT_TOKEN for Slack. ' +
-        'Alternatively, configure providers in config/watcher.yaml.'
+          'LINEAR_API_TOKEN for Linear, or SLACK_BOT_TOKEN for Slack. ' +
+          'Alternatively, configure providers in config/watcher.yaml.'
       );
     }
 
@@ -320,11 +318,7 @@ export class ConfigLoader {
     }
   }
 
-  static resolveSecret(
-    value?: string,
-    envVar?: string,
-    file?: string
-  ): string | undefined {
+  static resolveSecret(value?: string, envVar?: string, file?: string): string | undefined {
     if (value) {
       return value;
     }

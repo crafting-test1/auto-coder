@@ -7,8 +7,7 @@ import { SlackProvider } from './watcher/providers/slack/SlackProvider.js';
 import { logger } from './watcher/utils/logger.js';
 
 async function main(): Promise<void> {
-  const configPath =
-    process.env.WATCHER_CONFIG || './config/watcher.yaml';
+  const configPath = process.env.WATCHER_CONFIG || './config/watcher.yaml';
 
   try {
     const config = ConfigLoader.loadWithEnv(configPath);

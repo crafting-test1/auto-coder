@@ -1,9 +1,4 @@
-import type {
-  IProvider,
-  ProviderConfig,
-  ProviderMetadata,
-  EventHandler,
-} from '../types/index.js';
+import type { IProvider, ProviderConfig, ProviderMetadata, EventHandler } from '../types/index.js';
 import { ProviderError } from '../utils/errors.js';
 import { logger } from '../utils/logger.js';
 
@@ -18,25 +13,22 @@ export abstract class BaseProvider implements IProvider {
   }
 
   async validateWebhook(
-    headers: Record<string, string | string[] | undefined>,
-    body: unknown,
-    rawBody?: string | Buffer
+    _headers: Record<string, string | string[] | undefined>,
+    _body: unknown,
+    _rawBody?: string | Buffer
   ): Promise<boolean> {
     return true;
   }
 
   async handleWebhook(
-    headers: Record<string, string | string[] | undefined>,
-    body: unknown,
-    eventHandler: EventHandler
+    _headers: Record<string, string | string[] | undefined>,
+    _body: unknown,
+    _eventHandler: EventHandler
   ): Promise<void> {
-    throw new ProviderError(
-      'handleWebhook not implemented',
-      this.metadata.name
-    );
+    throw new ProviderError('handleWebhook not implemented', this.metadata.name);
   }
 
-  async poll(eventHandler: EventHandler): Promise<void> {
+  async poll(_eventHandler: EventHandler): Promise<void> {
     // Default: do nothing (no polling)
   }
 

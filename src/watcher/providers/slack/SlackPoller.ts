@@ -43,14 +43,16 @@ export class SlackPoller {
    * Poll for missed mentions.
    * Searches for messages that mention the bot since the last poll.
    */
-  async poll(): Promise<Array<{
-    channel: string;
-    ts: string;
-    threadTs?: string;
-    text: string;
-    user: string;
-    permalink?: string;
-  }>> {
+  async poll(): Promise<
+    Array<{
+      channel: string;
+      ts: string;
+      threadTs?: string;
+      text: string;
+      user: string;
+      permalink?: string;
+    }>
+  > {
     return withExponentialRetry(async () => {
       const now = Date.now();
       const afterTimestamp = Math.floor(this.lastPollTimestamp / 1000);
@@ -71,14 +73,16 @@ export class SlackPoller {
 
       const response = await fetch(`${endpoint}?${params}`, {
         headers: {
-          'Authorization': `Bearer ${this.token}`,
+          Authorization: `Bearer ${this.token}`,
           'Content-Type': 'application/json',
         },
       });
 
       if (!response.ok) {
         const errorText = await response.text();
-        logger.warn(`Slack search API error: ${response.status} ${response.statusText} - ${errorText}`);
+        logger.warn(
+          `Slack search API error: ${response.status} ${response.statusText} - ${errorText}`
+        );
         return [];
       }
 

@@ -1,13 +1,18 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { GitHubReactor } from '../src/watcher/providers/github/GitHubReactor.js';
-import type { GitHubComments, CommentInfo } from '../src/watcher/providers/github/GitHubComments.js';
+import type {
+  GitHubComments,
+  CommentInfo,
+} from '../src/watcher/providers/github/GitHubComments.js';
 
-function makeReactor(opts: {
-  botUsernames?: string[];
-  lastComment?: CommentInfo | null;
-  postShouldThrow?: Error;
-} = {}): GitHubReactor {
+function makeReactor(
+  opts: {
+    botUsernames?: string[];
+    lastComment?: CommentInfo | null;
+    postShouldThrow?: Error;
+  } = {}
+): GitHubReactor {
   const mockComments: Partial<InstanceType<typeof GitHubComments>> = {
     getLastComment: async () => opts.lastComment ?? null,
     postComment: async () => {

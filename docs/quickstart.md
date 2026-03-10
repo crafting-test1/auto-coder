@@ -25,6 +25,7 @@ Add the bot as a collaborator on the repositories it needs to access.
 Sign in as the bot account, then go to **Settings → Developer settings → Personal access tokens → Fine-grained tokens → Generate new token**.
 
 Required permissions:
+
 - **Issues:** Read and write
 - **Pull requests:** Read and write
 
@@ -53,8 +54,7 @@ echo "$GITHUB_WEBHOOK_SECRET" | cs secret create github-webhook-secret --shared 
 
 or using the Web Console.
 
-After creating each secret, make sure both secrets are marked as **Admin Only** and **Not Mountable**.
----
+## After creating each secret, make sure both secrets are marked as **Admin Only** and **Not Mountable**.
 
 ## 4. Configure template and start a Sandbox
 
@@ -86,12 +86,12 @@ Find your webhook URL: Web Console → Sandbox → Endpoints → "webhook"
 
 In each monitored repository go to **Settings → Webhooks → Add webhook**:
 
-| Field | Value |
-|---|---|
-| Payload URL | `https://webhook--auto-coder-<your-org>.sandboxes.site/webhook/github` |
-| Content type | `application/json` ← **required** |
-| Secret | webhook secret from Step 3 |
-| Events | Issues, Pull requests, Issue comments |
+| Field        | Value                                                                  |
+| ------------ | ---------------------------------------------------------------------- |
+| Payload URL  | `https://webhook--auto-coder-<your-org>.sandboxes.site/webhook/github` |
+| Content type | `application/json` ← **required**                                      |
+| Secret       | webhook secret from Step 3                                             |
+| Events       | Issues, Pull requests, Issue comments                                  |
 
 ---
 
@@ -112,7 +112,7 @@ cs logs --workspace auto-coder/dev --follow watcher
 # Look for: "Watcher started successfully" and "Initialized provider: github"
 ```
 
-Create a test issue in one of your monitored repos. Within ~30 seconds the bot should comment: *"Agent is working on #\<number\>"* and a Crafting Coding Agent session will start.
+Create a test issue in one of your monitored repos. Within ~30 seconds the bot should comment: _"Agent is working on #\<number\>"_ and a Crafting Coding Agent session will start.
 
 ---
 

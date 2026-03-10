@@ -17,11 +17,11 @@ Before starting, make sure you have:
 
 Each provider requires its own credentials and, in some cases, an MCP server for the agent to act on your behalf. Follow the guide for each provider you want to use:
 
-| Provider | Credentials needed | MCP available |
-|---|---|---|
+| Provider                      | Credentials needed                | MCP available                                  |
+| ----------------------------- | --------------------------------- | ---------------------------------------------- |
 | [GitHub](providers/github.md) | Fine-grained PAT + webhook secret | GitHub MCP server (container, auto-configured) |
-| [Linear](providers/linear.md) | API key + webhook secret | Remote MCP at `https://mcp.linear.app/mcp` |
-| [Slack](providers/slack.md) | Bot token + signing secret | Slack MCP server (container, auto-configured) |
+| [Linear](providers/linear.md) | API key + webhook secret          | Remote MCP at `https://mcp.linear.app/mcp`     |
+| [Slack](providers/slack.md)   | Bot token + signing secret        | Slack MCP server (container, auto-configured)  |
 
 Complete the relevant provider guide(s) before continuing. Each guide ends with a list of secrets to create; you will reference those secret names in Part 2.
 
@@ -34,6 +34,7 @@ Complete the relevant provider guide(s) before continuing. Each guide ends with 
 Create a Crafting secret for each credential you collected in the provider guides. Use the canonical secret names listed there (they must match the template's `${secret:...}` references exactly).
 
 Example for GitHub (run in a separate terminal — never paste tokens into this chat):
+
 ```bash
 echo "YOUR_TOKEN" | cs secret create github-pat --shared -f -
 echo "YOUR_WEBHOOK_SECRET" | cs secret create github-webhook-secret --shared -f -
@@ -60,8 +61,9 @@ Open the template and fill in the required values in the `env:` block. At minimu
 
 ```yaml
 env:
-  - GITHUB_PERSONAL_ACCESS_TOKEN=${secret:github-pat}    # already set
+  - GITHUB_PERSONAL_ACCESS_TOKEN=${secret:github-pat} # already set
   - GITHUB_WEBHOOK_SECRET=${secret:github-webhook-secret} # already set
+
 
   # Optional — both are auto-detected from the PAT if not set:
   #   GITHUB_BOT_USERNAME    auto-detected via GET /user
@@ -181,6 +183,7 @@ For provider-specific troubleshooting, see the relevant provider guide:
 **Watcher fails to start — "No providers enabled"**
 
 The env vars are not reaching the watcher. Check:
+
 - Secrets exist: `cs secret list`
 - Template references the correct secret names (e.g. `${secret:github-pat}`)
 - Sandbox was created from the updated template: `cs sandbox info auto-coder`

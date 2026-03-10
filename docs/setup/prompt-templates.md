@@ -6,10 +6,10 @@ The prompt template controls what the agent is told when an event fires. Customi
 
 ## The Two Default Templates
 
-| Template | Used for |
-|---|---|
-| `config/event-prompt.hbs` | GitHub, Linear |
-| `config/event-prompt-slack.hbs` | Slack |
+| Template                        | Used for       |
+| ------------------------------- | -------------- |
+| `config/event-prompt.hbs`       | GitHub, Linear |
+| `config/event-prompt-slack.hbs` | Slack          |
 
 These are the starting point. Copy one and edit it rather than writing from scratch.
 
@@ -25,12 +25,12 @@ Set `WATCHER_COMMAND` to pass a custom prompt file path, or more directly, use `
 
 ```yaml
 commandExecutor:
-  promptTemplateFile: ./config/my-prompt.hbs   # default for all providers
+  promptTemplateFile: ./config/my-prompt.hbs # default for all providers
 
   # Per-provider overrides (take precedence over promptTemplateFile)
   prompts:
     github: ./config/my-github-prompt.hbs
-    slack:  ./config/my-slack-prompt.hbs
+    slack: ./config/my-slack-prompt.hbs
 ```
 
 The template file path is relative to the watcher's working directory inside the sandbox. Inject the file via the template's `system.files` block — the same way `watcher.yaml` itself is injected:
@@ -52,37 +52,42 @@ system:
 
 The full `NormalizedEvent` object is available in every template. The most commonly used fields:
 
-| Variable | Description |
-|---|---|
-| `{{provider}}` | `github` \| `linear` \| `slack` |
-| `{{type}}` | `issue`, `pull_request`, `merge_request`, `message` |
-| `{{action}}` | e.g. `opened`, `edited`, `poll` |
-| `{{resource.number}}` | Issue or PR number (GitHub/Linear) · always `0` for Slack |
-| `{{resource.title}}` | Title / summary (Slack: auto-generated `"Message in #<channelId>"`) |
-| `{{resource.description}}` | Body / description (Slack: full thread history) |
-| `{{resource.url}}` | URL to the issue or PR (Slack: empty for webhook events, populated for polled mentions) |
-| `{{resource.repository}}` | `owner/repo` (GitHub) · team key (Linear) · channel ID (Slack) |
-| `{{resource.author}}` | GitHub: login username · Linear: display name · Slack: user ID (e.g. `U01ABC123`) |
-| `{{resource.assignees}}` | Array — truthy if the issue is assigned · not populated for Slack |
-| `{{resource.labels}}` | Array of label name strings · not populated for Slack |
-| `{{resource.branch}}` | Head branch — GitHub PR only |
-| `{{resource.mergeTo}}` | Target branch — GitHub PR only |
-| `{{resource.comment.body}}` | Comment text (Slack: the triggering mention only, not full thread) · absent if event is not comment-triggered (except Slack, where it is always present) |
-| `{{resource.comment.author}}` | Comment author (Slack: user ID) |
-| `{{actor.username}}` | GitHub: login username · Linear: display name · Slack: user ID |
-| `{{metadata.timestamp}}` | ISO 8601 timestamp (GitHub/Linear) · Slack message timestamp, e.g. `1234567890.123456` |
+| Variable                      | Description                                                                                                                                              |
+| ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `{{provider}}`                | `github` \| `linear` \| `slack`                                                                                                                          |
+| `{{type}}`                    | `issue`, `pull_request`, `merge_request`, `message`                                                                                                      |
+| `{{action}}`                  | e.g. `opened`, `edited`, `poll`                                                                                                                          |
+| `{{resource.number}}`         | Issue or PR number (GitHub/Linear) · always `0` for Slack                                                                                                |
+| `{{resource.title}}`          | Title / summary (Slack: auto-generated `"Message in #<channelId>"`)                                                                                      |
+| `{{resource.description}}`    | Body / description (Slack: full thread history)                                                                                                          |
+| `{{resource.url}}`            | URL to the issue or PR (Slack: empty for webhook events, populated for polled mentions)                                                                  |
+| `{{resource.repository}}`     | `owner/repo` (GitHub) · team key (Linear) · channel ID (Slack)                                                                                           |
+| `{{resource.author}}`         | GitHub: login username · Linear: display name · Slack: user ID (e.g. `U01ABC123`)                                                                        |
+| `{{resource.assignees}}`      | Array — truthy if the issue is assigned · not populated for Slack                                                                                        |
+| `{{resource.labels}}`         | Array of label name strings · not populated for Slack                                                                                                    |
+| `{{resource.branch}}`         | Head branch — GitHub PR only                                                                                                                             |
+| `{{resource.mergeTo}}`        | Target branch — GitHub PR only                                                                                                                           |
+| `{{resource.comment.body}}`   | Comment text (Slack: the triggering mention only, not full thread) · absent if event is not comment-triggered (except Slack, where it is always present) |
+| `{{resource.comment.author}}` | Comment author (Slack: user ID)                                                                                                                          |
+| `{{actor.username}}`          | GitHub: login username · Linear: display name · Slack: user ID                                                                                           |
+| `{{metadata.timestamp}}`      | ISO 8601 timestamp (GitHub/Linear) · Slack message timestamp, e.g. `1234567890.123456`                                                                   |
 
 For the complete field-by-field reference including provider-specific quirks, see the comments at the top of each example template.
 
 ### Built-in helpers
 
 ```handlebars
-{{resourceLink}}                    {{!-- formatted link: "owner/repo#123" --}}
-{{commentLink}}                     {{!-- formatted link to the comment --}}
-{{#eq provider "github"}}...{{/eq}} {{!-- conditional: renders if equal --}}
-{{#ne action "poll"}}...{{/ne}}     {{!-- conditional: renders if not equal --}}
-{{#if resource.assignees}}...{{/if}}{{!-- conditional: renders if truthy --}}
-{{#each resource.labels}}{{this}}{{/each}} {{!-- iterate array --}}
+{{resourceLink}}
+{{! formatted link: "owner/repo#123" }}
+{{commentLink}}
+{{! formatted link to the comment }}
+{{#eq provider 'github'}}...{{/eq}}
+{{! conditional: renders if equal }}
+{{#ne action 'poll'}}...{{/ne}}
+{{! conditional: renders if not equal }}
+{{#if resource.assignees}}...{{/if}}{{! conditional: renders if truthy }}
+{{#each resource.labels}}{{this}}{{/each}}
+{{! iterate array }}
 ```
 
 ---
@@ -108,7 +113,7 @@ commandExecutor:
 
 ```yaml
 commandExecutor:
-  dryRun: true   # logs the rendered prompt without executing
+  dryRun: true # logs the rendered prompt without executing
 ```
 
 Run the watcher and trigger a test event. Check logs to see the exact prompt that would be sent.
@@ -121,12 +126,10 @@ Run the watcher and trigger a test event. Check logs to see the exact prompt tha
 
 ```handlebars
 {{#if resource.assignees}}
-## Instructions
-You are assigned to this issue. Implement the requested change and open a PR.
+  ## Instructions You are assigned to this issue. Implement the requested change and open a PR.
 {{else}}
-## Instructions
-This issue is unassigned. Add a clarifying comment asking the author for more details.
-Do NOT make code changes yet.
+  ## Instructions This issue is unassigned. Add a clarifying comment asking the author for more
+  details. Do NOT make code changes yet.
 {{/if}}
 ```
 
@@ -134,25 +137,29 @@ Do NOT make code changes yet.
 
 ```handlebars
 {{#if resource.labels}}
-Labels: {{#each resource.labels}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}
+  Labels:
+  {{#each resource.labels}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}
 {{/if}}
 ```
 
 ### Use a different repository naming convention
 
 ```handlebars
-- Create a branch named `fix/{{resource.number}}-{{resource.title}}`
-  (lowercase, spaces replaced with hyphens)
+- Create a branch named `fix/{{resource.number}}-{{resource.title}}` (lowercase, spaces replaced
+with hyphens)
 ```
 
 ### Per-provider behavior in a single template
 
 ```handlebars
-{{#eq provider "linear"}}
-- The team key is {{resource.repository}} — find the matching GitHub repo in the org
+{{#eq provider 'linear'}}
+  - The team key is
+  {{resource.repository}}
+  — find the matching GitHub repo in the org
 {{/eq}}
-{{#eq provider "github"}}
-- Work directly in {{resource.repository}}
+{{#eq provider 'github'}}
+  - Work directly in
+  {{resource.repository}}
 {{/eq}}
 ```
 

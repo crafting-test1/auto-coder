@@ -57,22 +57,14 @@ test('SlackWebhook.validate - valid with correct v0= signature', () => {
 
 test('SlackWebhook.validate - missing timestamp header when secret is configured returns invalid', () => {
   const webhook = new SlackWebhook('my-secret');
-  const result = webhook.validate(
-    { 'x-slack-signature': 'v0=deadbeef' },
-    {},
-    'body'
-  );
+  const result = webhook.validate({ 'x-slack-signature': 'v0=deadbeef' }, {}, 'body');
   assert.equal(result.valid, false);
   assert.ok(result.error?.toLowerCase().includes('timestamp'));
 });
 
 test('SlackWebhook.validate - missing signature header when secret is configured returns invalid', () => {
   const webhook = new SlackWebhook('my-secret');
-  const result = webhook.validate(
-    { 'x-slack-request-timestamp': freshTimestamp() },
-    {},
-    'body'
-  );
+  const result = webhook.validate({ 'x-slack-request-timestamp': freshTimestamp() }, {}, 'body');
   assert.equal(result.valid, false);
   assert.ok(result.error?.toLowerCase().includes('signature'));
 });

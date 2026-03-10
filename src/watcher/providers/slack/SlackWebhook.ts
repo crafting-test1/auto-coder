@@ -18,7 +18,7 @@ export class SlackWebhook {
     body: unknown,
     rawBody: string | Buffer
   ): { valid: boolean; error?: string; challenge?: string } {
-    const bodyObj = typeof body === 'object' && body !== null ? body as any : {};
+    const bodyObj = typeof body === 'object' && body !== null ? (body as any) : {};
 
     // Handle URL verification challenge (sent when first configuring webhook)
     if (bodyObj.type === 'url_verification') {
@@ -89,7 +89,7 @@ export class SlackWebhook {
         Buffer.from(expectedSignature, 'hex'),
         Buffer.from(computedSignature, 'hex')
       );
-    } catch (error) {
+    } catch {
       // timingSafeEqual throws if buffers have different lengths
       return false;
     }
@@ -102,7 +102,7 @@ export class SlackWebhook {
     headers: Record<string, string | string[] | undefined>,
     body: unknown
   ): { eventType: string; eventId: string; retryNum?: number } {
-    const bodyObj = typeof body === 'object' && body !== null ? body as any : {};
+    const bodyObj = typeof body === 'object' && body !== null ? (body as any) : {};
 
     const eventType = bodyObj.event?.type || bodyObj.type || 'unknown';
     const eventId = this.getHeader(headers, 'x-slack-request-timestamp') || Date.now().toString();

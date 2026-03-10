@@ -23,14 +23,14 @@ Set up auto-coder to respond to @mentions in Slack and automatically dispatch a 
 
 Navigate to **OAuth & Permissions** and add these Bot Token Scopes:
 
-| Scope | Purpose |
-|---|---|
-| `app_mentions:read` | Receive @mentions (webhook) |
-| `chat:write` | Post messages |
-| `channels:history` | Read public channel thread history (deduplication + context) |
-| `groups:history` | Read private channel thread history |
-| `im:history` | Read direct message thread history |
-| `search:read` | Search for missed mentions (polling mode) |
+| Scope               | Purpose                                                      |
+| ------------------- | ------------------------------------------------------------ |
+| `app_mentions:read` | Receive @mentions (webhook)                                  |
+| `chat:write`        | Post messages                                                |
+| `channels:history`  | Read public channel thread history (deduplication + context) |
+| `groups:history`    | Read private channel thread history                          |
+| `im:history`        | Read direct message thread history                           |
+| `search:read`       | Search for missed mentions (polling mode)                    |
 
 ---
 
@@ -77,6 +77,7 @@ Navigate to **Event Subscriptions**:
 The sandbox uses a Slack MCP server that gives Crafting Coding Agents access to Slack tools (search messages, read channel history, post messages, etc.).
 
 How it works:
+
 - The MCP server uses the `SLACK_MCP_XOXB_TOKEN` environment variable, which is set from the `slack-bot-token` secret in the sandbox template
 - Message posting is **disabled by default** for safety. To enable posting in specific channels, set `SLACK_MCP_ADD_MESSAGE_TOOL=<channel_id>` (comma-separated for multiple channels) in the sandbox template's `env:` block
 - The sandbox template handles the container setup automatically
@@ -96,7 +97,7 @@ providers:
 
     # Optional: polling as fallback for missed mentions
     # Recommended to catch mentions when webhooks fail or are temporarily unavailable
-    pollingInterval: 300  # 5 minutes (300 seconds)
+    pollingInterval: 300 # 5 minutes (300 seconds)
 
     auth:
       type: token
@@ -108,7 +109,7 @@ providers:
       # Must be set to true to activate polling (Slack-specific opt-in)
       pollingEnabled: true
 
-      initialLookbackHours: 1  # how far back to look on first poll
+      initialLookbackHours: 1 # how far back to look on first poll
 ```
 
 **No `botUsername` needed:** The Slack provider auto-detects the bot's user ID on startup.
@@ -128,7 +129,8 @@ By default, only `app_mention` events are processed. Use `eventFilter` to change
 ```yaml
 options:
   eventFilter:
-    app_mention: {}  # default
+    app_mention: {} # default
+
 
     # Also handle direct messages:
     # message: {}
@@ -139,6 +141,7 @@ If `eventFilter` is omitted, only `app_mention` is processed.
 ### Thread handling
 
 When the bot is mentioned in a thread:
+
 - The bot replies in the same thread automatically
 - The full thread conversation history is fetched and included in `resource.description` (formatted as `[timestamp] <@userId>: text` per message)
 - Use `resource.description` in Handlebars templates when you need full thread context; `resource.comment.body` contains only the triggering mention text
@@ -150,6 +153,7 @@ When the bot is mentioned in a thread:
 **Watcher fails to start — "No providers enabled"**
 
 The env vars are not reaching the watcher. Check:
+
 - Secrets exist: `cs secret list`
 - Template references the correct secret names (`${secret:slack-bot-token}`, `${secret:slack-signing-secret}`)
 - Sandbox was created from the updated template: `cs sandbox info auto-coder`
