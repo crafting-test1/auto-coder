@@ -1,6 +1,6 @@
 # auto-coder
 
-Automated coding assistant that monitors GitHub, GitLab, Linear, and Slack for events, then dispatches AI coding agents via Crafting Sandbox to handle them.
+Automated coding assistant that monitors GitHub, Linear, and Slack for events, then dispatches AI coding agents via Crafting Sandbox to handle them.
 
 ## Quick Start
 
@@ -18,18 +18,16 @@ Automated coding assistant that monitors GitHub, GitLab, Linear, and Slack for e
 
 - `config/watcher.yaml` — Main runtime config (providers, auth, repos, polling, executor)
 - `config/watcher.example.yaml` — Full reference config with all options documented
-- `templates/auto-coder-quick-start.yaml` — GitHub-only sandbox template (start here)
 - `templates/auto-coder-full.yaml` — Full sandbox template (GitHub + Linear + Slack)
-- `templates/auto-coder-github-issue-2-github-pr.example.yaml` — GitHub-only template
-- `templates/auto-coder-slack-2-github-pr.example.yaml` — Slack + GitHub template
-- `config/event-prompt.example.hbs` — Handlebars prompt template for code platform events
+- `docs/examples/templates/auto-coder-quick-start.yaml` — GitHub-only sandbox template (start here)
+- `docs/examples/templates/auto-coder-slack-2-github-pr.example.yaml` — Slack + GitHub template
+- `config/event-prompt.hbs` — Handlebars prompt template for code platform events
 
 ## Development
 
 ```bash
-pnpm run dev       # Run with hot reload (tsx)
+pnpm start         # Run with tsx (hot reload)
 pnpm run build     # Compile TypeScript
-pnpm start         # Run compiled output
 pnpm test          # Run tests
 pnpm run type-check  # Type check without emitting
 ```

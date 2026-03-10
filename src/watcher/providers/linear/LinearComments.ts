@@ -84,6 +84,38 @@ export class LinearComments {
     return comments;
   }
 
+  async getAuthenticatedUser(): Promise<string | null> {
+    const query = `{ viewer { name } }`;
+    try {
+      const response = await fetch(this.apiUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': this.apiKey,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ query }),
+      });
+
+      if (!response.ok) {
+        logger.warn(`Linear API error getting authenticated user: ${response.status} ${response.statusText}`);
+        return null;
+      }
+
+      const result = await response.json();
+      const data = result as any;
+
+      if (data.errors) {
+        logger.warn('Linear GraphQL errors while fetching viewer', { errors: data.errors });
+        return null;
+      }
+
+      return data.data?.viewer?.name ?? null;
+    } catch (error) {
+      logger.error('Error fetching authenticated Linear user', error);
+      return null;
+    }
+  }
+
   async postComment(issueId: string, body: string): Promise<string> {
     const mutation = `
       mutation CreateComment($issueId: String!, $body: String!) {

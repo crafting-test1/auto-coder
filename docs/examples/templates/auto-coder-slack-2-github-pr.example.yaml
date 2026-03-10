@@ -52,16 +52,18 @@ workspaces:
           git: git@github.com:crafting-test1/auto-coder.git
         manifest:
           overlays:
-            - content: |
+            - inline:
+                hooks:
+                  post-checkout:
+                    cmd: pnpm install
                 daemons:
-                  watcher: # Name of the process, please name after your service
+                  watcher:
                     run:
-                      cmd: pnpm run dev
+                      cmd: pnpm start
 
     system:
       files:
-        - path: /home/owner/auto-coder/config/watcher.yaml
-          owner: 1000:1000
+        - path: ~/auto-coder/config/watcher.yaml
           mode: "0644"
           overwrite: true
           content: |
@@ -71,7 +73,7 @@ workspaces:
             commandExecutor:
               enabled: true
               command: "cs llm session run --approval=auto --name=$EVENT_SHORT_ID --task"
-              promptTemplateFile: ./config/event-prompt.example.hbs
+              promptTemplateFile: ./config/event-prompt.hbs
               useStdin: true
               followUp: true
             deduplication:
@@ -82,6 +84,8 @@ workspaces:
                 enabled: true
               slack:
                 enabled: true
+    restriction:
+      life_time: ALWAYS
 
 containers:
   - name: github-mcp
@@ -110,17 +114,14 @@ containers:
             name: inline-volume
             content:
               text: |
-                events {}
-                http {
-                  server {
-                    listen 8082;
-                    location /mcp {
-                      proxy_set_header Authorization "Bearer ${GITHUB_PERSONAL_ACCESS_TOKEN}";
-                      proxy_set_header Host github-mcp;
-                      proxy_pass http://github-mcp:8082/mcp;
-                      proxy_http_version 1.1;
-                      proxy_buffering off;
-                    }
+                server {
+                  listen 8082;
+                  location /mcp {
+                    proxy_set_header Authorization "Bearer ${GITHUB_PERSONAL_ACCESS_TOKEN}";
+                    proxy_set_header Host github-mcp;
+                    proxy_pass http://github-mcp:8082/mcp;
+                    proxy_http_version 1.1;
+                    proxy_buffering off;
                   }
                 }
   - name: slack-mcp

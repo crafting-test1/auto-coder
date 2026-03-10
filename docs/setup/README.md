@@ -6,7 +6,7 @@ Deploy auto-coder on your Crafting site with one or more event providers. This g
 
 Before starting, make sure you have:
 
-- **[Crafting CLI (`cs`)](https://docs.sandboxes.cloud/docs/cli)** — installed and authenticated as an org admin (`cs auth login`)
+- **Crafting CLI (`cs`)** — installed and authenticated as an org admin (`cs auth login`)
 - **A Crafting org** — with permission to create sandboxes, secrets, and templates
 - **A dedicated bot account** — a separate account for each provider you use (GitHub user, Linear user, Slack bot app); must not be your personal account
 - **Provider credentials** — API tokens and webhook secrets for each provider you want to enable (collected in Part 1 below)
@@ -20,7 +20,6 @@ Each provider requires its own credentials and, in some cases, an MCP server for
 | Provider | Credentials needed | MCP available |
 |---|---|---|
 | [GitHub](providers/github.md) | Fine-grained PAT + webhook secret | GitHub MCP server (container, auto-configured) |
-| [GitLab](providers/gitlab.md) | API token + webhook secret | None |
 | [Linear](providers/linear.md) | API key + webhook secret | Remote MCP at `https://mcp.linear.app/mcp` |
 | [Slack](providers/slack.md) | Bot token + signing secret | Slack MCP server (container, auto-configured) |
 
@@ -36,8 +35,8 @@ Create a Crafting secret for each credential you collected in the provider guide
 
 Example for GitHub (run in a separate terminal — never paste tokens into this chat):
 ```bash
-echo "YOUR_TOKEN" | cs secret create github-pat -f -
-echo "YOUR_WEBHOOK_SECRET" | cs secret create github-webhook-secret -f -
+echo "YOUR_TOKEN" | cs secret create github-pat --shared -f -
+echo "YOUR_WEBHOOK_SECRET" | cs secret create github-webhook-secret --shared -f -
 ```
 
 After creating each secret, open the Crafting Web Console and mark it as **Admin Only** and **Not Mountable**:
@@ -53,11 +52,9 @@ Download the sandbox template into a local folder (gitignored, safe for customiz
 
 ```bash
 mkdir -p _local
-curl -o _local/auto-coder-quick-start.yaml \
-  https://raw.githubusercontent.com/crafting-test1/auto-coder/refs/heads/main/templates/auto-coder-quick-start.yaml
+curl -o _local/auto-coder-full.yaml \
+  https://raw.githubusercontent.com/crafting-test1/auto-coder/refs/heads/main/templates/auto-coder-full.yaml
 ```
-
-For multi-provider setups, use `templates/auto-coder-full.yaml` as your base.
 
 Open the template and fill in the required values in the `env:` block. At minimum:
 
@@ -66,9 +63,12 @@ env:
   - GITHUB_PERSONAL_ACCESS_TOKEN=${secret:github-pat}    # already set
   - GITHUB_WEBHOOK_SECRET=${secret:github-webhook-secret} # already set
 
-  # Fill these in:
-  - GITHUB_BOT_USERNAME=your-bot-github-username   # from Step 1 of providers/github.md
-  - GITHUB_REPOSITORIES=owner/repo                 # comma-separated: owner/repo1,owner/repo2
+  # Optional — both are auto-detected from the PAT if not set:
+  #   GITHUB_BOT_USERNAME    auto-detected via GET /user
+  #   GITHUB_REPOSITORIES    auto-detected via GET /user/repos (fine-grained PATs return only scoped repos)
+  # Uncomment to override:
+  # - GITHUB_BOT_USERNAME=your-bot-github-username
+  # - GITHUB_REPOSITORIES=owner/repo1,owner/repo2
 ```
 
 See [docs/setup/configuration.md](configuration.md) for the full env var and `watcher.yaml` reference.
@@ -95,9 +95,9 @@ This one-time step is required for providers with MCP support (GitHub, Linear, S
 1. Open the **Crafting Web Console**
 2. Navigate to **Connect → LLM**
 3. Under **Sandboxes Authorized to Expose MCP Servers**, click **Add**
-4. Select the `auto-coder` sandbox and confirm
+4. Input the sandbox name `auto-coder` and confirm
 
-**MUST:** Without this step, Claude sessions inside the sandbox cannot use MCP tools (GitHub, Linear, Slack actions) and will fail to read issues or create PRs.
+**MUST:** Without this step, Coding Agent sessions cannot use MCP tools (GitHub, Linear, Slack actions) and will fail to read issues or create PRs.
 
 ### 5. Configure webhooks in your provider
 
@@ -139,17 +139,25 @@ For webhook secrets, also update the secret value in the provider's webhook sett
 ### Scope minimization
 
 - **GitHub:** Fine-grained token scoped to specific repositories with Issues + Pull Requests read/write only. Avoid org-level tokens or classic tokens with full `repo` scope.
-- **GitLab:** API token with the minimum scopes required (`api` for full access, or narrower scopes if your workflow allows).
 - **Linear:** API keys have full workspace access. Use a dedicated service account when possible.
 - **Slack:** Restrict bot scopes to the minimum listed in [slack.md](providers/slack.md). Only invite the bot to channels it needs to monitor.
 
 ### Cost control
 
-Each triggered event starts a Crafting Coding Agent session. A busy repository with many issues/comments will start many sessions. To control costs:
+The pinned sandbox runs 24/7, so the primary cost driver is the node pool it runs on. To control costs:
 
-- Use `eventFilter` in `watcher.yaml` (see `config/watcher.example.yaml`) to restrict which event types and actions trigger sessions.
-- Increase polling intervals and rely on webhooks as the primary trigger.
-- Monitor session usage in the Crafting Web Console.
+- **Use a small node pool** — create a dedicated small node pool (or use an existing one) and assign the sandbox to it. Since the watcher process is lightweight, it does not need a large or general-purpose node.
+- **Assign the sandbox to the node pool** — add a `schedule_spec` to the workspace in the sandbox template so the pinned sandbox always runs on the low-cost nodes:
+
+```yaml
+workspaces:
+  - name: dev
+    schedule_spec:
+      selector:
+        name: <your-node-pool-name>
+```
+
+See [Crafting docs — Schedule Spec](https://docs.sandboxes.cloud/features/schedule-spec.html) for details. Ensure the `selector.name` matches a configured node pool exactly, or the workload will fail to schedule.
 
 ### Restriction Mode
 
@@ -167,7 +175,6 @@ See [Crafting docs — Restriction Mode](https://docs.sandboxes.cloud/docs/restr
 For provider-specific troubleshooting, see the relevant provider guide:
 
 - [GitHub troubleshooting](providers/github.md#troubleshooting)
-- [GitLab troubleshooting](providers/gitlab.md#troubleshooting)
 - [Linear troubleshooting](providers/linear.md#troubleshooting)
 - [Slack troubleshooting](providers/slack.md#troubleshooting)
 

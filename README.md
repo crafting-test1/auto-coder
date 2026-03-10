@@ -1,6 +1,6 @@
 # auto-coder
 
-Listens for events on GitHub, GitLab, Linear, and Slack, then dispatches a [Crafting Coding Agent](https://www.crafting.dev/) to handle them — running continuously inside a Crafting Sandbox.
+Listens for events on GitHub, Linear, and Slack, then dispatches a [Crafting Coding Agent](https://www.crafting.dev/) to handle them — running continuously inside a Crafting Sandbox.
 
 ## Quick Start
 

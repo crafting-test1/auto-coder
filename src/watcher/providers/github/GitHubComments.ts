@@ -180,6 +180,56 @@ export class GitHubComments {
     }
   }
 
+  async getAuthenticatedUser(): Promise<string | null> {
+    try {
+      return await withExponentialRetry(async () => {
+        const response = await fetch('https://api.github.com/user', {
+          headers: {
+            Authorization: `Bearer ${this.token}`,
+            Accept: 'application/vnd.github.v3+json',
+            'User-Agent': 'auto-coder-watcher',
+          },
+        });
+
+        if (!response.ok) {
+          logger.warn(`GitHub API error getting authenticated user: ${response.status} ${response.statusText}`);
+          return null;
+        }
+
+        const user = (await response.json()) as { login: string };
+        return user.login;
+      });
+    } catch (error) {
+      logger.error('Error fetching authenticated GitHub user', error);
+      return null;
+    }
+  }
+
+  async getAccessibleRepositories(): Promise<string[]> {
+    try {
+      return await withExponentialRetry(async () => {
+        const response = await fetch('https://api.github.com/user/repos?per_page=100&sort=updated', {
+          headers: {
+            Authorization: `Bearer ${this.token}`,
+            Accept: 'application/vnd.github.v3+json',
+            'User-Agent': 'auto-coder-watcher',
+          },
+        });
+
+        if (!response.ok) {
+          logger.warn(`GitHub API error getting accessible repositories: ${response.status} ${response.statusText}`);
+          return [];
+        }
+
+        const repos = (await response.json()) as Array<{ full_name: string }>;
+        return repos.map(r => r.full_name);
+      });
+    } catch (error) {
+      logger.error('Error fetching accessible GitHub repositories', error);
+      return [];
+    }
+  }
+
   async postComment(
     repository: string,
     resourceType: string,

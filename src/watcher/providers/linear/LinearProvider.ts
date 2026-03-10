@@ -3,48 +3,16 @@ import type {
   ProviderConfig,
   ProviderMetadata,
   EventHandler,
-  NormalizedEvent,
 } from '../../types/index.js';
 import { ConfigLoader } from '../../core/ConfigLoader.js';
 import { LinearWebhook } from './LinearWebhook.js';
 import { LinearPoller } from './LinearPoller.js';
 import { LinearComments } from './LinearComments.js';
 import { LinearReactor } from './LinearReactor.js';
+import { normalizeWebhookEvent, normalizePolledEvent, normalizeCommentEvent, type LinearWebhookPayload, type LinearCommentPayload } from './LinearNormalizer.js';
+import { isBotMentionedInText, isBotAssignedInList } from '../../utils/eventFilter.js';
 import { ProviderError } from '../../utils/errors.js';
 import { logger } from '../../utils/logger.js';
-
-interface LinearWebhookPayload {
-  action: string;
-  type: string;
-  createdAt: string;
-  data: {
-    id: string;
-    identifier: string;
-    number: number;
-    title: string;
-    description?: string;
-    url: string;
-    state: {
-      name: string;
-    };
-    team: {
-      key: string;
-      name: string;
-    };
-    assignee?: {
-      name: string;
-    };
-    creator?: {
-      name: string;
-    };
-    labels?: Array<{ name: string }>;
-    updatedAt: string;
-    createdAt: string;
-  };
-  updatedFrom?: {
-    [key: string]: unknown;
-  };
-}
 
 type LinearEventConfig = { states: string[]; skipStates: string[] };
 
@@ -56,7 +24,8 @@ export class LinearProvider extends BaseProvider {
   private botUsernames: string[] = [];
 
   private static readonly DEFAULT_WEBHOOK_EVENTS: Record<string, LinearEventConfig> = {
-    Issue: { states: ['all'], skipStates: ['done', 'cancelled', 'canceled'] },
+    Issue:   { states: ['all'], skipStates: ['done', 'cancelled', 'canceled'] },
+    Comment: { states: ['all'], skipStates: ['done', 'cancelled', 'canceled'] },
   };
 
   private eventFilter: Record<string, LinearEventConfig> =
@@ -97,12 +66,20 @@ export class LinearProvider extends BaseProvider {
       eventFilter?: Record<string, { states?: string[]; skipStates?: string[] }>;
     } | undefined;
 
-    // Read bot username(s) for deduplication
+    // Read bot username(s) for deduplication — auto-detect from token if not configured
     if (options?.botUsername) {
       this.botUsernames = Array.isArray(options.botUsername)
         ? options.botUsername
         : [options.botUsername];
       logger.debug(`Linear bot usernames configured: ${this.botUsernames.join(', ')}`);
+    } else if (this.comments) {
+      const detected = await this.comments.getAuthenticatedUser();
+      if (detected) {
+        this.botUsernames = [detected];
+        logger.info(`Linear bot username auto-detected from API key: ${detected}`);
+      } else {
+        logger.warn('Linear: botUsername not configured and auto-detection failed - deduplication will not work');
+      }
     } else {
       logger.warn('Linear: No botUsername configured - deduplication will not work');
     }
@@ -201,6 +178,30 @@ export class LinearProvider extends BaseProvider {
       return;
     }
 
+    // Comment events: check parent issue state + bot mention
+    if (payload.type === 'Comment') {
+      const commentPayload = payload as unknown as LinearCommentPayload;
+      const issueState = commentPayload.data.issue?.state?.name;
+      if (issueState && this.shouldSkipByState(issueState, eventConfig.states, eventConfig.skipStates)) {
+        logger.debug(`Skipping comment on completed/cancelled Linear issue`);
+        return;
+      }
+      if (this.botUsernames.length === 0) {
+        logger.error(`Skipping Linear comment - botUsername not configured`);
+        return;
+      }
+      if (!isBotMentionedInText(commentPayload.data.body, this.botUsernames)) {
+        logger.debug(`Skipping Linear comment - bot not mentioned`);
+        return;
+      }
+      const issueId = commentPayload.data.issue.id;
+      const reactor = new LinearReactor(this.comments, issueId, this.botUsernames);
+      const normalizedEvent = normalizeCommentEvent(commentPayload, webhookId);
+      await eventHandler(normalizedEvent, reactor);
+      return;
+    }
+
+    // Issue events (default path): check state + bot assignment
     const issueId = payload.data.id;
 
     if (this.shouldSkipClosedItem(payload, eventConfig.states, eventConfig.skipStates)) {
@@ -208,11 +209,19 @@ export class LinearProvider extends BaseProvider {
       return;
     }
 
+    // Normalize first so we can inspect the assignees list
+    const normalizedEvent = normalizeWebhookEvent(payload, webhookId);
+
+    if (this.botUsernames.length === 0) {
+      logger.error(`Skipping Linear issue ${payload.data.identifier} - botUsername not configured`);
+      return;
+    }
+    if (!isBotAssignedInList(normalizedEvent.resource.assignees, this.botUsernames, a => (a as any).name)) {
+      logger.debug(`Skipping Linear issue ${payload.data.identifier} - bot not assigned`);
+      return;
+    }
+
     const reactor = new LinearReactor(this.comments, issueId, this.botUsernames);
-
-    // Normalize Linear event for template rendering
-    const normalizedEvent = this.normalizeEvent(payload, webhookId);
-
     await eventHandler(normalizedEvent, reactor);
   }
 
@@ -267,97 +276,27 @@ export class LinearProvider extends BaseProvider {
         continue;
       }
 
+      // Normalize first so we can inspect the assignees list
+      const normalizedEvent = normalizePolledEvent(item);
+
+      if (this.botUsernames.length === 0) {
+        logger.error(`Skipping polled Linear issue ${item.data.identifier} - botUsername not configured`);
+        continue;
+      }
+      if (!isBotAssignedInList(normalizedEvent.resource.assignees, this.botUsernames, a => (a as any).name)) {
+        logger.debug(`Skipping polled Linear issue ${item.data.identifier} - bot not assigned`);
+        continue;
+      }
+
       logger.debug(`Creating reactor for issue ${item.data.identifier}`);
 
       const reactor = new LinearReactor(this.comments, issueId, this.botUsernames);
-
-      // Normalize Linear API response for template rendering
-      const normalizedEvent = this.normalizePolledEvent(item);
 
       logger.debug(`Calling event handler for issue ${item.data.identifier}`);
       await eventHandler(normalizedEvent, reactor);
     }
 
     logger.debug(`Finished processing ${items.length} items from Linear poll`);
-  }
-
-  private normalizeEvent(payload: LinearWebhookPayload, webhookId: string): NormalizedEvent {
-    const data = payload.data;
-    const eventId = `linear:${data.team.key}:${payload.action}:${data.id}:${webhookId}`;
-
-    // Build resource object with only defined optional properties
-    const resource: NormalizedEvent['resource'] = {
-      number: data.number,
-      title: data.title,
-      description: data.description || '',
-      url: data.url,
-      state: data.state.name,
-      repository: data.team.key,
-    };
-
-    const author = data.creator?.name;
-    const assignees = data.assignee ? [data.assignee] : undefined;
-    const labels = data.labels?.map((l) => l.name);
-
-    if (author) resource.author = author;
-    if (assignees) resource.assignees = assignees;
-    if (labels && labels.length > 0) resource.labels = labels;
-
-    return {
-      id: eventId,
-      provider: 'linear',
-      type: 'issue',
-      action: payload.action,
-      resource,
-      actor: {
-        username: data.creator?.name || 'unknown',
-        id: data.id,
-      },
-      metadata: {
-        timestamp: payload.createdAt,
-      },
-      raw: payload,
-    };
-  }
-
-  private normalizePolledEvent(item: any): NormalizedEvent {
-    const data = item.data;
-    const eventId = `linear:${item.team}:poll:${data.number}:${Date.now()}`;
-
-    // Build resource object with only defined optional properties
-    const resource: NormalizedEvent['resource'] = {
-      number: data.number,
-      title: data.title,
-      description: data.description || '',
-      url: data.url,
-      state: data.state.name,
-      repository: data.team.key,
-    };
-
-    const author = data.creator?.name;
-    const assignees = data.assignee ? [data.assignee] : undefined;
-    const labels = data.labels?.nodes?.map((l: any) => l.name);
-
-    if (author) resource.author = author;
-    if (assignees) resource.assignees = assignees;
-    if (labels && labels.length > 0) resource.labels = labels;
-
-    return {
-      id: eventId,
-      provider: 'linear',
-      type: 'issue',
-      action: 'poll',
-      resource,
-      actor: {
-        username: data.creator?.name || 'unknown',
-        id: data.id,
-      },
-      metadata: {
-        timestamp: new Date().toISOString(),
-        polled: true,
-      },
-      raw: data,
-    };
   }
 
   async shutdown(): Promise<void> {

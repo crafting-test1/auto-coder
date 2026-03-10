@@ -17,7 +17,7 @@ The secret name must exactly match what is referenced in the template (e.g., `gi
 
 ## Secrets Reference
 
-### `github-pat` / `github_pat`
+### `github-pat`
 
 **Used as:** `GITHUB_PERSONAL_ACCESS_TOKEN`
 

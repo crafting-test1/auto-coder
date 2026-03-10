@@ -3,31 +3,15 @@ import type {
   ProviderConfig,
   ProviderMetadata,
   EventHandler,
-  NormalizedEvent,
 } from '../../types/index.js';
 import { ConfigLoader } from '../../core/ConfigLoader.js';
 import { SlackWebhook } from './SlackWebhook.js';
 import { SlackComments } from './SlackComments.js';
 import { SlackReactor } from './SlackReactor.js';
 import { SlackPoller } from './SlackPoller.js';
+import { normalizeWebhookEvent, normalizePolledMention, type SlackEventPayload } from './SlackNormalizer.js';
 import { ProviderError } from '../../utils/errors.js';
 import { logger } from '../../utils/logger.js';
-
-interface SlackEventPayload {
-  type: string;
-  event?: {
-    type: string;
-    channel: string;
-    user: string;
-    text: string;
-    ts: string;
-    thread_ts?: string;
-    channel_type?: string;
-  };
-  team_id?: string;
-  event_id?: string;
-  event_time?: number;
-}
 
 /**
  * Slack provider that processes app_mention events.
@@ -79,12 +63,19 @@ export class SlackProvider extends BaseProvider {
     // Initialize Slack API client
     this.comments = new SlackComments(this.token);
 
-    // Get bot user ID for mention detection and deduplication
+    // Get bot user ID for mention detection and deduplication.
+    // Token detection runs first; an explicit botUsername in config/env overrides it.
     try {
       const botUserId = await this.comments.getBotUserId();
       this.botUsernames = [botUserId];
-      logger.info(`Slack bot user ID: ${botUserId}`);
+      logger.info(`Slack bot user ID auto-detected from token: ${botUserId}`);
       logger.info('Slack authentication successful');
+
+      const override = config.options?.botUsername as string | undefined;
+      if (override) {
+        this.botUsernames = [override];
+        logger.info(`Slack bot user ID overridden from config: ${override}`);
+      }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       logger.error('Failed to authenticate with Slack API', { error: errorMessage });
@@ -234,53 +225,9 @@ export class SlackProvider extends BaseProvider {
     );
 
     // Normalize Slack event for template rendering
-    const normalizedEvent = this.normalizeEvent(payload, history);
+    const normalizedEvent = normalizeWebhookEvent(payload, history);
 
     await eventHandler(normalizedEvent, reactor);
-  }
-
-  private normalizeEvent(payload: SlackEventPayload, history?: string): NormalizedEvent {
-    const event = payload.event!;
-
-    // Event ID for deduplication
-    const eventId = `slack:${event.channel}:${event.ts}:${payload.event_id || Date.now()}`;
-
-    // Extract channel name (use channel ID as we don't have name in event)
-    const channelId = event.channel;
-
-    // For Slack, we treat the channel as the "repository"
-    // and the message as an "issue" that needs a response
-    const resource: NormalizedEvent['resource'] = {
-      number: 0, // Slack doesn't have issue numbers, use timestamp as unique ID
-      title: `Message in #${channelId}`,
-      description: history || event.text || '',
-      url: '', // Slack message URLs require workspace context
-      state: 'open', // Messages are always "open" until resolved
-      repository: channelId,
-      comment: {
-        body: event.text || '',
-        author: event.user,
-      },
-    };
-
-    return {
-      id: eventId,
-      provider: 'slack',
-      type: 'message',
-      action: 'created',
-      resource,
-      actor: {
-        username: event.user,
-        id: event.user,
-      },
-      metadata: {
-        timestamp: event.ts,
-        channel: channelId,
-        threadTs: event.thread_ts,
-        channelType: event.channel_type,
-      },
-      raw: payload,
-    };
   }
 
   async poll(eventHandler: EventHandler): Promise<void> {
@@ -327,7 +274,7 @@ export class SlackProvider extends BaseProvider {
         );
 
         // Normalize polled mention for template rendering
-        const normalizedEvent = this.normalizePolledMention(mention, history);
+        const normalizedEvent = normalizePolledMention(mention, history);
 
         await eventHandler(normalizedEvent, reactor);
       }
@@ -335,56 +282,6 @@ export class SlackProvider extends BaseProvider {
       logger.error('Error polling Slack mentions', error);
       throw error;
     }
-  }
-
-  private normalizePolledMention(mention: {
-    channel: string;
-    ts: string;
-    threadTs?: string;
-    text: string;
-    user: string;
-    permalink?: string;
-  }, history?: string): NormalizedEvent {
-    // Event ID for deduplication
-    const eventId = `slack:${mention.channel}:${mention.ts}:polled`;
-
-    const commentObj: { body: string; author: string; url?: string } = {
-      body: mention.text || '',
-      author: mention.user,
-    };
-
-    if (mention.permalink) {
-      commentObj.url = mention.permalink;
-    }
-
-    const resource: NormalizedEvent['resource'] = {
-      number: 0,
-      title: `Message in #${mention.channel}`,
-      description: history || mention.text || '',
-      url: mention.permalink || '',
-      state: 'open',
-      repository: mention.channel,
-      comment: commentObj,
-    };
-
-    return {
-      id: eventId,
-      provider: 'slack',
-      type: 'message',
-      action: 'created',
-      resource,
-      actor: {
-        username: mention.user,
-        id: mention.user,
-      },
-      metadata: {
-        timestamp: mention.ts,
-        channel: mention.channel,
-        threadTs: mention.threadTs,
-        polled: true,
-      },
-      raw: mention,
-    };
   }
 
   async shutdown(): Promise<void> {

@@ -12,7 +12,7 @@ export class ConfigLoader {
     'cs llm session run --approval=auto --name=$EVENT_SHORT_ID --task';
 
   private static readonly DEFAULT_PROMPT_TEMPLATE =
-    './config/event-prompt.example.hbs';
+    './config/event-prompt.hbs';
 
   /**
    * Primary entry point. Loads config from file (optional) then overlays env vars.
@@ -23,20 +23,27 @@ export class ConfigLoader {
    *
    * GitHub:
    *   GITHUB_PERSONAL_ACCESS_TOKEN  — enables GitHub provider
-   *   GITHUB_BOT_USERNAME           — bot account username (required for deduplication)
+   *   GITHUB_BOT_USERNAME           — overrides bot username (auto-detected from token if absent)
    *   GITHUB_REPOSITORIES           — comma-separated list: owner/repo1,owner/repo2
    *   GITHUB_WEBHOOK_SECRET         — webhook signature verification secret
    *   GITHUB_POLLING_INTERVAL       — polling interval in seconds (default: 60)
    *
+   * GitLab:
+   *   GITLAB_TOKEN                  — enables GitLab provider
+   *   GITLAB_BOT_USERNAME           — overrides bot username (auto-detected from token if absent)
+   *   GITLAB_WEBHOOK_TOKEN          — webhook token for request verification
+   *   GITLAB_POLLING_INTERVAL       — polling interval in seconds (default: 60)
+   *
    * Linear:
    *   LINEAR_API_TOKEN              — enables Linear provider
-   *   LINEAR_BOT_USERNAME           — bot account username (required for deduplication)
+   *   LINEAR_BOT_USERNAME           — overrides bot username (auto-detected from token if absent)
    *   LINEAR_TEAMS                  — comma-separated list of team keys (e.g. ENG,DESIGN)
    *   LINEAR_WEBHOOK_SECRET         — webhook signature verification secret
    *   LINEAR_POLLING_INTERVAL       — polling interval in seconds (default: 60)
    *
    * Slack:
    *   SLACK_BOT_TOKEN               — enables Slack provider
+   *   SLACK_BOT_USERNAME            — overrides bot user ID (auto-detected from token if absent)
    *   SLACK_SIGNING_SECRET          — webhook request signing secret
    *
    * General:
@@ -141,10 +148,35 @@ export class ConfigLoader {
       result.providers!.linear = linearConfig;
     }
 
+    // GitLab — auto-enabled when GITLAB_TOKEN is set
+    if (process.env.GITLAB_TOKEN) {
+      const options: Record<string, unknown> = {};
+
+      if (process.env.GITLAB_BOT_USERNAME) {
+        options.botUsername = process.env.GITLAB_BOT_USERNAME;
+      }
+      if (process.env.GITLAB_WEBHOOK_TOKEN) {
+        options.webhookTokenEnv = 'GITLAB_WEBHOOK_TOKEN';
+      }
+
+      const gitlabConfig: ProviderConfig = {
+        enabled: true,
+        auth: { type: 'token', tokenEnv: 'GITLAB_TOKEN' },
+        options,
+      };
+      if (process.env.GITLAB_POLLING_INTERVAL) {
+        gitlabConfig.pollingInterval = parseInt(process.env.GITLAB_POLLING_INTERVAL, 10);
+      }
+      result.providers!.gitlab = gitlabConfig;
+    }
+
     // Slack — auto-enabled when SLACK_BOT_TOKEN is set
     if (process.env.SLACK_BOT_TOKEN) {
       const options: Record<string, unknown> = {};
 
+      if (process.env.SLACK_BOT_USERNAME) {
+        options.botUsername = process.env.SLACK_BOT_USERNAME;
+      }
       if (process.env.SLACK_SIGNING_SECRET) {
         options.signingSecretEnv = 'SLACK_SIGNING_SECRET';
       }

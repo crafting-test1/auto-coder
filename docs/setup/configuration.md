@@ -18,14 +18,6 @@ Set env vars in the sandbox template's `env:` block. The watcher reads them at s
 | `GITHUB_WEBHOOK_SECRET` | Recommended | Shared secret used to verify webhook signatures |
 | `GITHUB_POLLING_INTERVAL` | Optional | Polling interval in seconds (default: `60`) |
 
-### GitLab
-
-| Variable | Required | Description |
-|---|---|---|
-| `GITLAB_TOKEN` | Yes — enables GitLab | Personal access token with `api` scope |
-| `GITLAB_WEBHOOK_TOKEN` | Recommended | Shared secret used to verify webhook signatures |
-| `GITLAB_POLLING_INTERVAL` | Optional | Polling interval in seconds (default: `60`) |
-
 ### Linear
 
 | Variable | Required | Description |
@@ -82,7 +74,7 @@ deduplication:
 commandExecutor:
   enabled: true
   command: "cs llm session run --approval=auto --name=$EVENT_SHORT_ID --task"
-  promptTemplateFile: ./config/event-prompt.example.hbs
+  promptTemplateFile: ./config/event-prompt.hbs
   useStdin: true        # true = prompt via stdin; false = via $PROMPT env var
   followUp: true        # post command stdout as a follow-up comment
   dryRun: false         # log command without executing (useful for testing)
@@ -130,7 +122,6 @@ Provider defaults:
 | Provider | Default behaviour |
 |---|---|
 | GitHub | Issues and comments processed; most PR lifecycle events (open, sync, label, etc.) skipped |
-| GitLab | Issues and notes processed; MR open and update skipped |
 | Linear | Issue events only; done/cancelled states skipped |
 | Slack | `app_mention` events only |
 
@@ -150,7 +141,7 @@ deduplication:
 commandExecutor:
   enabled: true
   command: "cs llm session run --approval=auto --name=$EVENT_SHORT_ID --task"
-  promptTemplateFile: ./config/event-prompt.example.hbs
+  promptTemplateFile: ./config/event-prompt.hbs
   useStdin: true
   followUp: true
 ```

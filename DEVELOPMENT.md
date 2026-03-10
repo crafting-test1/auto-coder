@@ -41,7 +41,7 @@ auto-coder/
 │   └── index.ts              # Main entry point
 ├── config/                   # Configuration files
 │   ├── watcher.example.yaml
-│   └── event-prompt.example.hbs
+│   └── event-prompt.hbs
 └── docs/                     # Documentation
     ├── overview.md
     ├── watcher.md
@@ -51,7 +51,6 @@ auto-coder/
     │   ├── configuration.md
     │   ├── security.md
     │   ├── github.md
-    │   ├── gitlab.md
     │   ├── linear.md
     │   └── slack.md
     └── examples/flows/
@@ -102,7 +101,7 @@ Example configuration:
 commandExecutor:
   enabled: true
   command: "cs llm session run --approval=auto --name=$EVENT_SHORT_ID --task"
-  promptTemplateFile: ./config/event-prompt.example.hbs
+  promptTemplateFile: ./config/event-prompt.hbs
   useStdin: true      # Pass prompt to stdin
   followUp: true      # Update comment with output
 ```
@@ -171,7 +170,7 @@ await watcher.stop();
 
 ## Adding Custom Providers
 
-To add a new provider beyond the built-in ones (GitHub, GitLab, Linear, Slack):
+To add a new provider beyond the built-in ones (GitHub, Linear, Slack):
 
 1. **Implement the IProvider interface:**
 
@@ -253,9 +252,8 @@ providers:
 
 ## Development Scripts
 
-- `pnpm run dev` - Run the watcher in development mode with hot reload
+- `pnpm start` - Run the watcher with tsx
 - `pnpm run build` - Compile TypeScript to JavaScript
-- `pnpm start` - Run the compiled JavaScript
 - `pnpm run type-check` - Check types without building
 - `pnpm test` - Run tests
 

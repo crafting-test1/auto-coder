@@ -70,7 +70,7 @@ How it works:
 
 ## watcher.yaml Configuration
 
-The watcher auto-configures from environment variables set in the sandbox template, so a `watcher.yaml` file is not required for standard setups. If you need custom event filters, multiple repositories, or non-default polling, inject a `watcher.yaml` via the template's `files:` block (see the commented example in `templates/auto-coder-quick-start.yaml`).
+The watcher auto-configures from environment variables set in the sandbox template, so a `watcher.yaml` file is not required for standard setups. If you need custom event filters, multiple repositories, or non-default polling, inject a `watcher.yaml` via the template's `files:` block (see the commented example in `docs/examples/templates/auto-coder-quick-start.yaml`).
 
 Reference configuration:
 
@@ -203,7 +203,7 @@ cs template update auto-coder ./_local/auto-coder-quick-start.yaml
 cs sandbox restart auto-coder
 ```
 
-**Claude sessions fail to use GitHub tools**
+**Coding Agent sessions fail to use GitHub tools**
 
 MCP servers are not authorized. Repeat the authorization step (Web Console → **Connect → LLM** → **Sandboxes Authorized to Expose MCP Servers** → **Add**). Also confirm the sandbox is pinned (`cs sandbox pin auto-coder`) — the MCP server is unavailable when the sandbox is suspended.
 

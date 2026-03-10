@@ -10,51 +10,10 @@ import { GitHubWebhook } from './GitHubWebhook.js';
 import { GitHubPoller } from './GitHubPoller.js';
 import { GitHubComments } from './GitHubComments.js';
 import { GitHubReactor } from './GitHubReactor.js';
+import { normalizeWebhookEvent, normalizePolledEvent, type GitHubWebhookPayload } from './GitHubNormalizer.js';
+import { isBotMentionedInText, isBotAssignedInList } from '../../utils/eventFilter.js';
 import { ProviderError } from '../../utils/errors.js';
 import { logger } from '../../utils/logger.js';
-
-interface GitHubWebhookPayload {
-  action: string;
-  issue?: {
-    id: number;
-    number: number;
-    title: string;
-    body?: string;
-    html_url: string;
-    state: string;
-    assignees?: any[];
-    labels?: any[];
-    user?: { login: string; id: number };
-    pull_request?: unknown;
-  };
-  pull_request?: {
-    id: number;
-    number: number;
-    title: string;
-    body?: string;
-    html_url: string;
-    state: string;
-    merged?: boolean;
-    assignees?: any[];
-    labels?: any[];
-    user?: { login: string; id: number };
-    head?: { ref: string };
-    base?: { ref: string };
-  };
-  comment?: {
-    id: number;
-    body?: string;
-    html_url?: string;
-    user?: { login: string; id: number };
-  };
-  repository: {
-    full_name: string;
-  };
-  sender: {
-    id: number;
-    login: string;
-  };
-}
 
 type GitHubEventConfig = { actions: string[]; skipActions: string[] };
 
@@ -109,12 +68,20 @@ export class GitHubProvider extends BaseProvider {
       eventFilter?: Record<string, { actions?: string[]; skipActions?: string[] }>;
     } | undefined;
 
-    // Read bot username(s) for deduplication
+    // Read bot username(s) for deduplication — auto-detect from PAT if not configured
     if (options?.botUsername) {
       this.botUsernames = Array.isArray(options.botUsername)
         ? options.botUsername
         : [options.botUsername];
       logger.debug(`GitHub bot usernames configured: ${this.botUsernames.join(', ')}`);
+    } else if (this.comments) {
+      const detected = await this.comments.getAuthenticatedUser();
+      if (detected) {
+        this.botUsernames = [detected];
+        logger.info(`GitHub bot username auto-detected from PAT: ${detected}`);
+      } else {
+        logger.warn('GitHub: botUsername not configured and auto-detection failed - deduplication will not work');
+      }
     } else {
       logger.warn('GitHub: No botUsername configured - deduplication will not work');
     }
@@ -142,8 +109,16 @@ export class GitHubProvider extends BaseProvider {
     }
     logger.info(`GitHub event filter: ${Object.keys(this.eventFilter).join(', ')}`);
 
-    const hasPollingConfig =
-      this.token && options?.repositories && options.repositories.length > 0;
+    // Auto-detect repositories from PAT if not explicitly configured
+    let repositories = options?.repositories ?? [];
+    if (this.token && repositories.length === 0 && this.comments) {
+      repositories = await this.comments.getAccessibleRepositories();
+      if (repositories.length > 0) {
+        logger.info(`GitHub repositories auto-detected from PAT: ${repositories.join(', ')}`);
+      }
+    }
+
+    const hasPollingConfig = this.token && repositories.length > 0;
 
     if (hasPollingConfig) {
       const pollerConfig: {
@@ -154,15 +129,15 @@ export class GitHubProvider extends BaseProvider {
         maxItemsPerPoll?: number;
       } = {
         token: this.token!,
-        repositories: options!.repositories!,
+        repositories,
         events: Object.keys(this.eventFilter),
       };
 
-      if (options!.initialLookbackHours !== undefined) {
+      if (options?.initialLookbackHours !== undefined) {
         pollerConfig.initialLookbackHours = options.initialLookbackHours;
       }
 
-      if (options!.maxItemsPerPoll !== undefined) {
+      if (options?.maxItemsPerPoll !== undefined) {
         pollerConfig.maxItemsPerPoll = options.maxItemsPerPoll;
       }
 
@@ -232,7 +207,7 @@ export class GitHubProvider extends BaseProvider {
     }
 
     // Normalize event first to apply shared filtering logic
-    const normalizedEvent = this.normalizeEvent(payload, deliveryId);
+    const normalizedEvent = normalizeWebhookEvent(payload, deliveryId);
 
     // Apply shared filtering logic
     if (!this.shouldProcessEvent(normalizedEvent, undefined, eventConfig.actions, eventConfig.skipActions)) {
@@ -283,6 +258,23 @@ export class GitHubProvider extends BaseProvider {
     if (skipActions.includes(action)) {
       logger.debug(`Skipping ${type} #${resource.number} ${action} event`);
       return false;
+    }
+
+    // Assignment/mention filter: only process if bot is involved
+    if (this.botUsernames.length === 0) {
+      logger.error(`Skipping ${type} #${resource.number} - botUsername not configured`);
+      return false;
+    }
+    if (resource.comment) {
+      if (!isBotMentionedInText(resource.comment.body, this.botUsernames)) {
+        logger.debug(`Skipping ${type} #${resource.number} comment - bot not mentioned`);
+        return false;
+      }
+    } else {
+      if (!isBotAssignedInList(resource.assignees, this.botUsernames, a => (a as any).login)) {
+        logger.debug(`Skipping ${type} #${resource.number} - bot not assigned`);
+        return false;
+      }
     }
 
     // For polled events, skip if no recent human interaction
@@ -381,7 +373,7 @@ export class GitHubProvider extends BaseProvider {
       }
 
       // Normalize event first to apply shared filtering logic
-      const normalizedEvent = this.normalizePolledEvent(item);
+      const normalizedEvent = normalizePolledEvent(item);
 
       // Apply shared filtering logic (same as webhooks)
       if (!this.shouldProcessEvent(normalizedEvent, hasRecentComments, pollEventConfig.actions, pollEventConfig.skipActions)) {
@@ -403,148 +395,6 @@ export class GitHubProvider extends BaseProvider {
     }
 
     logger.debug(`Finished processing ${items.length} items from GitHub poll`);
-  }
-
-  private normalizeEvent(payload: GitHubWebhookPayload, deliveryId: string): NormalizedEvent {
-    let type = 'issue';
-    let eventId = '';
-    let number = 0;
-    let title = '';
-    let description = '';
-    let url = '';
-    let state = '';
-    let author: string | undefined;
-    let assignees: unknown[] | undefined;
-    let labels: string[] | undefined;
-    let branch: string | undefined;
-    let mergeTo: string | undefined;
-    let comment: { body: string; author: string; url?: string } | undefined;
-
-    if (payload.pull_request) {
-      type = 'pull_request';
-      const pr = payload.pull_request;
-      eventId = `github:${payload.repository.full_name}:${payload.action}:${pr.id}:${deliveryId}`;
-      number = pr.number;
-      title = pr.title;
-      description = pr.body || '';
-      url = pr.html_url;
-      state = pr.state;
-      author = pr.user?.login;
-      assignees = pr.assignees && pr.assignees.length > 0 ? pr.assignees : undefined;
-      labels = pr.labels?.map((l: any) => l.name);
-      branch = pr.head?.ref;
-      mergeTo = pr.base?.ref;
-    } else if (payload.issue) {
-      type = 'issue';
-      const issue = payload.issue;
-      eventId = `github:${payload.repository.full_name}:${payload.action}:${issue.id}:${deliveryId}`;
-      number = issue.number;
-      title = issue.title;
-      description = issue.body || '';
-      url = issue.html_url;
-      state = issue.state;
-      author = issue.user?.login;
-      assignees = issue.assignees && issue.assignees.length > 0 ? issue.assignees : undefined;
-      labels = issue.labels?.map((l: any) => l.name);
-
-      // If this is a PR issue (from issue_comment event), mark it as pull_request type
-      if (issue.pull_request) {
-        type = 'pull_request';
-      }
-    }
-
-    // Extract comment information if present (for issue_comment events)
-    if (payload.comment) {
-      const commentObj: { body: string; author: string; url?: string } = {
-        body: payload.comment.body || '',
-        author: payload.comment.user?.login || 'unknown',
-      };
-      if (payload.comment.html_url) {
-        commentObj.url = payload.comment.html_url;
-      }
-      comment = commentObj;
-      // Update eventId to include comment ID for uniqueness
-      eventId = `github:${payload.repository.full_name}:${payload.action}:comment:${payload.comment.id}:${deliveryId}`;
-    }
-
-    // Build resource object with only defined optional properties
-    const resource: NormalizedEvent['resource'] = {
-      number,
-      title,
-      description,
-      url,
-      state,
-      repository: payload.repository.full_name,
-    };
-
-    if (author) resource.author = author;
-    if (assignees) resource.assignees = assignees;
-    if (labels) resource.labels = labels;
-    if (branch) resource.branch = branch;
-    if (mergeTo) resource.mergeTo = mergeTo;
-    if (comment) resource.comment = comment;
-
-    return {
-      id: eventId,
-      provider: 'github',
-      type,
-      action: payload.action,
-      resource,
-      actor: {
-        username: payload.sender?.login || 'unknown',
-        id: payload.sender?.id || 0,
-      },
-      metadata: {
-        timestamp: new Date().toISOString(),
-        deliveryId,
-      },
-      raw: payload,
-    };
-  }
-
-  private normalizePolledEvent(item: any): NormalizedEvent {
-    const data = item.data;
-    const type = item.type;
-    const eventId = `github:${item.repository}:poll:${data.number}:${Date.now()}`;
-
-    // Build resource object with only defined optional properties
-    const resource: NormalizedEvent['resource'] = {
-      number: data.number,
-      title: data.title,
-      description: data.body || '',
-      url: data.html_url,
-      state: data.state,
-      repository: item.repository,
-    };
-
-    const author = data.user?.login;
-    const assignees = data.assignees && data.assignees.length > 0 ? data.assignees : undefined;
-    const labels = data.labels?.map((l: any) => l.name);
-    const branch = type === 'pull_request' && data.head ? data.head.ref : undefined;
-    const mergeTo = type === 'pull_request' && data.base ? data.base.ref : undefined;
-
-    if (author) resource.author = author;
-    if (assignees) resource.assignees = assignees;
-    if (labels) resource.labels = labels;
-    if (branch) resource.branch = branch;
-    if (mergeTo) resource.mergeTo = mergeTo;
-
-    return {
-      id: eventId,
-      provider: 'github',
-      type,
-      action: 'poll',
-      resource,
-      actor: {
-        username: data.user?.login || 'unknown',
-        id: data.user?.id || 0,
-      },
-      metadata: {
-        timestamp: new Date().toISOString(),
-        polled: true,
-      },
-      raw: data,
-    };
   }
 
   async shutdown(): Promise<void> {

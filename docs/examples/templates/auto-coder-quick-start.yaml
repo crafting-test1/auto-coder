@@ -4,7 +4,7 @@
 # QUICK START (4 steps before creating this template):
 #   1. Create secrets:    see docs/setup/github.md
 #   2. Fill in env vars:  edit GITHUB_BOT_USERNAME and GITHUB_REPOSITORIES below
-#   3. Create template:   cs template create auto-coder ./templates/auto-coder-quick-start.yaml
+#   3. Create template:   cs template create auto-coder ./docs/examples/templates/auto-coder-quick-start.yaml
 #   4. Create sandbox:    cs sandbox create auto-coder -t auto-coder
 #
 # After sandbox is created:
@@ -12,14 +12,14 @@
 #   6. Authorize MCP:     Web Console → Connect → LLM → Discovery → Authorize
 #   7. Set GitHub webhook: see docs/setup/github.md
 #
-# For multi-provider (GitHub + Linear + Slack), see templates/auto-coder-full.example.yaml
+# For multi-provider (GitHub + Linear + Slack), see templates/auto-coder-full.yaml
 # =============================================================================
 
 env:
   # ---------------------------------------------------------------------------
   # Secrets — create these before applying the template:
-  #   cs secret create github-pat <your-token>
-  #   cs secret create github-webhook-secret <random-string>
+  #   cs secret create github-pat --shared <your-token>
+  #   cs secret create github-webhook-secret --shared <random-string>
   #
   # MUST set both secrets as "Admin Only" + "Not Mountable" in the Crafting
   # Web Console (Secrets → Edit) so they are never written to the filesystem.
@@ -32,13 +32,14 @@ env:
   # ---------------------------------------------------------------------------
 
   # The GitHub username of the bot account that posts comments.
+  # Optional — auto-detected from the PAT if not set (via GET /user).
   # MUST be a dedicated bot account, not your personal account.
-  # Used to prevent the watcher from triggering on its own comments.
-  - GITHUB_BOT_USERNAME=your-bot-github-username
+  # - GITHUB_BOT_USERNAME=your-bot-github-username
 
   # Repositories to monitor, comma-separated: owner/repo1,owner/repo2
-  # For polling mode (catching missed events). Webhooks work without this.
-  - GITHUB_REPOSITORIES=owner/repo
+  # Optional — auto-detected from the PAT if not set (fine-grained PATs return
+  # only their scoped repos via GET /user/repos).
+  # - GITHUB_REPOSITORIES=owner/repo
 
   # ---------------------------------------------------------------------------
   # Optional tuning — safe to leave as-is for most setups.
@@ -108,11 +109,14 @@ workspaces:
           git: git@github.com:crafting-test1/auto-coder.git
         manifest:
           overlays:
-            - content: |
+            - inline:
+                hooks:
+                  post-checkout:
+                    cmd: pnpm install
                 daemons:
-                  watcher: # Name of the process, please name after your service
+                  watcher:
                     run:
-                      cmd: pnpm run dev
+                      cmd: pnpm start
       # -----------------------------------------------------------------------
       # ADVANCED: watcher.yaml file injection (optional)
       #
@@ -124,8 +128,7 @@ workspaces:
       # -----------------------------------------------------------------------
     system: 
       files:
-        - path: /home/owner/auto-coder/config/watcher.yaml
-          owner: 1000:1000
+        - path: ~/auto-coder/config/watcher.yaml
           mode: "0644"
           overwrite: true
           content: |
@@ -135,7 +138,7 @@ workspaces:
             commandExecutor:
               enabled: true
               command: "cs llm session run --approval=auto --name=$EVENT_SHORT_ID --task"
-              promptTemplateFile: ./config/event-prompt.example.hbs
+              promptTemplateFile: ./config/event-prompt.hbs
               useStdin: true
               followUp: true
             deduplication:
@@ -144,10 +147,11 @@ workspaces:
             providers:
               github:
                 enabled: true
-
+    restriction:
+      life_time: ALWAYS
 containers:
   # ---------------------------------------------------------------------------
-  # GitHub MCP server — exposes GitHub tools (issues, PRs, repos) to Claude.
+  # GitHub MCP server — exposes GitHub tools (issues, PRs, repos) to Sandbox Coding Agent.
   # The token is NOT set here; it is injected as an Authorization header by the
   # mcp-proxy container, so this container never holds the secret directly.
   #
@@ -191,17 +195,14 @@ containers:
             name: inline-volume
             content:
               text: |
-                events {}
-                http {
-                  server {
-                    listen 8082;
-                    location /mcp {
-                      proxy_set_header Authorization "Bearer ${GITHUB_PERSONAL_ACCESS_TOKEN}";
-                      proxy_set_header Host github-mcp;
-                      proxy_pass http://github-mcp:8082/mcp;
-                      proxy_http_version 1.1;
-                      proxy_buffering off;
-                    }
+                server {
+                  listen 8082;
+                  location /mcp {
+                    proxy_set_header Authorization "Bearer ${GITHUB_PERSONAL_ACCESS_TOKEN}";
+                    proxy_set_header Host github-mcp;
+                    proxy_pass http://github-mcp:8082/mcp;
+                    proxy_http_version 1.1;
+                    proxy_buffering off;
                   }
                 }
 
@@ -212,7 +213,7 @@ containers:
 # REQUIRED MANUAL STEP after creating the sandbox:
 #   Web Console → Connect → LLM → Discovery tab → click "Authorize"
 #
-# Without this step, Claude sessions cannot use GitHub MCP tools.
+# Without this step, Coding Agent sessions cannot use GitHub MCP tools.
 # =============================================================================
 customizations:
   - mcp_server:
