@@ -40,7 +40,7 @@ auto-coder/
 │   ├── standalone.ts         # Standalone entry point
 │   └── index.ts              # Main entry point
 ├── config/                   # Configuration files
-│   ├── watcher.example.yaml
+│   ├── watcher.full.yaml
 │   └── event-prompt.hbs
 └── docs/                     # Documentation
     ├── overview.md

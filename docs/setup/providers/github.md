@@ -216,7 +216,7 @@ MCP servers are not authorized. Repeat the authorization step (Web Console → *
 
 **Agent triggers on the wrong events**
 
-Use `eventFilter` in `watcher.yaml` (or injected via the template's `files:` block) to control exactly which event types and actions trigger sessions. See `config/watcher.example.yaml` for the full filter reference.
+Use `eventFilter` in `watcher.yaml` (or injected via the template's `files:` block) to control exactly which event types and actions trigger sessions. See `config/watcher.full.yaml` for the full filter reference.
 
 **Polling not working**
 

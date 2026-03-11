@@ -97,7 +97,7 @@ providers:
         issue_comment: {}
 ```
 
-See `config/watcher.example.yaml` for the full reference, including all providers and every available option.
+See `config/watcher.full.yaml` for the full reference, including all providers and every available option.
 
 ### Event filtering
 

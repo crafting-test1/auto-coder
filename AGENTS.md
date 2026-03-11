@@ -4,7 +4,7 @@ Automated coding assistant that monitors GitHub, GitLab, Linear, and Slack for e
 
 ## Before You Start
 
-- `config/watcher.yaml` does not exist in the repo — it is injected at sandbox start. Read `config/watcher.example.yaml` for the reference config. Never commit `watcher.yaml`.
+- `config/watcher.yaml` does not exist in the repo — it is injected at sandbox start. Read `config/watcher.full.yaml` for the reference config. Never commit `watcher.yaml`.
 - `_local/` does not exist in the repo — it is gitignored and used for local sandbox template customizations.
 
 ## Before Creating a PR
@@ -41,4 +41,4 @@ Each provider follows the same six-file split under `src/watcher/providers/<name
 - `*Poller.ts` — queries platform API for recent events
 - `*Comments.ts` — low-level comment API calls
 
-When adding a new provider, also register it in `src/watcher/index.ts`, add env var handling in `ConfigLoader.buildFromEnv()`, and document the vars in `config/watcher.example.yaml`.
+When adding a new provider, also register it in `src/watcher/index.ts`, add env var handling in `ConfigLoader.buildFromEnv()`, and document the vars in `config/watcher.full.yaml`.
