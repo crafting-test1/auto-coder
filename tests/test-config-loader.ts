@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os';
 import { ConfigLoader } from '../src/watcher/core/ConfigLoader.js';
 import { ConfigError } from '../src/watcher/utils/errors.js';
 
-const tempDir = join(tmpdir(), `auto-coder-config-tests-${Date.now()}`);
+const tempDir = join(tmpdir(), `coworker-bot-config-tests-${Date.now()}`);
 mkdirSync(tempDir, { recursive: true });
 after(() => rmSync(tempDir, { recursive: true, force: true }));
 

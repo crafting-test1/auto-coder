@@ -37,11 +37,11 @@ test('isBotMentionedInText - empty botUsernames returns false', () => {
 });
 
 test('isBotMentionedInText - hyphenated username matches exactly', () => {
-  assert.equal(isBotMentionedInText('@auto-coder-bot please fix this', ['auto-coder-bot']), true);
+  assert.equal(isBotMentionedInText('@coworker-bot-bot please fix this', ['coworker-bot-bot']), true);
 });
 
-test('isBotMentionedInText - @auto-coder-bot-extra does NOT match "auto-coder-bot"', () => {
-  assert.equal(isBotMentionedInText('@auto-coder-bot-extra', ['auto-coder-bot']), false);
+test('isBotMentionedInText - @coworker-bot-bot-extra does NOT match "coworker-bot-bot"', () => {
+  assert.equal(isBotMentionedInText('@coworker-bot-bot-extra', ['coworker-bot-bot']), false);
 });
 
 test('isBotMentionedInText - any bot in multi-bot list matches', () => {
@@ -129,9 +129,9 @@ test('isBotAssignedInList - getUsernameFrom returns undefined for absent field',
 });
 
 test('isBotAssignedInList - works with username field (GitLab style)', () => {
-  const assignees = [{ username: 'auto-coder', id: 51 }];
+  const assignees = [{ username: 'coworker-bot', id: 51 }];
   assert.equal(
-    isBotAssignedInList(assignees, ['auto-coder'], (a) => (a as any).username),
+    isBotAssignedInList(assignees, ['coworker-bot'], (a) => (a as any).username),
     true
   );
 });

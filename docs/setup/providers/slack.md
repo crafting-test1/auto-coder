@@ -1,6 +1,6 @@
 # Slack Provider Setup
 
-Set up auto-coder to respond to @mentions in Slack and automatically dispatch a Crafting Coding Agent to handle them.
+Set up coworker-bot to respond to @mentions in Slack and automatically dispatch a Crafting Coding Agent to handle them.
 
 **Prerequisites:** Crafting CLI (`cs`) installed and authenticated as an org admin. A Slack workspace where you can create and install apps.
 
@@ -41,9 +41,9 @@ Navigate to **Event Subscriptions**:
 1. Toggle **Enable Events** to **On**
 2. Set **Request URL** to your sandbox's webhook endpoint:
    ```
-   https://webhook--auto-coder-<your-org>.sandboxes.site/webhook/slack
+   https://webhook--coworker-bot-<your-org>.sandboxes.site/webhook/slack
    ```
-   Slack will send a verification challenge. auto-coder responds to it automatically — the URL should show a green checkmark.
+   Slack will send a verification challenge. coworker-bot responds to it automatically — the URL should show a green checkmark.
 3. Under **Subscribe to bot events**, add: `app_mention`
 4. Click **Save Changes**
 
@@ -156,11 +156,11 @@ The env vars are not reaching the watcher. Check:
 
 - Secrets exist: `cs secret list`
 - Template references the correct secret names (`${secret:slack-bot-token}`, `${secret:slack-signing-secret}`)
-- Sandbox was created from the updated template: `cs sandbox info auto-coder`
+- Sandbox was created from the updated template: `cs sandbox info coworker-bot`
 
 **Webhooks not received — bot doesn't respond to mentions**
 
-- Verify the sandbox is pinned (`cs sandbox pin auto-coder`) — a suspended sandbox cannot receive webhooks
+- Verify the sandbox is pinned (`cs sandbox pin coworker-bot`) — a suspended sandbox cannot receive webhooks
 - Verify the Request URL is correct in Slack app settings → Event Subscriptions (should show a green checkmark)
 - Verify the `app_mention` event is subscribed in Event Subscriptions
 - Check sandbox logs for webhook validation errors
@@ -191,4 +191,4 @@ The bot responds multiple times to the same mention. Check sandbox logs on start
 
 **MCP tools not working**
 
-MCP servers are not authorized. Repeat the authorization step (Web Console → **Connect → LLM** → **Sandboxes Authorized to Expose MCP Servers** → **Add**). Also confirm the sandbox is pinned (`cs sandbox pin auto-coder`).
+MCP servers are not authorized. Repeat the authorization step (Web Console → **Connect → LLM** → **Sandboxes Authorized to Expose MCP Servers** → **Add**). Also confirm the sandbox is pinned (`cs sandbox pin coworker-bot`).

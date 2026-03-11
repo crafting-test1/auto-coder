@@ -1,12 +1,12 @@
 # Flow: GitHub Issue to GitHub PR
 
-This document shows how auto-coder automatically turns GitHub issues into pull requests using **Crafting Sandbox**.
+This document shows how coworker-bot automatically turns GitHub issues into pull requests using **Crafting Sandbox**.
 
 ## Overview
 
-**auto-coder** runs as a pinned Crafting Sandbox that monitors your GitHub repositories. When you create a GitHub issue, it detects the event and creates a **Crafting Sandbox Coding Agent** from a matched template (based on repository or context) to implement the feature or fix, then creates a pull request with the changes - all automatically.
+**coworker-bot** runs as a pinned Crafting Sandbox that monitors your GitHub repositories. When you create a GitHub issue, it detects the event and creates a **Crafting Sandbox Coding Agent** from a matched template (based on repository or context) to implement the feature or fix, then creates a pull request with the changes - all automatically.
 
-The Sandbox can be created from this example [template](../../templates/auto-coder-github-issue-2-github-pr.example.yaml)
+The Sandbox can be created from this example [template](../../templates/coworker-bot-github-issue-2-github-pr.example.yaml)
 
 ---
 
@@ -29,9 +29,9 @@ Acceptance criteria:
 
 ## What Happens Next
 
-### 1. **auto-coder detects the issue** (within seconds)
+### 1. **coworker-bot detects the issue** (within seconds)
 
-The auto-coder pinned Crafting Sandbox receives the GitHub webhook and validates it's a new issue that needs work.
+The coworker-bot pinned Crafting Sandbox receives the GitHub webhook and validates it's a new issue that needs work.
 
 ---
 
@@ -134,7 +134,7 @@ The PR is ready for your review. The Crafting Sandbox Coding Agent has done all 
       │
       ↓
 ┌─────────────────────────────────────────────────┐
-│  auto-coder detects new issue (within seconds)  │
+│  coworker-bot detects new issue (within seconds)  │
 │  ✓ Validates webhook                            │
 │  ✓ Checks it's not a duplicate                  │
 └─────┬───────────────────────────────────────────┘
@@ -188,7 +188,7 @@ The PR is ready for your review. The Crafting Sandbox Coding Agent has done all 
 **You comment on the issue:**
 
 ```
-@auto-coder-bot Can you also add keyboard shortcut Ctrl+D to toggle dark mode?
+@coworker-bot-bot Can you also add keyboard shortcut Ctrl+D to toggle dark mode?
 ```
 
 **The Crafting Sandbox Coding Agent:**
@@ -200,7 +200,7 @@ The PR is ready for your review. The Crafting Sandbox Coding Agent has done all 
 
 ### Deduplication protection
 
-If the webhook is accidentally triggered multiple times, auto-coder is smart enough to avoid duplicate work:
+If the webhook is accidentally triggered multiple times, coworker-bot is smart enough to avoid duplicate work:
 
 - ✅ Checks the last comment on the issue
 - ✅ If it's from the bot, skips processing
@@ -234,7 +234,7 @@ commandExecutor:
 
 **Pinned Sandbox + Template-based Agents:**
 
-1. **auto-coder** (pinned Crafting Sandbox - always running)
+1. **coworker-bot** (pinned Crafting Sandbox - always running)
    - Monitors GitHub, Slack, Linear, etc. for events
    - Receives webhooks and manages polling
    - Handles deduplication and event routing

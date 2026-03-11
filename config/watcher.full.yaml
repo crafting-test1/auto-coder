@@ -132,10 +132,10 @@ providers:
       # Activity from these users will be skipped to prevent duplicate work
       # If the last comment on an issue/PR is by any of these users, the event is skipped
       # Can be a single string or array of GitHub usernames
-      botUsername: auto-coder-bot
+      botUsername: coworker-bot-bot
       # Multiple usernames (if you have multiple bot accounts):
       # botUsername:
-      #   - "auto-coder-bot"
+      #   - "coworker-bot-bot"
       #   - "backup-bot"
 
       # Repositories to monitor (required for polling mode)
@@ -190,10 +190,10 @@ providers:
       # If the last comment on an issue is by any of these users, the event is skipped
       # Linear usernames are typically in the format "john-doe"
       # Can be a single string or array of Linear usernames
-      botUsername: auto-coder-bot
+      botUsername: coworker-bot-bot
       # Multiple usernames:
       # botUsername:
-      #   - "auto-coder-bot"
+      #   - "coworker-bot-bot"
       #   - "backup-bot"
       # Tip: Run with logLevel: debug to see which username format Linear returns
 

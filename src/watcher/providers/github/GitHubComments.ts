@@ -26,7 +26,7 @@ export class GitHubComments {
         headers: {
           Authorization: `Bearer ${this.token}`,
           Accept: 'application/vnd.github.v3+json',
-          'User-Agent': 'auto-coder-watcher',
+          'User-Agent': 'coworker-bot-watcher',
         },
       });
 
@@ -104,7 +104,7 @@ export class GitHubComments {
           headers: {
             Authorization: `Bearer ${this.token}`,
             Accept: 'application/vnd.github.v3+json',
-            'User-Agent': 'auto-coder-watcher',
+            'User-Agent': 'coworker-bot-watcher',
           },
         });
 
@@ -148,7 +148,7 @@ export class GitHubComments {
           headers: {
             Authorization: `Bearer ${this.token}`,
             Accept: 'application/vnd.github.v3+json',
-            'User-Agent': 'auto-coder-watcher',
+            'User-Agent': 'coworker-bot-watcher',
           },
         });
 
@@ -185,7 +185,7 @@ export class GitHubComments {
           headers: {
             Authorization: `Bearer ${this.token}`,
             Accept: 'application/vnd.github.v3+json',
-            'User-Agent': 'auto-coder-watcher',
+            'User-Agent': 'coworker-bot-watcher',
           },
         });
 
@@ -214,7 +214,7 @@ export class GitHubComments {
             headers: {
               Authorization: `Bearer ${this.token}`,
               Accept: 'application/vnd.github.v3+json',
-              'User-Agent': 'auto-coder-watcher',
+              'User-Agent': 'coworker-bot-watcher',
             },
           }
         );
@@ -253,7 +253,7 @@ export class GitHubComments {
           Authorization: `Bearer ${this.token}`,
           Accept: 'application/vnd.github.v3+json',
           'Content-Type': 'application/json',
-          'User-Agent': 'auto-coder-watcher',
+          'User-Agent': 'coworker-bot-watcher',
         },
         body: JSON.stringify({ body: comment }),
       });

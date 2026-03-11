@@ -1,13 +1,13 @@
 # Development Guide
 
-This guide provides detailed information for developers and contributors working on auto-coder.
+This guide provides detailed information for developers and contributors working on coworker-bot.
 
 ## Architecture
 
 ### Directory Structure
 
 ```
-auto-coder/
+coworker-bot/
 ├── src/
 │   ├── watcher/              # Watcher subsystem
 │   │   ├── types/            # Type definitions
@@ -137,7 +137,7 @@ const watcher = new Watcher({
       auth: { type: 'token', tokenEnv: 'GITHUB_TOKEN' },
       options: {
         webhookSecretEnv: 'GITHUB_WEBHOOK_SECRET',
-        botUsername: 'auto-coder-bot',
+        botUsername: 'coworker-bot-bot',
         repositories: ['owner/repo'],
         initialLookbackHours: 1,
       },

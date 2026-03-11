@@ -1,12 +1,12 @@
 # Flow: Slack Thread to GitHub PR
 
-This document shows how auto-coder automatically turns Slack conversations into GitHub pull requests using **Crafting Sandbox**.
+This document shows how coworker-bot automatically turns Slack conversations into GitHub pull requests using **Crafting Sandbox**.
 
 ## Overview
 
-**auto-coder** runs as a pinned Crafting Sandbox that monitors your Slack workspace. When you @mention the bot with a bug report or feature request, it creates a **Crafting Sandbox Coding Agent** from a matched template (based on repository or context) to investigate, implement the fix, and create a pull request - all while keeping your team updated in the Slack thread.
+**coworker-bot** runs as a pinned Crafting Sandbox that monitors your Slack workspace. When you @mention the bot with a bug report or feature request, it creates a **Crafting Sandbox Coding Agent** from a matched template (based on repository or context) to investigate, implement the fix, and create a pull request - all while keeping your team updated in the Slack thread.
 
-The Sandbox can be created from this example [template](../templates/auto-coder-slack-2-github-pr.example.yaml)
+The Sandbox can be created from this example [template](../templates/coworker-bot-slack-2-github-pr.example.yaml)
 
 ---
 
@@ -24,21 +24,21 @@ We need to fix this ASAP as it's affecting multiple users.
 Error message:
 SQL syntax error: You have an error in your SQL syntax near 'Brien'
 
-@AutoCoder can you investigate and fix this?
+@coworker-bot can you investigate and fix this?
 ```
 
 ## What Happens Next
 
-### 1. **auto-coder detects your @mention** (instantly)
+### 1. **coworker-bot detects your @mention** (instantly)
 
-The auto-coder pinned Crafting Sandbox receives the Slack webhook and validates you've mentioned the bot.
+The coworker-bot pinned Crafting Sandbox receives the Slack webhook and validates you've mentioned the bot.
 
 ---
 
 ### 2. **Bot replies in the thread**
 
 ```
-AutoCoder BOT [9:15 AM]
+coworker-bot BOT [9:15 AM]
 🤖 Crafting Sandbox Coding Agent is investigating this issue
 ```
 
@@ -101,7 +101,7 @@ This fixes a SQL injection vulnerability that could have allowed:
 ### 6. **Team gets updated in Slack**
 
 ```
-AutoCoder BOT [9:17 AM]
+coworker-bot BOT [9:17 AM]
 ✅ **Issue fixed!**
 
 I found and fixed a SQL injection vulnerability in the user profile query.
@@ -130,10 +130,10 @@ have allowed SQL injection attacks.
 ```
 alice [9:18 AM]
 Wow, that was fast! And good catch on the security vulnerability - I didn't
-even realize it was an injection risk. Thanks @AutoCoder!
+even realize it was an injection risk. Thanks @coworker-bot!
 
 bob [9:20 AM]
-@AutoCoder can you also add similar checks to the other user search endpoints?
+@coworker-bot can you also add similar checks to the other user search endpoints?
 We probably have the same issue there.
 ```
 
@@ -151,7 +151,7 @@ The bot detects Bob's new @mention and starts another investigation!
       │
       ↓
 ┌──────────────────────────────────────────────────┐
-│  auto-coder detects @mention (instantly)         │
+│  coworker-bot detects @mention (instantly)         │
 │  ✓ Validates webhook from Slack                  │
 │  ✓ Retrieves full thread context                 │
 │  ✓ Checks it's not a duplicate                   │
@@ -206,7 +206,7 @@ The bot detects Bob's new @mention and starts another investigation!
 
 **Pinned Sandbox + Template-based Agents:**
 
-1. **auto-coder** (pinned Crafting Sandbox - always running)
+1. **coworker-bot** (pinned Crafting Sandbox - always running)
    - Monitors Slack, GitHub, Linear, etc. for events
    - Receives webhooks from Slack when bot is @mentioned
    - Retrieves full thread context for better understanding
@@ -262,7 +262,7 @@ commandExecutor:
 ### Multi-Repository Context
 
 ```
-@AutoCoder I'm seeing auth errors in the mobile app. The backend shows
+@coworker-bot I'm seeing auth errors in the mobile app. The backend shows
 "Invalid token format" errors. Can you check both repos?
 ```
 
@@ -271,11 +271,11 @@ commandExecutor:
 ### Iterative Development
 
 ```
-alice: @AutoCoder add a feature flag for the new dashboard
+alice: @coworker-bot add a feature flag for the new dashboard
 Bot: ✅ Created PR #200
-alice: @AutoCoder also add it to mobile config
+alice: @coworker-bot also add it to mobile config
 Bot: ✅ Updated PR #200 with mobile changes
-bob: @AutoCoder add documentation
+bob: @coworker-bot add documentation
 Bot: ✅ Updated PR #200 with docs
 ```
 
@@ -284,7 +284,7 @@ Bot: ✅ Updated PR #200 with docs
 ### Code Review Requests
 
 ```
-@AutoCoder review PR #150 and let me know if you spot issues
+@coworker-bot review PR #150 and let me know if you spot issues
 ```
 
 → Agent analyzes the PR and posts findings in thread + PR comments
@@ -293,7 +293,7 @@ Bot: ✅ Updated PR #200 with docs
 
 ## Why Slack Integration Works Well
 
-- **Always monitoring**: auto-coder pinned Crafting Sandbox runs 24/7, watching for @mentions
+- **Always monitoring**: coworker-bot pinned Crafting Sandbox runs 24/7, watching for @mentions
 - **Natural conversation**: Discuss bugs/features in your existing channels
 - **Full context**: Crafting Sandbox Coding Agent sees the entire thread conversation
 - **Team collaboration**: Multiple people can participate and @mention the bot

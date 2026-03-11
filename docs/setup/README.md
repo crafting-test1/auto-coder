@@ -1,6 +1,6 @@
 # Setup Guide
 
-Deploy auto-coder on your Crafting site with one or more event providers. This guide covers all providers and is suitable for IaC / Config-as-Code workflows.
+Deploy coworker-bot on your Crafting site with one or more event providers. This guide covers all providers and is suitable for IaC / Config-as-Code workflows.
 
 ## Prerequisites
 
@@ -53,8 +53,8 @@ Download the sandbox template into a local folder (gitignored, safe for customiz
 
 ```bash
 mkdir -p _local
-curl -o _local/auto-coder-full.yaml \
-  https://raw.githubusercontent.com/crafting-test1/auto-coder/refs/heads/main/templates/auto-coder-full.yaml
+curl -o _local/coworker-bot-full.yaml \
+  https://raw.githubusercontent.com/crafting-test1/auto-coder/refs/heads/main/templates/coworker-bot-full.yaml
 ```
 
 Open the template and fill in the required values in the `env:` block. At minimum:
@@ -79,13 +79,13 @@ See [docs/setup/configuration.md](configuration.md) for the full env var and `wa
 
 ```bash
 # Register the template with your Crafting site
-cs template create auto-coder ./_local/auto-coder-quick-start.yaml
+cs template create coworker-bot ./_local/coworker-bot-quick-start.yaml
 
 # Create the sandbox from the template
-cs sandbox create auto-coder -t auto-coder
+cs sandbox create coworker-bot -t coworker-bot
 
 # Pin it so it stays running 24/7 to receive webhook events
-cs sandbox pin auto-coder
+cs sandbox pin coworker-bot
 ```
 
 **MUST pin the sandbox.** Without pinning, the sandbox suspends after inactivity and misses webhook events. Events received while suspended are lost (polling will catch events from the past hour when it resumes, but real-time response requires the sandbox to be pinned).
@@ -97,7 +97,7 @@ This one-time step is required for providers with MCP support (GitHub, Linear, S
 1. Open the **Crafting Web Console**
 2. Navigate to **Connect → LLM**
 3. Under **Sandboxes Authorized to Expose MCP Servers**, click **Add**
-4. Input the sandbox name `auto-coder` and confirm
+4. Input the sandbox name `coworker-bot` and confirm
 
 **MUST:** Without this step, Coding Agent sessions cannot use MCP tools (GitHub, Linear, Slack actions) and will fail to read issues or create PRs.
 
@@ -106,7 +106,7 @@ This one-time step is required for providers with MCP support (GitHub, Linear, S
 Each provider has a specific webhook URL. Find yours in the Web Console: sandbox → **Endpoints** → **webhook** → copy the URL. It follows the pattern:
 
 ```
-https://webhook--auto-coder-<your-org>.sandboxes.site/webhook/<provider>
+https://webhook--coworker-bot-<your-org>.sandboxes.site/webhook/<provider>
 ```
 
 Configure the webhook in each provider's settings page. See the relevant provider guide for the exact steps and required fields.
@@ -114,7 +114,7 @@ Configure the webhook in each provider's settings page. See the relevant provide
 ### 6. Verify
 
 ```bash
-cs logs --workspace auto-coder/dev --follow watcher
+cs logs --workspace coworker-bot/dev --follow watcher
 ```
 
 Look for: `Watcher started successfully` and `Initialized provider: <name>`.
@@ -133,7 +133,7 @@ Rotate credentials on your standard schedule. After rotating any token:
 
 ```bash
 echo "NEW_VALUE" | cs secret update <secret-name> -f -
-cs sandbox restart auto-coder
+cs sandbox restart coworker-bot
 ```
 
 For webhook secrets, also update the secret value in the provider's webhook settings.
@@ -186,8 +186,8 @@ The env vars are not reaching the watcher. Check:
 
 - Secrets exist: `cs secret list`
 - Template references the correct secret names (e.g. `${secret:github-pat}`)
-- Sandbox was created from the updated template: `cs sandbox info auto-coder`
+- Sandbox was created from the updated template: `cs sandbox info coworker-bot`
 
 **Agent sessions fail to use MCP tools**
 
-MCP servers are not authorized. Repeat the authorization step in Part 2 (Web Console → **Connect → LLM** → **Sandboxes Authorized to Expose MCP Servers** → **Add**). Also confirm the sandbox is pinned (`cs sandbox pin auto-coder`) — MCP servers are unavailable when the sandbox is suspended.
+MCP servers are not authorized. Repeat the authorization step in Part 2 (Web Console → **Connect → LLM** → **Sandboxes Authorized to Expose MCP Servers** → **Add**). Also confirm the sandbox is pinned (`cs sandbox pin coworker-bot`) — MCP servers are unavailable when the sandbox is suspended.

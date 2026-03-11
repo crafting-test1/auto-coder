@@ -1,8 +1,8 @@
 # =============================================================================
-# auto-coder — Full template: GitHub + Linear + Slack → Crafting Coding Agent
+# coworker-bot — Full template: GitHub + Linear + Slack → Crafting Coding Agent
 #
 # Use this template if you need more than one provider. For GitHub-only, use
-# docs/examples/templates/auto-coder-quick-start.yaml instead — it is simpler and better
+# docs/examples/templates/coworker-bot-quick-start.yaml instead — it is simpler and better
 # documented as a starting point.
 #
 # SETUP STEPS before creating this template:
@@ -10,11 +10,11 @@
 #   2. Fill in required env vars below (REPOSITORIES, TEAMS) — BOT_USERNAMEs are auto-detected
 #   3. Delete the env vars, endpoints, containers, and customizations for any
 #      providers you are NOT using — see DELETE comments throughout this file
-#   4. Create template:  cs template create auto-coder ./templates/auto-coder-full.yaml
-#   5. Create sandbox:   cs sandbox create auto-coder -t auto-coder
+#   4. Create template:  cs template create coworker-bot ./templates/coworker-bot-full.yaml
+#   5. Create sandbox:   cs sandbox create coworker-bot -t coworker-bot
 #
 # After sandbox is created:
-#   6. Pin the sandbox:  cs sandbox pin auto-coder
+#   6. Pin the sandbox:  cs sandbox pin coworker-bot
 #   7. Authorize MCP:    Web Console → Connect → LLM → Discovery → Authorize
 #   8. Configure webhooks for each provider you enabled
 # =============================================================================
@@ -179,7 +179,7 @@ workspaces:
         protocol: HTTP/TCP
 
     checkouts:
-      # The auto-coder repo is checked out here on sandbox creation.
+      # The coworker-bot repo is checked out here on sandbox creation.
       # The watcher daemon (below) runs from this directory.
       - path: auto-coder
         repo:

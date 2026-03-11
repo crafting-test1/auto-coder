@@ -1,4 +1,4 @@
-# auto-coder Setup Wizard
+# coworker-bot Setup Wizard
 
 ACTION: Silently run `which cs` to verify the cs CLI is installed. If not found, tell the user: "You'll need the Crafting Sandbox CLI (`cs`) to continue. Install it from https://www.crafting.dev/ and come back when it's ready." Then STOP and wait.
 
@@ -6,7 +6,7 @@ Print this exactly, then wait for the user to reply:
 
 ---
 
-**Welcome to auto-coder setup!**
+**Welcome to coworker-bot setup!**
 
 Which providers would you like to set up? *(enter numbers, e.g. "1" or "1, 4")*
 
@@ -34,7 +34,7 @@ USER: Enters one or more numbers
 
 ### GitHub Credentials
 
-You'll need a **GitHub Personal Access Token (PAT)** so auto-coder can read issues/PRs and post comments.
+You'll need a **GitHub Personal Access Token (PAT)** so coworker-bot can read issues/PRs and post comments.
 
 **Step 1 — Create a bot account (if you don't have one):**
 
@@ -47,7 +47,7 @@ Add the bot as a collaborator on the repositories it needs to access.
 ACTION: Open the GitHub fine-grained token creation page for the user: https://github.com/settings/personal-access-tokens/new
 
 On that page, configure:
-- **Token name:** `auto-coder`
+- **Token name:** `coworker-bot`
 - **Expiration:** 90 days (or your preference)
 - **Repository access:** Select the repos you want to monitor
 - **Repository permissions:**
@@ -87,11 +87,11 @@ USER: Confirms secrets are stored
 
 Now a few more details for GitHub configuration.
 
-STOP: What's the **GitHub username** of your bot account? (Used for deduplication so auto-coder doesn't re-process its own comments)
+STOP: What's the **GitHub username** of your bot account? (Used for deduplication so coworker-bot doesn't re-process its own comments)
 
 USER: Provides username
 
-STOP: Which **repositories** should auto-coder monitor? Format: `owner/repo`, comma-separated. Example: `myorg/frontend, myorg/backend`
+STOP: Which **repositories** should coworker-bot monitor? Format: `owner/repo`, comma-separated. Example: `myorg/frontend, myorg/backend`
 
 USER: Provides repositories
 
@@ -111,7 +111,7 @@ ACTION: Open that link for the user: https://linear.app/settings/api
 
 On that page:
 1. Under **Personal API keys**, click **"Create key"**
-2. Label it `auto-coder`
+2. Label it `coworker-bot`
 3. Click **"Create key"** and **copy it immediately** — it won't be shown again
 
 **Step 2 — Create a webhook:**
@@ -119,7 +119,7 @@ On that page:
 On the same page, under **Webhooks**:
 1. Click **"Create webhook"**
 2. Set:
-   - **Label:** `auto-coder`
+   - **Label:** `coworker-bot`
    - **Webhook URL:** leave blank for now (you'll fill it in after the sandbox is created)
    - **Resource types:** check **Issue** and **Comment**
 3. Click **"Create webhook"**
@@ -144,7 +144,7 @@ STOP: What's your **Linear bot display name**? (The display name of the Linear a
 
 USER: Provides name
 
-STOP: Which **teams** should auto-coder monitor? Enter team keys like `ENG`, `PRODUCT` (found in Linear → Settings → Teams, or in issue IDs like "ENG-123"). Say "all" to monitor every team.
+STOP: Which **teams** should coworker-bot monitor? Enter team keys like `ENG`, `PRODUCT` (found in Linear → Settings → Teams, or in issue IDs like "ENG-123"). Say "all" to monitor every team.
 
 USER: Provides team keys or "all"
 
@@ -219,13 +219,13 @@ All credentials are stored. Now let's create your Crafting Sandbox.
 
 ACTION: Based on the providers the user selected, choose the best base template:
 
-- **GitHub only** → `docs/examples/templates/auto-coder-quick-start.yaml`
-- **GitHub + Slack** (no Linear) → `docs/examples/templates/auto-coder-slack-2-github-pr.example.yaml`
-- **Any combination including Linear**, or **all providers** → `templates/auto-coder-full.yaml`
+- **GitHub only** → `docs/examples/templates/coworker-bot-quick-start.yaml`
+- **GitHub + Slack** (no Linear) → `docs/examples/templates/coworker-bot-slack-2-github-pr.example.yaml`
+- **Any combination including Linear**, or **all providers** → `templates/coworker-bot-full.yaml`
 
 Read the chosen template file. You will need to create a working copy with adjustments.
 
-ACTION: Detect the auto-coder repo's git remote URL by running `git remote get-url origin` in the auto-coder directory. If the URL differs from what's in the template (the template defaults to `git@github.com:crafting-test1/auto-coder.git`), you'll need to update it.
+ACTION: Detect the coworker-bot repo's git remote URL by running `git remote get-url origin` in the coworker-bot directory. If the URL differs from what's in the template (the template defaults to `git@github.com:crafting-test1/auto-coder.git`), you'll need to update it.
 
 ACTION: Create a working copy of the template at `_local/setup-generated.yaml` (create the `_local/` directory if it doesn't exist):
 1. Start from the chosen base template
@@ -246,7 +246,7 @@ ACTION: Validate the generated template YAML by running `/home/owner/yaml-linter
 
 Tell the user which base template you used and what adjustments were made.
 
-STOP: What would you like to name your **template**? (A reusable name, e.g., `auto-coder` or `my-auto-coder`)
+STOP: What would you like to name your **template**? (A reusable name, e.g., `coworker-bot` or `my-coworker-bot`)
 
 USER: Provides template name
 
@@ -254,7 +254,7 @@ ACTION: Run `cs template create <template_name> ./_local/setup-generated.yaml`
 
 [If it fails with "already exists", ask the user if they want to update it or choose a different name.]
 
-STOP: What would you like to name your **sandbox**? (The running instance, e.g., `auto-coder-prod` or `auto-coder-dev`)
+STOP: What would you like to name your **sandbox**? (The running instance, e.g., `coworker-bot-prod` or `coworker-bot-dev`)
 
 USER: Provides sandbox name
 
@@ -363,7 +363,7 @@ Configure webhooks in your provider settings:
 - Linear: Settings → API → Webhooks → update the webhook URL to `https://<your-url>/webhook/linear`
 - Slack: App → Event Subscriptions → set Request URL to `https://<your-url>/webhook/slack`
 
-Without webhooks, auto-coder will use polling mode (checking every 60s for GitHub/Linear, every 5min for Slack).
+Without webhooks, coworker-bot will use polling mode (checking every 60s for GitHub/Linear, every 5min for Slack).
 
 **Verify:**
 ```

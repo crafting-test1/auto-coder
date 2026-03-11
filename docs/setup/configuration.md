@@ -1,6 +1,6 @@
 # Configuration Reference
 
-auto-coder uses a two-layer configuration system. Environment variables are the default approach and work without any file. `watcher.yaml` provides the full option set for advanced setups. When both are present, **env vars always win**.
+coworker-bot uses a two-layer configuration system. Environment variables are the default approach and work without any file. `watcher.yaml` provides the full option set for advanced setups. When both are present, **env vars always win**.
 
 ---
 

@@ -1,6 +1,6 @@
 # GitHub Quick Start
 
-Get auto-coder running with GitHub in ~10 minutes.
+Get coworker-bot running with GitHub in ~10 minutes.
 
 ## Prerequisites
 
@@ -63,18 +63,18 @@ Download the template into a local folder (gitignored, safe for customizations):
 
 ```bash
 mkdir -p _local
-curl -o _local/auto-coder-quick-start.yaml \
-  https://raw.githubusercontent.com/crafting-test1/auto-coder/refs/heads/main/docs/examples/templates/auto-coder-quick-start.yaml
+curl -o _local/coworker-bot-quick-start.yaml \
+  https://raw.githubusercontent.com/crafting-test1/auto-coder/refs/heads/main/docs/examples/templates/coworker-bot-quick-start.yaml
 ```
 
-Open `_local/auto-coder-quick-start.yaml`. The two env vars `GITHUB_BOT_USERNAME` and `GITHUB_REPOSITORIES` are **auto-detected from the PAT** (bot username via `GET /user`, repositories via `GET /user/repos`) and can be left commented out. Uncomment and set them explicitly only if you want to override the auto-detected values.
+Open `_local/coworker-bot-quick-start.yaml`. The two env vars `GITHUB_BOT_USERNAME` and `GITHUB_REPOSITORIES` are **auto-detected from the PAT** (bot username via `GET /user`, repositories via `GET /user/repos`) and can be left commented out. Uncomment and set them explicitly only if you want to override the auto-detected values.
 
 Create the template and sandbox from the local file:
 
 ```bash
-cs template create auto-coder ./_local/auto-coder-quick-start.yaml
-cs sandbox create auto-coder -t auto-coder
-cs sandbox pin auto-coder
+cs template create coworker-bot ./_local/coworker-bot-quick-start.yaml
+cs sandbox create coworker-bot -t coworker-bot
+cs sandbox pin coworker-bot
 ```
 
 > **MUST pin the sandbox.** Without pinning, the sandbox suspends after inactivity and misses webhook events. Events received while suspended are lost.
@@ -89,7 +89,7 @@ In each monitored repository go to **Settings → Webhooks → Add webhook**:
 
 | Field        | Value                                                                  |
 | ------------ | ---------------------------------------------------------------------- |
-| Payload URL  | `https://webhook--auto-coder-<your-org>.sandboxes.site/webhook/github` |
+| Payload URL  | `https://webhook--coworker-bot-<your-org>.sandboxes.site/webhook/github` |
 | Content type | `application/json` ← **required**                                      |
 | Secret       | webhook secret from Step 3                                             |
 | Events       | Issues, Pull requests, Issue comments                                  |
@@ -98,7 +98,7 @@ In each monitored repository go to **Settings → Webhooks → Add webhook**:
 
 ## 6. Authorize MCP servers
 
-Web Console → **Connect → LLM** → under **Sandboxes Authorized to Expose MCP Servers**, click **Add**, input the sandbox name `auto-coder`, and confirm.
+Web Console → **Connect → LLM** → under **Sandboxes Authorized to Expose MCP Servers**, click **Add**, input the sandbox name `coworker-bot`, and confirm.
 
 Without this step the agent cannot read issues or create PRs.
 
@@ -109,7 +109,7 @@ For more details, please refer to this [doc](https://docs.sandboxes.cloud/featur
 ## 7. Verify
 
 ```bash
-cs logs --workspace auto-coder/dev --follow watcher
+cs logs --workspace coworker-bot/dev --follow watcher
 ```
 
 Create a test issue in one of your monitored repos. Within ~30 seconds the bot should comment: _"Agent is working on #\<number\>"_ and a Crafting Coding Agent session will start.

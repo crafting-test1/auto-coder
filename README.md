@@ -1,4 +1,4 @@
-# auto-coder
+# coworker-bot
 
 Listens for events on GitHub, Linear, and Slack, then dispatches a [Crafting Coding Agent](https://www.crafting.dev/) to handle them — running continuously inside a Crafting Sandbox.
 

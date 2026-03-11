@@ -1,6 +1,6 @@
 # Wizard Instructions
 
-You are guiding a user through setting up auto-coder in their Crafting Sandbox. Follow these instructions precisely.
+You are guiding a user through setting up coworker-bot in their Crafting Sandbox. Follow these instructions precisely.
 
 ## Core Rules
 

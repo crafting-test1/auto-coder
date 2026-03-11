@@ -1,12 +1,12 @@
 # Security Hardening
 
-This guide covers the security controls that should be applied to every auto-coder deployment. The individual provider setup guides cover the mechanics of each step; this doc explains the _why_ and collects all controls in one place.
+This guide covers the security controls that should be applied to every coworker-bot deployment. The individual provider setup guides cover the mechanics of each step; this doc explains the _why_ and collects all controls in one place.
 
 ---
 
 ## Sandbox Secrets — Admin Only + Not Mountable
 
-Every secret you create for auto-coder must be marked with two flags in the Crafting Web Console:
+Every secret you create for coworker-bot must be marked with two flags in the Crafting Web Console:
 
 **Web Console → Secrets → select secret → Edit → check both:**
 
@@ -52,7 +52,7 @@ Use a different random value for each provider. Configure the same value in both
 
 ## Dedicated Bot Accounts
 
-Each provider should have a dedicated service account used exclusively by auto-coder. Do not use personal accounts.
+Each provider should have a dedicated service account used exclusively by coworker-bot. Do not use personal accounts.
 
 **Why this matters:**
 

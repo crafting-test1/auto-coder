@@ -253,7 +253,7 @@ const commentPayload = {
   },
   data: {
     id: 'comment-xyz',
-    body: 'Hey @auto-coder can you look at this?',
+    body: 'Hey @coworker-bot can you look at this?',
     user: { id: 'user-bob-id', name: 'Bob' },
     issue: {
       id: 'issue-abc',
@@ -288,7 +288,7 @@ test('normalizeCommentEvent - core fields from parent issue', () => {
 test('normalizeCommentEvent - comment fields populated', () => {
   const event = normalizeCommentEvent(commentPayload, 'webhook-id-c2');
 
-  assert.equal(event.resource.comment?.body, 'Hey @auto-coder can you look at this?');
+  assert.equal(event.resource.comment?.body, 'Hey @coworker-bot can you look at this?');
   assert.equal(event.resource.comment?.author, 'Bob');
 });
 

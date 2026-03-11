@@ -1,4 +1,4 @@
-# auto-coder
+# coworker-bot
 
 Automated coding assistant that monitors GitHub, Linear, and Slack for events, then dispatches AI coding agents via Crafting Sandbox to handle them.
 
@@ -18,9 +18,9 @@ Automated coding assistant that monitors GitHub, Linear, and Slack for events, t
 
 - `config/watcher.yaml` — Main runtime config (providers, auth, repos, polling, executor)
 - `config/watcher.full.yaml` — Full reference config with all options documented
-- `templates/auto-coder-full.yaml` — Full sandbox template (GitHub + Linear + Slack)
-- `docs/examples/templates/auto-coder-quick-start.yaml` — GitHub-only sandbox template (start here)
-- `docs/examples/templates/auto-coder-slack-2-github-pr.example.yaml` — Slack + GitHub template
+- `templates/coworker-bot-full.yaml` — Full sandbox template (GitHub + Linear + Slack)
+- `docs/examples/templates/coworker-bot-quick-start.yaml` — GitHub-only sandbox template (start here)
+- `docs/examples/templates/coworker-bot-slack-2-github-pr.example.yaml` — Slack + GitHub template
 - `config/event-prompt.hbs` — Handlebars prompt template for code platform events
 
 ## Development

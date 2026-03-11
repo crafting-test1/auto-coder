@@ -1,6 +1,6 @@
 # Watcher: Event Listener & Orchestrator
 
-> Part of the [auto-coder overview](./overview.md). This doc covers the design and features of the Watcher component specifically.
+> Part of the [coworker-bot overview](./overview.md). This doc covers the design and features of the Watcher component specifically.
 
 Watcher is a Node.js service that listens for events from developer platforms, filters them, and triggers the downstream coding agent. It is purely an orchestrator — it does not write code itself.
 

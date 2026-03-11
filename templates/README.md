@@ -1,6 +1,6 @@
 # Sandbox Template
 
-This folder contains Crafting Sandbox templates for the auto-coder agent. Each template references secrets using the `${secret:<name>}` syntax — these must be configured in your Crafting Sandbox before the sandbox will start successfully.
+This folder contains Crafting Sandbox templates for the coworker-bot agent. Each template references secrets using the `${secret:<name>}` syntax — these must be configured in your Crafting Sandbox before the sandbox will start successfully.
 
 ## How Secrets Work in Crafting Sandbox
 
@@ -47,7 +47,7 @@ A Linear Personal API Key used to authenticate the Linear MCP server.
 **How to create:**
 
 1. Go to [linear.app → Settings → API → Personal API keys](https://linear.app/settings/api)
-2. Click **Create key**, give it a label (e.g., `auto-coder`)
+2. Click **Create key**, give it a label (e.g., `coworker-bot`)
 3. Copy the generated key
 4. Add it to Crafting Sandbox as secret name `linear-pat`
 
@@ -80,7 +80,7 @@ A Slack Bot User OAuth Token (`xoxb-...`) used by both the webhook handler and t
 **How to create:**
 
 1. Go to [api.slack.com/apps](https://api.slack.com/apps) and click **Create New App → From scratch**
-2. Choose a name (e.g., `auto-coder`) and select your workspace
+2. Choose a name (e.g., `coworker-bot`) and select your workspace
 3. Under **OAuth & Permissions → Scopes → Bot Token Scopes**, add:
    - `channels:history`
    - `channels:read`

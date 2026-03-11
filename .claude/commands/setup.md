@@ -1,6 +1,6 @@
 ---
 name: setup
-description: Interactive auto-coder setup wizard
+description: Interactive coworker-bot setup wizard
 allowed-tools:
   - Read
   - Write
@@ -9,7 +9,7 @@ allowed-tools:
   - Grep
 ---
 
-auto-coder Setup Wizard
+coworker-bot Setup Wizard
 
 Do this SILENTLY — don't announce what you're doing:
 

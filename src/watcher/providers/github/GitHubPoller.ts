@@ -127,7 +127,7 @@ export class GitHubPoller {
         headers: {
           Authorization: `Bearer ${this.config.token}`,
           Accept: 'application/vnd.github.v3+json',
-          'User-Agent': 'auto-coder-watcher',
+          'User-Agent': 'coworker-bot-watcher',
         },
       });
 
@@ -200,7 +200,7 @@ export class GitHubPoller {
         headers: {
           Authorization: `Bearer ${this.config.token}`,
           Accept: 'application/vnd.github.v3+json',
-          'User-Agent': 'auto-coder-watcher',
+          'User-Agent': 'coworker-bot-watcher',
         },
       });
 

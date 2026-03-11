@@ -1,5 +1,5 @@
 {
-  "name": "auto-coder",
+  "name": "coworker-bot",
   "version": "1.0.0",
   "description": "Automated coding assistant that monitors GitHub, Linear, and Slack events, powered by Crafting Sandbox",
   "main": "dist/index.js",

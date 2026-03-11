@@ -1,6 +1,6 @@
 # Linear Provider Setup
 
-Set up auto-coder to monitor Linear issues and automatically dispatch a Crafting Coding Agent to handle them.
+Set up coworker-bot to monitor Linear issues and automatically dispatch a Crafting Coding Agent to handle them.
 
 **Prerequisites:** Crafting CLI (`cs`) installed and authenticated as an org admin. A Linear account with access to the teams/issues you want to monitor.
 
@@ -13,7 +13,7 @@ Set up auto-coder to monitor Linear issues and automatically dispatch a Crafting
 1. Go to [Linear Settings → API → Personal API keys](https://linear.app/settings/api)
 2. Under **Personal API keys**, click **Create key**
 3. Set:
-   - **Label:** `auto-coder` (or your preferred name)
+   - **Label:** `coworker-bot` (or your preferred name)
 4. Click **Create key** and **copy the generated key immediately** — it will not be shown again
 
 **Important:** Linear API keys have full access to your workspace data. Keep them secure and never commit them to version control.
@@ -27,8 +27,8 @@ Set up auto-coder to monitor Linear issues and automatically dispatch a Crafting
 1. Go to [Linear Settings → API → Webhooks](https://linear.app/settings/api)
 2. Click **Create webhook**
 3. Set:
-   - **Webhook URL:** `https://webhook--auto-coder-<your-org>.sandboxes.site/webhook/linear` (fill in after sandbox is created — you can update this later)
-   - **Label:** `auto-coder`
+   - **Webhook URL:** `https://webhook--coworker-bot-<your-org>.sandboxes.site/webhook/linear` (fill in after sandbox is created — you can update this later)
+   - **Label:** `coworker-bot`
    - **Resource types:** check **Issue** and **Comment**
 4. Click **Create webhook**
 5. **Copy the webhook secret** — Linear generates and displays it after creation. Copy it immediately; it may not be shown again.
@@ -138,11 +138,11 @@ The env vars are not reaching the watcher. Check:
 
 - Secrets exist: `cs secret list`
 - Template references the correct secret names (`${secret:linear-pat}`, `${secret:linear-webhook-secret}`)
-- Sandbox was created from the updated template: `cs sandbox info auto-coder`
+- Sandbox was created from the updated template: `cs sandbox info coworker-bot`
 
 **Webhook events not received**
 
-- Verify the sandbox is pinned (`cs sandbox pin auto-coder`) — a suspended sandbox cannot receive webhooks
+- Verify the sandbox is pinned (`cs sandbox pin coworker-bot`) — a suspended sandbox cannot receive webhooks
 - Verify the webhook URL is correct (Web Console → Endpoints → webhook)
 - Check Linear webhook delivery log: Settings → API → Webhooks → select webhook → **Deliveries** tab
 - Verify webhook secret matches configuration
