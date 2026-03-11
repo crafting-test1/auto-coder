@@ -96,11 +96,6 @@ Polls issues (updated since last poll), optionally filtered to configured teams.
 - Bot involvement is implicit — `app_mention` means the bot was @mentioned
 - No assignment check, no state/closed check (messages have no concept of closed)
 
-### Polling
-
-- Opt-in only: requires `pollingEnabled: true` in config
-- Polls for @mentions of the bot since last poll
-
 ### Known gaps / design concerns
 
 - **No guard against bot-to-bot mentions**: if another bot @mentions this bot, it passes all filters; deduplication is the only protection if it happens within the same thread
